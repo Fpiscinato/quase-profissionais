@@ -4,7 +4,7 @@ import type { PlayerId, Team } from '../../engine/types'
 import type { PlayerRow, RoundRecord } from '../../db/db'
 import { createMatchForRound } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
-import { card, primaryButton, secondaryButton } from './ui'
+import { card, primaryButton, secondaryButton } from '../../ui/styles'
 
 interface Props {
   tournamentId: string

@@ -3,7 +3,7 @@ import { generateDoublesRotation } from '../../engine/schedule'
 import type { PlayerId, ScheduledMatch } from '../../engine/types'
 import type { PlayerRow } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
-import { card } from './ui'
+import { card } from '../../ui/styles'
 
 interface Props {
   availablePlayerIds: PlayerId[]

@@ -3,7 +3,7 @@ import { db } from '../../db/db'
 import { usePlayers, useTournament } from '../../db/hooks'
 import type { PlayerId } from '../../engine/types'
 import { MatchSetupStep } from './MatchSetupStep'
-import { card, primaryButton } from './ui'
+import { card, primaryButton } from '../../ui/styles'
 import { useState } from 'react'
 
 interface Props {

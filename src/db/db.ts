@@ -171,3 +171,57 @@ export async function createMatchForRound(input: CreateMatchInput): Promise<Matc
 
   return match
 }
+
+export class DuplicatePlayerNameError extends Error {
+  constructor(name: string) {
+    super(`Já existe um jogador chamado "${name}".`)
+    this.name = 'DuplicatePlayerNameError'
+  }
+}
+
+function normalizeName(name: string): string {
+  return name.trim().toLowerCase()
+}
+
+async function assertNameAvailable(name: string, excludingId?: string): Promise<void> {
+  const target = normalizeName(name)
+  const existing = await db.players.toArray()
+  const clash = existing.some((p) => p.id !== excludingId && normalizeName(p.name) === target)
+  if (clash) throw new DuplicatePlayerNameError(name.trim())
+}
+
+export async function addPlayer(name: string): Promise<PlayerRow> {
+  const trimmed = name.trim()
+  if (!trimmed) throw new Error('O nome não pode ser vazio.')
+  await assertNameAvailable(trimmed)
+  const player: PlayerRow = { id: newId(), name: trimmed, active: true }
+  await db.players.add(player)
+  return player
+}
+
+export async function updatePlayerName(id: PlayerId, name: string): Promise<void> {
+  const trimmed = name.trim()
+  if (!trimmed) throw new Error('O nome não pode ser vazio.')
+  await assertNameAvailable(trimmed, id)
+  await db.players.update(id, { name: trimmed })
+}
+
+/** True if the player is referenced by any recorded match (Section 6: history is kept per match). */
+export async function playerHasMatches(playerId: PlayerId): Promise<boolean> {
+  const matches = await db.matches.toArray()
+  return matches.some((m) => m.team1.includes(playerId) || m.team2.includes(playerId))
+}
+
+/**
+ * Removes a player. A player with match history is archived (active: false)
+ * instead of hard-deleted, so past results/rankings keep working. A player
+ * with no matches yet is deleted outright.
+ */
+export async function removePlayer(id: PlayerId): Promise<'archived' | 'deleted'> {
+  if (await playerHasMatches(id)) {
+    await db.players.update(id, { active: false })
+    return 'archived'
+  }
+  await db.players.delete(id)
+  return 'deleted'
+}

@@ -5,7 +5,7 @@ import { usePlayers } from '../../db/hooks'
 import { createTournament, type TeamFormationMode, type TournamentFormat } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
 import { ManualRoundsEditor } from './ManualRoundsEditor'
-import { card, primaryButton, secondaryButton } from './ui'
+import { card, primaryButton, secondaryButton } from '../../ui/styles'
 
 interface Props {
   availablePlayerIds: PlayerId[]

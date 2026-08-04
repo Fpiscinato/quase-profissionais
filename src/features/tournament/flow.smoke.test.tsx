@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
-import { describe, expect, it } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import App from '../../App'
 import { db, DEFAULT_PLAYER_NAMES } from '../../db/db'
+
+afterEach(cleanup)
 
 /**
  * End-to-end smoke test for the Phase 2 flow, run against a real Dexie

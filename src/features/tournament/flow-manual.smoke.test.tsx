@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
-import { describe, expect, it } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen, fireEvent, within, cleanup } from '@testing-library/react'
 import App from '../../App'
 import { db, DEFAULT_PLAYER_NAMES } from '../../db/db'
+
+afterEach(cleanup)
 
 describe('Phase 2 flow — manual team formation and manual serve order', () => {
   it('lets the organiser hand-pick pairings each round and a valid serve order', async () => {

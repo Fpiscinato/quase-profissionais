@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { usePlayers } from '../../db/hooks'
 import type { PlayerId } from '../../engine/types'
-import { primaryButton, label as labelClass } from './ui'
+import { primaryButton, label as labelClass } from '../../ui/styles'
 
 interface Props {
   onContinue: (availablePlayerIds: PlayerId[]) => void
