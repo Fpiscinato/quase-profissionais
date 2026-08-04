@@ -1,0 +1,182 @@
+import { useMemo, useState } from 'react'
+import { buildServeOrder } from '../../engine/serve'
+import type { PlayerId, Team } from '../../engine/types'
+import type { PlayerRow, RoundRecord } from '../../db/db'
+import { createMatchForRound } from '../../db/db'
+import { shuffle } from '../../lib/shuffle'
+import { card, primaryButton, secondaryButton } from './ui'
+
+interface Props {
+  tournamentId: string
+  round: RoundRecord
+  byId: Map<PlayerId, PlayerRow>
+  onDone: () => void
+  onBack: () => void
+}
+
+type OrderMode = 'random' | 'manual'
+
+function randomServeOrder(team1: Team, team2: Team): PlayerId[] {
+  const shuffledTeam1 = shuffle(team1)
+  const shuffledTeam2 = shuffle(team2)
+  const [first, second] = shuffle([shuffledTeam1, shuffledTeam2])
+  return buildServeOrder(first, second)
+}
+
+export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Props) {
+  const [mode, setMode] = useState<OrderMode>('random')
+  const [randomOrder, setRandomOrder] = useState<PlayerId[]>(() =>
+    randomServeOrder(round.team1, round.team2),
+  )
+  const [manualOrder, setManualOrder] = useState<PlayerId[]>([])
+  const [saving, setSaving] = useState(false)
+
+  const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
+  const teamOf = (id: PlayerId): 'team1' | 'team2' => (round.team1.includes(id) ? 'team1' : 'team2')
+
+  const allPlayers = useMemo(() => [...round.team1, ...round.team2], [round.team1, round.team2])
+  const totalSlots = allPlayers.length
+
+  const canPickManually = (id: PlayerId) => {
+    if (manualOrder.includes(id)) return false
+    if (manualOrder.length === 0) return true
+    const lastTeam = teamOf(manualOrder[manualOrder.length - 1])
+    return teamOf(id) !== lastTeam
+  }
+
+  const pickManual = (id: PlayerId) => {
+    if (!canPickManually(id)) return
+    setManualOrder((prev) => [...prev, id])
+  }
+
+  const serveOrder = mode === 'random' ? randomOrder : manualOrder
+  const canConfirm = serveOrder.length === totalSlots && !saving
+
+  const handleConfirm = async () => {
+    if (!canConfirm) return
+    setSaving(true)
+    await createMatchForRound({
+      tournamentId,
+      roundIndex: round.index,
+      team1: round.team1,
+      team2: round.team2,
+      serveOrder,
+    })
+    onDone()
+  }
+
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <div>
+        <h1 className="text-xl font-bold">Configurar partida — Rodada {round.index + 1}</h1>
+        <p className="text-sm text-cream/70">
+          {round.team1.map(name).join(' & ')} <span className="text-cream/50">vs</span>{' '}
+          {round.team2.map(name).join(' & ')}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">Ordem de saque</span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('random')}
+            className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
+              mode === 'random' ? 'bg-lime text-navy' : 'border border-cream/30'
+            }`}
+          >
+            Sortear
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode('manual')
+              setManualOrder([])
+            }}
+            className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
+              mode === 'manual' ? 'bg-lime text-navy' : 'border border-cream/30'
+            }`}
+          >
+            Escolher
+          </button>
+        </div>
+      </div>
+
+      {mode === 'random' && (
+        <div className={card}>
+          <ol className="flex flex-col gap-1">
+            {randomOrder.map((id, i) => (
+              <li key={id}>
+                {i + 1}. {name(id)}
+              </li>
+            ))}
+          </ol>
+          <button
+            type="button"
+            className={`${secondaryButton} mt-3`}
+            onClick={() => setRandomOrder(randomServeOrder(round.team1, round.team2))}
+          >
+            Sortear novamente
+          </button>
+        </div>
+      )}
+
+      {mode === 'manual' && (
+        <div className={card}>
+          <p className="mb-2 text-xs text-cream/60">
+            Toque na ordem em que cada jogador vai sacar (jogadores consecutivos são sempre de
+            times opostos).
+          </p>
+          <ol className="mb-3 flex flex-col gap-1">
+            {manualOrder.map((id, i) => (
+              <li key={id}>
+                {i + 1}. {name(id)}
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-wrap gap-2">
+            {allPlayers
+              .filter((id) => !manualOrder.includes(id))
+              .map((id) => {
+                const enabled = canPickManually(id)
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    disabled={!enabled}
+                    onClick={() => pickManual(id)}
+                    className="min-h-11 rounded-lg border border-cream/30 px-3 py-2 text-sm font-semibold disabled:opacity-30"
+                  >
+                    {name(id)}
+                  </button>
+                )
+              })}
+          </div>
+          {manualOrder.length > 0 && (
+            <button
+              type="button"
+              className={`${secondaryButton} mt-3`}
+              onClick={() => setManualOrder([])}
+            >
+              Reiniciar
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="mt-2 flex gap-2">
+        <button type="button" className={secondaryButton} onClick={onBack}>
+          Voltar
+        </button>
+        <button
+          type="button"
+          className={`${primaryButton} flex-1`}
+          disabled={!canConfirm}
+          onClick={handleConfirm}
+        >
+          {saving ? 'Salvando...' : 'Confirmar partida'}
+        </button>
+      </div>
+    </div>
+  )
+}
