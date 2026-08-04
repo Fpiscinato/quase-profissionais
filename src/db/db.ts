@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { applyPoint, computeMatchState } from '../engine/score'
 import { DEFAULT_MATCH_CONFIG } from '../engine/types'
 import type { MatchConfig, PlayerId, PointLog, Team, TeamSide } from '../engine/types'
 
@@ -224,4 +225,83 @@ export async function removePlayer(id: PlayerId): Promise<'archived' | 'deleted'
   }
   await db.players.delete(id)
   return 'deleted'
+}
+
+function tallyPoints(pointLog: PointLog): { points1: number; points2: number } {
+  let points1 = 0
+  let points2 = 0
+  for (const point of pointLog) {
+    if (point === 'team1') points1++
+    else points2++
+  }
+  return { points1, points2 }
+}
+
+/** Derives the games/points/winner snapshot stored on the row from a point log. */
+function deriveMatchTally(pointLog: PointLog, config: MatchConfig) {
+  const state = computeMatchState(pointLog, config)
+  const { points1, points2 } = tallyPoints(pointLog)
+  return {
+    pointLog,
+    games1: state.finalGames1 ?? state.games1,
+    games2: state.finalGames2 ?? state.games2,
+    points1,
+    points2,
+    winnerTeam: state.winner,
+  }
+}
+
+/** Opens a match for live play: marks it in_progress, starts the timer once, and remembers it for resume-after-reload. */
+export async function startMatch(matchId: string): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const match = await db.matches.get(matchId)
+    if (!match) throw new Error('Match not found')
+    if (match.status === 'scheduled') {
+      await db.matches.update(matchId, { status: 'in_progress', startedAt: Date.now() })
+    }
+  })
+  await updateSettings({ currentMatchId: matchId })
+}
+
+/**
+ * Records one point for a side. No-ops (via applyPoint) if the set is
+ * already decided. Wrapped in a transaction so rapid back-to-back taps
+ * (read match -> compute -> write) can't race and drop a point.
+ */
+export async function recordPoint(
+  matchId: string,
+  winner: TeamSide,
+  config: MatchConfig,
+): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const match = await db.matches.get(matchId)
+    if (!match) throw new Error('Match not found')
+    const newLog = applyPoint(match.pointLog, winner, config)
+    if (newLog === match.pointLog) return
+    await db.matches.update(matchId, deriveMatchTally(newLog, config))
+  })
+}
+
+/** Removes the last recorded point and recomputes games/points/winner from the shorter log. */
+export async function undoLastPoint(matchId: string, config: MatchConfig): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const match = await db.matches.get(matchId)
+    if (!match || match.pointLog.length === 0) return
+    const newLog = match.pointLog.slice(0, -1)
+    await db.matches.update(matchId, deriveMatchTally(newLog, config))
+  })
+}
+
+/** Locks in the final result: stops the timer and marks the match completed. */
+export async function saveMatch(matchId: string): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const match = await db.matches.get(matchId)
+    if (!match) throw new Error('Match not found')
+    const completedAt = Date.now()
+    const durationSeconds = match.startedAt
+      ? Math.max(0, Math.round((completedAt - match.startedAt) / 1000))
+      : 0
+    await db.matches.update(matchId, { status: 'completed', completedAt, durationSeconds })
+  })
+  await updateSettings({ currentMatchId: undefined })
 }

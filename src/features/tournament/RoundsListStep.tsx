@@ -8,9 +8,10 @@ import { useState } from 'react'
 
 interface Props {
   tournamentId: string
+  onOpenMatch: (matchId: string) => void
 }
 
-export function RoundsListStep({ tournamentId }: Props) {
+export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
   const tournament = useTournament(tournamentId)
   const { byId } = usePlayers()
   const matches = useLiveQuery(
@@ -38,6 +39,7 @@ export function RoundsListStep({ tournamentId }: Props) {
   }
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
+  const teamName = (ids: PlayerId[]) => ids.map(name).join(' & ')
   const matchByRound = new Map(matches.map((m) => [m.roundIndex, m]))
 
   return (
@@ -54,30 +56,35 @@ export function RoundsListStep({ tournamentId }: Props) {
         {tournament.rounds.map((round) => {
           const match = matchByRound.get(round.index)
           const configured = !!round.matchId && !!match
+          const completed = configured && match!.status === 'completed'
+
+          let statusLabel = 'Pendente'
+          if (completed) statusLabel = 'Concluída ✓'
+          else if (configured) statusLabel = 'Configurada'
+
           return (
             <div key={round.index} className={card}>
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-xs text-cream/60">Rodada {round.index + 1}</span>
                 <span
-                  className={`text-xs font-semibold ${configured ? 'text-lime' : 'text-cream/50'}`}
+                  className={`text-xs font-semibold ${
+                    configured ? 'text-lime' : 'text-cream/50'
+                  }`}
                 >
-                  {configured ? 'Configurada ✓' : 'Pendente'}
+                  {statusLabel}
                 </span>
               </div>
               <div className="font-semibold">
-                {round.team1.map(name).join(' & ')} <span className="text-cream/50">vs</span>{' '}
-                {round.team2.map(name).join(' & ')}
+                {teamName(round.team1)} <span className="text-cream/50">vs</span>{' '}
+                {teamName(round.team2)}
               </div>
               {round.restingPlayerIds.length > 0 && (
                 <div className="text-xs text-cream/60">
                   Descansa: {round.restingPlayerIds.map(name).join(', ')}
                 </div>
               )}
-              {configured && match ? (
-                <div className="mt-2 text-xs text-cream/60">
-                  Ordem de saque: {match.serveOrder.map(name).join(', ')}
-                </div>
-              ) : (
+
+              {!configured && (
                 <button
                   type="button"
                   className={`${primaryButton} mt-3`}
@@ -85,6 +92,28 @@ export function RoundsListStep({ tournamentId }: Props) {
                 >
                   Configurar partida
                 </button>
+              )}
+
+              {configured && !completed && (
+                <>
+                  <div className="mt-2 text-xs text-cream/60">
+                    Ordem de saque: {match!.serveOrder.map(name).join(', ')}
+                  </div>
+                  <button
+                    type="button"
+                    className={`${primaryButton} mt-3`}
+                    onClick={() => onOpenMatch(match!.id)}
+                  >
+                    {match!.status === 'in_progress' ? 'Continuar partida' : 'Iniciar partida'}
+                  </button>
+                </>
+              )}
+
+              {completed && (
+                <div className="mt-2 text-sm">
+                  {teamName(match!.team1)} {match!.games1} × {match!.games2}{' '}
+                  {teamName(match!.team2)}
+                </div>
               )}
             </div>
           )

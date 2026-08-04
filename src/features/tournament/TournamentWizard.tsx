@@ -4,12 +4,14 @@ import type { PlayerId } from '../../engine/types'
 import { AvailabilityStep } from './AvailabilityStep'
 import { FormatRotationStep } from './FormatRotationStep'
 import { RoundsListStep } from './RoundsListStep'
+import { LiveMatchScreen } from '../match/LiveMatchScreen'
 
 type Step =
   | { name: 'loading' }
   | { name: 'disponibilidade' }
   | { name: 'formato-rotacao'; availablePlayerIds: PlayerId[] }
   | { name: 'rodadas'; tournamentId: string }
+  | { name: 'partida-ao-vivo'; tournamentId: string; matchId: string }
 
 export function TournamentWizard() {
   const [step, setStep] = useState<Step>({ name: 'loading' })
@@ -19,6 +21,21 @@ export function TournamentWizard() {
     ;(async () => {
       await ensurePlayersSeeded()
       const settings = await getSettings()
+
+      if (settings.currentMatchId) {
+        const match = await db.matches.get(settings.currentMatchId)
+        if (match && match.status !== 'completed') {
+          if (!cancelled) {
+            setStep({
+              name: 'partida-ao-vivo',
+              tournamentId: match.tournamentId,
+              matchId: match.id,
+            })
+          }
+          return
+        }
+      }
+
       if (settings.currentTournamentId) {
         const tournament = await db.tournaments.get(settings.currentTournamentId)
         if (tournament && tournament.status !== 'completed') {
@@ -57,5 +74,19 @@ export function TournamentWizard() {
     )
   }
 
-  return <RoundsListStep tournamentId={step.tournamentId} />
+  if (step.name === 'partida-ao-vivo') {
+    const { tournamentId, matchId } = step
+    return (
+      <LiveMatchScreen matchId={matchId} onSaved={() => setStep({ name: 'rodadas', tournamentId })} />
+    )
+  }
+
+  return (
+    <RoundsListStep
+      tournamentId={step.tournamentId}
+      onOpenMatch={(matchId) =>
+        setStep({ name: 'partida-ao-vivo', tournamentId: step.tournamentId, matchId })
+      }
+    />
+  )
 }

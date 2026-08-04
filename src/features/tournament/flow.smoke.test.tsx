@@ -53,7 +53,7 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar partida' }))
 
     await screen.findByText('Rodadas')
-    expect(screen.getAllByText('Configurada ✓')).toHaveLength(1)
+    expect(screen.getAllByText('Configurada')).toHaveLength(1)
     expect(screen.getAllByText('Pendente')).toHaveLength(4)
     expect(screen.getByText(/Ordem de saque:/)).toBeTruthy()
 
@@ -74,7 +74,7 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
 
     await screen.findByText('Rodadas')
     expect(screen.queryByText('Quem joga hoje?')).toBeNull()
-    expect(screen.getAllByText('Configurada ✓')).toHaveLength(1)
+    expect(screen.getAllByText('Configurada')).toHaveLength(1)
     expect(screen.getAllByText('Pendente')).toHaveLength(4)
   })
 })
