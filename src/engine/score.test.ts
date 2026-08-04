@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyPoint, computeMatchState, isGameOver, isSetOver, isTiebreak, isTiebreakOver } from './score'
+import { shouldChangeEnds } from './serve'
 import { DEFAULT_MATCH_CONFIG } from './types'
 import type { MatchConfig, PointLog, TeamSide } from './types'
 
@@ -181,5 +182,73 @@ describe('isSetOver', () => {
 
   it('at 4-4 with an undecided tiebreak, the set is not over', () => {
     expect(isSetOver(4, 4, { points1: 3, points2: 2 }, config).over).toBe(false)
+  })
+})
+
+describe('6-game set ("Padrão reduzido", Section 12: gamesToWinSet=6)', () => {
+  const config6: MatchConfig = { gamesToWinSet: 6, tiebreakPoints: 7, deuceMode: 'advantage' }
+  const winGame = (side: TeamSide): TeamSide[] => [side, side, side, side]
+
+  // 12 games alternating team1/team2 (4-0 each), so after game k, totalGamesCompleted === k.
+  // Games 1,3,5,7,9,11 go to team1; games 2,4,6,8,10,12 go to team2 -> 6-6 after game 12.
+  const fullLog = play(
+    Array.from({ length: 12 }, (_, i) => winGame(i % 2 === 0 ? 'team1' : 'team2')).flat(),
+    config6,
+  )
+
+  it.each([1, 3, 5, 7, 9, 11])('changes ends after game %i (odd total games)', (gameNumber) => {
+    const prefix = fullLog.slice(0, gameNumber * 4)
+    const state = computeMatchState(prefix, config6)
+    expect(state.totalGamesCompleted).toBe(gameNumber)
+    expect(
+      shouldChangeEnds({
+        isTiebreak: state.isTiebreak,
+        totalGamesCompleted: state.totalGamesCompleted,
+        tiebreakPointsCompleted: state.tiebreak.points1 + state.tiebreak.points2,
+      }),
+    ).toBe(true)
+  })
+
+  it.each([2, 4, 6, 8, 10])('does not change ends after game %i (even total games)', (gameNumber) => {
+    const prefix = fullLog.slice(0, gameNumber * 4)
+    const state = computeMatchState(prefix, config6)
+    expect(state.totalGamesCompleted).toBe(gameNumber)
+    expect(
+      shouldChangeEnds({
+        isTiebreak: state.isTiebreak,
+        totalGamesCompleted: state.totalGamesCompleted,
+        tiebreakPointsCompleted: state.tiebreak.points1 + state.tiebreak.points2,
+      }),
+    ).toBe(false)
+  })
+
+  it('reaching 6-6 triggers a tiebreak, not a 13th normal game', () => {
+    const prefix = fullLog.slice(0, 12 * 4)
+    const state = computeMatchState(prefix, config6)
+    expect(state.games1).toBe(6)
+    expect(state.games2).toBe(6)
+    expect(state.isTiebreak).toBe(true)
+    expect(state.isMatchOver).toBe(false)
+    expect(isTiebreak(6, 6, config6)).toBe(true)
+  })
+})
+
+describe('Deuce mode parameterization (Section 12) — wired end-to-end via computeMatchState', () => {
+  const toDeuce: TeamSide[] = ['team1', 'team2', 'team1', 'team2', 'team1', 'team2'] // 3-3 (40-40)
+
+  it('advantage mode (default): the point right after 40-40 does NOT end the game', () => {
+    const log = play([...toDeuce, 'team1'], DEFAULT_MATCH_CONFIG)
+    const state = computeMatchState(log, DEFAULT_MATCH_CONFIG)
+    expect(state.games1).toBe(0)
+    expect(state.currentGame).toEqual({ points1: 4, points2: 3 })
+  })
+
+  it('golden point mode: the same log ends the game immediately at 40-40 (no-ad)', () => {
+    const goldenPointConfig: MatchConfig = { gamesToWinSet: 4, tiebreakPoints: 7, deuceMode: 'goldenPoint' }
+    const log = play([...toDeuce, 'team1'], goldenPointConfig)
+    const state = computeMatchState(log, goldenPointConfig)
+    expect(state.games1).toBe(1)
+    expect(state.games2).toBe(0)
+    expect(state.currentGame).toEqual({ points1: 0, points2: 0 })
   })
 })
