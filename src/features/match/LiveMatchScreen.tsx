@@ -6,7 +6,8 @@ import { computeMatchState } from '../../engine/score'
 import type { PlayerId, TeamSide } from '../../engine/types'
 import { ALERT_LABELS, computeAlerts } from './alerts'
 import { computeServeInfo } from './serveInfo'
-import { formatDuration, pointLabel } from './display'
+import { pointLabel } from './display'
+import { formatDuration } from '../../lib/format'
 import { bigButton, card, secondaryButton } from '../../ui/styles'
 
 interface Props {
@@ -36,7 +37,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
 
   const config = tournament.options
   const state = computeMatchState(match.pointLog, config)
-  const alerts = computeAlerts(state)
+  const alerts = computeAlerts(state, config.deuceMode)
   const serveInfo = computeServeInfo(state, match.serveOrder)
   const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
 

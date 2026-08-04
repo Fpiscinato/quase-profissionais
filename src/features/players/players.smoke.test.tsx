@@ -96,7 +96,8 @@ describe('Players CRUD (Jogadores screen)', () => {
     expect(await db.players.toArray()).toHaveLength(5)
 
     // An archived player can no longer be marked available for a new tournament.
-    fireEvent.click(screen.getByRole('button', { name: 'Torneio' }))
+    fireEvent.click(screen.getByRole('button', { name: '‹ Início' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Torneio' }))
     await screen.findByText('Quem joga hoje?')
     expect(screen.queryByLabelText('Jarede')).toBeNull()
     expect(await screen.findByLabelText('Mateus')).toBeTruthy()

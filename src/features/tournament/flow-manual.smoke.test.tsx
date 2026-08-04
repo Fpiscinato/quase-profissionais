@@ -12,6 +12,7 @@ describe('Phase 2 flow — manual team formation and manual serve order', () => 
   it('lets the organiser hand-pick pairings each round and a valid serve order', async () => {
     render(<App />)
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Torneio' }))
     await screen.findByText('Quem joga hoje?')
     for (const playerName of DEFAULT_PLAYER_NAMES) {
       fireEvent.click(await screen.findByLabelText(playerName))

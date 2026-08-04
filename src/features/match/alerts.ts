@@ -1,13 +1,14 @@
 import { shouldChangeEnds } from '../../engine/serve'
-import type { MatchState } from '../../engine/types'
+import type { DeuceMode, MatchState } from '../../engine/types'
 
-export type LiveAlert = 'tiebreak' | 'game' | 'change-ends' | 'set-over'
+export type LiveAlert = 'tiebreak' | 'game' | 'change-ends' | 'set-over' | 'golden-point'
 
 export const ALERT_LABELS: Record<LiveAlert, string> = {
   'set-over': 'Set encerrado',
   tiebreak: 'Tiebreak!',
   game: 'Game!',
   'change-ends': 'Troquem de lado',
+  'golden-point': 'Ponto de ouro!',
 }
 
 /**
@@ -15,7 +16,7 @@ export const ALERT_LABELS: Record<LiveAlert, string> = {
  * only true at the exact boundary moment (start of the next game/tiebreak
  * segment) — they self-clear as soon as the next point is played.
  */
-export function computeAlerts(state: MatchState): LiveAlert[] {
+export function computeAlerts(state: MatchState, deuceMode: DeuceMode): LiveAlert[] {
   if (state.isMatchOver) return ['set-over']
 
   const alerts: LiveAlert[] = []
@@ -26,6 +27,17 @@ export function computeAlerts(state: MatchState): LiveAlert[] {
     alerts.push('tiebreak')
   } else if (!state.isTiebreak && gamePointsPlayed === 0 && state.totalGamesCompleted > 0) {
     alerts.push('game')
+  }
+
+  // Section 10: the live screen announces when a golden point is being
+  // played — at 40-40 (deuce), the very next point decides the game.
+  if (
+    !state.isTiebreak &&
+    deuceMode === 'goldenPoint' &&
+    state.currentGame.points1 === state.currentGame.points2 &&
+    state.currentGame.points1 >= 3
+  ) {
+    alerts.push('golden-point')
   }
 
   const changeEnds = shouldChangeEnds({

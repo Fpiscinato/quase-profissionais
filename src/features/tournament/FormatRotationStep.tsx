@@ -6,6 +6,7 @@ import { createTournament, type TeamFormationMode, type TournamentFormat } from 
 import { shuffle } from '../../lib/shuffle'
 import { ManualRoundsEditor } from './ManualRoundsEditor'
 import { card, primaryButton, secondaryButton } from '../../ui/styles'
+import { HelpHint } from '../../ui/HelpHint'
 
 interface Props {
   availablePlayerIds: PlayerId[]
@@ -59,7 +60,10 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-cream/80">Formato</span>
+        <span className="text-sm font-semibold text-cream/80">
+          Formato
+          <HelpHint text="Duplas (Americano) precisa de 4+ jogadores e forma times de 2. Individual é todos-contra-todos, um jogador por vez, a partir de 2." />
+        </span>
         <div className="flex gap-2">
           <button
             type="button"
@@ -96,7 +100,10 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
 
       {format === 'duplas' && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-cream/80">Formação das duplas</span>
+          <span className="text-sm font-semibold text-cream/80">
+            Formação das duplas
+            <HelpHint text="Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada." />
+          </span>
           <div className="flex gap-2">
             <button
               type="button"

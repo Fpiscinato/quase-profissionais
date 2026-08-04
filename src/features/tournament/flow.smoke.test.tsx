@@ -19,6 +19,8 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
   it('walks the full wizard and persists a tournament + a configured match', async () => {
     render(<App />)
 
+    // Fresh install: nothing to resume, so App lands on Home first.
+    fireEvent.click(await screen.findByRole('button', { name: 'Torneio' }))
     await screen.findByText('Quem joga hoje?')
 
     for (const playerName of DEFAULT_PLAYER_NAMES) {
@@ -67,9 +69,9 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
   })
 
   it('resumes the in-progress tournament on a fresh mount instead of restarting the wizard', async () => {
-    // A second render() simulates a full app reload: TournamentWizard reads
-    // AppSettings.currentTournamentId on mount and should skip straight to
-    // the rounds list instead of asking for availability again.
+    // A second render() simulates a full app reload: App reads
+    // AppSettings.currentTournamentId on mount and should skip Home and the
+    // availability screen, landing straight on the rounds list.
     render(<App />)
 
     await screen.findByText('Rodadas')

@@ -5,6 +5,7 @@ import type { PlayerRow, RoundRecord } from '../../db/db'
 import { createMatchForRound } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
 import { card, primaryButton, secondaryButton } from '../../ui/styles'
+import { HelpHint } from '../../ui/HelpHint'
 
 interface Props {
   tournamentId: string
@@ -76,7 +77,10 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-cream/80">Ordem de saque</span>
+        <span className="text-sm font-semibold text-cream/80">
+          Ordem de saque
+          <HelpHint text="Cada jogador saca um game inteiro; a ordem roda entre os dois times, então quem saca em seguida é sempre do time adversário." />
+        </span>
         <div className="flex gap-2">
           <button
             type="button"
