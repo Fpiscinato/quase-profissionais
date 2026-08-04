@@ -86,3 +86,20 @@ export interface PlayerStanding {
   pointsWon: number
   pointsLost: number
 }
+
+/**
+ * Ranking by exact pairing (Team/Dupla) rather than by individual player:
+ * credits the specific team of 1 (singles) or 2 (doubles) players that
+ * played together, not each player separately. Two matches only count
+ * toward the same TeamStanding if the same set of player ids played them
+ * together (order-independent).
+ */
+export interface TeamStanding {
+  playerIds: PlayerId[]
+  matchesPlayed: number
+  matchesWon: number
+  gamesWon: number
+  gamesLost: number
+  pointsWon: number
+  pointsLost: number
+}

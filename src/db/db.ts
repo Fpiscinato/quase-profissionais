@@ -305,3 +305,69 @@ export async function saveMatch(matchId: string): Promise<void> {
   })
   await updateSettings({ currentMatchId: undefined })
 }
+
+/**
+ * Marks a tournament finished so the wizard stops resuming it and offers a
+ * fresh availability screen instead. Matches already played keep their
+ * history — this does not delete anything.
+ */
+export async function finishTournament(tournamentId: string): Promise<void> {
+  await db.tournaments.update(tournamentId, { status: 'completed' })
+  const settings = await getSettings()
+  if (settings.currentTournamentId === tournamentId) {
+    await updateSettings({ currentTournamentId: undefined, currentMatchId: undefined })
+  }
+}
+
+/** Deletes a tournament and every match that belongs to it. Cannot be undone. */
+export async function deleteTournament(tournamentId: string): Promise<void> {
+  await db.transaction('rw', db.tournaments, db.matches, async () => {
+    await db.matches.where('tournamentId').equals(tournamentId).delete()
+    await db.tournaments.delete(tournamentId)
+  })
+  const settings = await getSettings()
+  if (settings.currentTournamentId === tournamentId) {
+    await updateSettings({ currentTournamentId: undefined, currentMatchId: undefined })
+  }
+}
+
+/**
+ * Deletes a single not-yet-started match and un-links it from its round, so
+ * "Configurar partida" (teams/serve order) can be redone for that round.
+ * Refuses to delete a match that's already in progress or completed.
+ */
+export async function deleteScheduledMatch(matchId: string): Promise<void> {
+  await db.transaction('rw', db.tournaments, db.matches, async () => {
+    const match = await db.matches.get(matchId)
+    if (!match) return
+    if (match.status !== 'scheduled') {
+      throw new Error('Só é possível excluir uma partida que ainda não começou.')
+    }
+    const tournament = await db.tournaments.get(match.tournamentId)
+    if (tournament) {
+      const rounds = tournament.rounds.map((r) =>
+        r.matchId === matchId ? { ...r, matchId: undefined } : r,
+      )
+      await db.tournaments.update(match.tournamentId, { rounds })
+    }
+    await db.matches.delete(matchId)
+  })
+  const settings = await getSettings()
+  if (settings.currentMatchId === matchId) {
+    await updateSettings({ currentMatchId: undefined })
+  }
+}
+
+/**
+ * Full reset (Section 1): wipes players, tournaments and matches, then
+ * reseeds exactly the 5 default players. Device-local settings are reset
+ * too (nothing left to resume).
+ */
+export async function fullReset(): Promise<void> {
+  await db.transaction('rw', db.players, db.tournaments, db.matches, db.appSettings, async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await seedDefaultPlayers()
+    await db.appSettings.put({ id: 'settings', schemaVersion: 1 })
+  })
+}

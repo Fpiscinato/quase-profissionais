@@ -31,7 +31,8 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   }, [availablePlayerIds.join(','), format, shuffleSeed])
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
-  const teamName = (team: PlayerId[]) => team.map(name).join(' & ')
+  const teamName = (team: PlayerId[]) =>
+    team.map(name).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' & ')
 
   const finalRounds = mode === 'balanced' ? balancedRounds : manualRounds
   const canConfirm = !!finalRounds && finalRounds.length > 0 && !saving
@@ -144,7 +145,11 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
               </div>
               {round.restingPlayerIds.length > 0 && (
                 <div className="text-xs text-cream/60">
-                  Descansa: {round.restingPlayerIds.map(name).join(', ')}
+                  Descansa:{' '}
+                  {round.restingPlayerIds
+                    .map(name)
+                    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+                    .join(', ')}
                 </div>
               )}
             </div>

@@ -1,17 +1,20 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../../db/db'
+import { useState } from 'react'
+import { db, deleteScheduledMatch, deleteTournament, finishTournament } from '../../db/db'
 import { usePlayers, useTournament } from '../../db/hooks'
 import type { PlayerId } from '../../engine/types'
 import { MatchSetupStep } from './MatchSetupStep'
-import { card, primaryButton } from '../../ui/styles'
-import { useState } from 'react'
+import { card, destructiveButton, primaryButton, secondaryButton } from '../../ui/styles'
 
 interface Props {
   tournamentId: string
   onOpenMatch: (matchId: string) => void
+  onExit: () => void
 }
 
-export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
+type Confirm = { kind: 'finish' } | { kind: 'delete-tournament' } | { kind: 'delete-match'; matchId: string }
+
+export function RoundsListStep({ tournamentId, onOpenMatch, onExit }: Props) {
   const tournament = useTournament(tournamentId)
   const { byId } = usePlayers()
   const matches = useLiveQuery(
@@ -20,6 +23,8 @@ export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
     [],
   )
   const [configuringRound, setConfiguringRound] = useState<number | null>(null)
+  const [confirm, setConfirm] = useState<Confirm | null>(null)
+  const [busy, setBusy] = useState(false)
 
   if (!tournament) {
     return <div className="p-4 text-cream/70">Carregando torneio...</div>
@@ -42,6 +47,25 @@ export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
   const teamName = (ids: PlayerId[]) => ids.map(name).join(' & ')
   const matchByRound = new Map(matches.map((m) => [m.roundIndex, m]))
 
+  const handleFinish = async () => {
+    setBusy(true)
+    await finishTournament(tournamentId)
+    onExit()
+  }
+
+  const handleDeleteTournament = async () => {
+    setBusy(true)
+    await deleteTournament(tournamentId)
+    onExit()
+  }
+
+  const handleDeleteMatch = async (matchId: string) => {
+    setBusy(true)
+    await deleteScheduledMatch(matchId)
+    setConfirm(null)
+    setBusy(false)
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
@@ -57,6 +81,7 @@ export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
           const match = matchByRound.get(round.index)
           const configured = !!round.matchId && !!match
           const completed = configured && match!.status === 'completed'
+          const notStartedYet = configured && match!.status === 'scheduled'
 
           let statusLabel = 'Pendente'
           if (completed) statusLabel = 'Concluída ✓'
@@ -80,7 +105,11 @@ export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
               </div>
               {round.restingPlayerIds.length > 0 && (
                 <div className="text-xs text-cream/60">
-                  Descansa: {round.restingPlayerIds.map(name).join(', ')}
+                  Descansa:{' '}
+                  {round.restingPlayerIds
+                    .map(name)
+                    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+                    .join(', ')}
                 </div>
               )}
 
@@ -99,13 +128,50 @@ export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
                   <div className="mt-2 text-xs text-cream/60">
                     Ordem de saque: {match!.serveOrder.map(name).join(', ')}
                   </div>
-                  <button
-                    type="button"
-                    className={`${primaryButton} mt-3`}
-                    onClick={() => onOpenMatch(match!.id)}
-                  >
-                    {match!.status === 'in_progress' ? 'Continuar partida' : 'Iniciar partida'}
-                  </button>
+                  {notStartedYet && confirm?.kind === 'delete-match' && confirm.matchId === match!.id ? (
+                    <div className="mt-3 flex flex-col gap-2">
+                      <p className="text-xs text-destructive">
+                        ⚠ Excluir esta configuração de partida (times e ordem de saque)? Você
+                        vai precisar configurar de novo. Isso não pode ser desfeito.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className={secondaryButton}
+                          onClick={() => setConfirm(null)}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          className={`${destructiveButton} flex-1`}
+                          disabled={busy}
+                          onClick={() => handleDeleteMatch(match!.id)}
+                        >
+                          Confirmar exclusão
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        className={primaryButton}
+                        onClick={() => onOpenMatch(match!.id)}
+                      >
+                        {match!.status === 'in_progress' ? 'Continuar partida' : 'Iniciar partida'}
+                      </button>
+                      {notStartedYet && (
+                        <button
+                          type="button"
+                          className={secondaryButton}
+                          onClick={() => setConfirm({ kind: 'delete-match', matchId: match!.id })}
+                        >
+                          Excluir
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -118,6 +184,67 @@ export function RoundsListStep({ tournamentId, onOpenMatch }: Props) {
             </div>
           )
         })}
+      </div>
+
+      <div className={card}>
+        {confirm?.kind === 'finish' ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm">
+              Encerrar este torneio? As partidas já jogadas continuam no histórico e no ranking.
+              Você poderá começar um torneio novo em seguida.
+            </p>
+            <div className="flex gap-2">
+              <button type="button" className={secondaryButton} onClick={() => setConfirm(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={`${primaryButton} flex-1`}
+                disabled={busy}
+                onClick={handleFinish}
+              >
+                Encerrar e começar novo
+              </button>
+            </div>
+          </div>
+        ) : confirm?.kind === 'delete-tournament' ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-destructive">
+              ⚠ Excluir este torneio inteiro, com todas as suas partidas? Essa ação não pode ser
+              desfeita.
+            </p>
+            <div className="flex gap-2">
+              <button type="button" className={secondaryButton} onClick={() => setConfirm(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={`${destructiveButton} flex-1`}
+                disabled={busy}
+                onClick={handleDeleteTournament}
+              >
+                Sim, excluir tudo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={`${secondaryButton} flex-1`}
+              onClick={() => setConfirm({ kind: 'finish' })}
+            >
+              Encerrar torneio
+            </button>
+            <button
+              type="button"
+              className={destructiveButton}
+              onClick={() => setConfirm({ kind: 'delete-tournament' })}
+            >
+              Excluir torneio
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -33,6 +33,8 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
   const [saving, setSaving] = useState(false)
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
+  const teamName = (ids: PlayerId[]) =>
+    ids.map(name).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' & ')
   const teamOf = (id: PlayerId): 'team1' | 'team2' => (round.team1.includes(id) ? 'team1' : 'team2')
 
   const allPlayers = useMemo(() => [...round.team1, ...round.team2], [round.team1, round.team2])
@@ -71,8 +73,8 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
       <div>
         <h1 className="text-xl font-bold">Configurar partida — Rodada {round.index + 1}</h1>
         <p className="text-sm text-cream/70">
-          {round.team1.map(name).join(' & ')} <span className="text-cream/50">vs</span>{' '}
-          {round.team2.map(name).join(' & ')}
+          {teamName(round.team1)} <span className="text-cream/50">vs</span>{' '}
+          {teamName(round.team2)}
         </p>
       </div>
 

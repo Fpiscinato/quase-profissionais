@@ -126,4 +126,30 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     expect(mateus[5].textContent).toBe('3') // Games Lost: 1 (T1) + 2 (T2)
     expect(mateus[6].textContent).toBe('33') // Points Won: 16 (T1) + 17 (T2)
   })
+
+  it('"Duplas" mode ranks by exact pairing instead of by individual player', async () => {
+    await seedTwoTournaments()
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Duplas' }))
+    await screen.findByRole('table')
+
+    // The 4 pairings across T1+T2 never repeat, so each plays exactly once —
+    // ranked by Games Won, tiebroken by Points Won (Section 6's rule, same
+    // one computeStandings uses, just applied per-pairing instead of per-player).
+    const rows = dataRows()
+    const pairOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
+    expect(rows.map(pairOf)).toEqual([
+      'Emerson & Mateus', // team2 of T2: gamesWon 4, pointsWon 17
+      'Jarede & Mateus', // team1 of T1: gamesWon 4, pointsWon 16 (loses the games-won tie on points)
+      'Jarede & Mateus Adv', // team1 of T2: gamesWon 2
+      'Emerson & Mateus Adv', // team2 of T1: gamesWon 1
+    ])
+
+    const top = within(rows[0]).getAllByRole('cell')
+    expect(top[2].textContent).toBe('1') // Matches Played together
+    expect(top[4].textContent).toBe('4') // Games Won
+    expect(top[6].textContent).toBe('17') // Points Won
+  })
 })

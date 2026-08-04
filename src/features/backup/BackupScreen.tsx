@@ -1,12 +1,20 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { exportBackup, isBackupPayload, mergeImport, type MergeResult } from '../../db/backup'
-import { card, primaryButton, secondaryButton } from '../../ui/styles'
+import { fullReset } from '../../db/db'
+import { card, destructiveButton, primaryButton, secondaryButton, textInput } from '../../ui/styles'
+
+const RESET_CONFIRM_WORD = 'RESETAR'
 
 export function BackupScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<MergeResult | null>(null)
+
+  const [resetConfirming, setResetConfirming] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetBusy, setResetBusy] = useState(false)
+  const [resetDone, setResetDone] = useState(false)
 
   const handleExport = async () => {
     setBusy(true)
@@ -29,6 +37,15 @@ export function BackupScreen() {
   }
 
   const handleImportClick = () => fileInputRef.current?.click()
+
+  const handleReset = async () => {
+    setResetBusy(true)
+    await fullReset()
+    setResetBusy(false)
+    setResetConfirming(false)
+    setResetConfirmText('')
+    setResetDone(true)
+  }
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -110,6 +127,60 @@ export function BackupScreen() {
               </li>
             </ul>
           </div>
+        )}
+      </div>
+
+      <div className={`${card} border border-destructive/50`}>
+        <h2 className="mb-2 font-semibold text-destructive">Resetar dados</h2>
+        <p className="mb-3 text-sm text-cream/70">
+          Apaga todos os torneios, partidas e jogadores adicionados. Os 5 jogadores padrão
+          (Jarede, Mateus, Mateus Adv, Emerson, Fernando) são restaurados.
+        </p>
+
+        {resetDone ? (
+          <p className="text-sm text-lime">
+            Dados resetados. Os 5 jogadores padrão foram restaurados.
+          </p>
+        ) : resetConfirming ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-destructive">
+              ⚠ Essa ação não pode ser desfeita. Todo o histórico, ranking e jogadores
+              personalizados serão perdidos. Digite <strong>{RESET_CONFIRM_WORD}</strong> pra
+              confirmar.
+            </p>
+            <input
+              type="text"
+              className={textInput}
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              placeholder={RESET_CONFIRM_WORD}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={secondaryButton}
+                onClick={() => {
+                  setResetConfirming(false)
+                  setResetConfirmText('')
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={`${destructiveButton} flex-1`}
+                disabled={resetConfirmText !== RESET_CONFIRM_WORD || resetBusy}
+                onClick={handleReset}
+              >
+                {resetBusy ? 'Resetando...' : 'Confirmar reset'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className={destructiveButton} onClick={() => setResetConfirming(true)}>
+            Resetar tudo
+          </button>
         )}
       </div>
     </div>

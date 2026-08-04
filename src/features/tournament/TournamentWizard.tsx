@@ -13,7 +13,11 @@ type Step =
   | { name: 'rodadas'; tournamentId: string }
   | { name: 'partida-ao-vivo'; tournamentId: string; matchId: string }
 
-export function TournamentWizard() {
+interface Props {
+  onExit: () => void
+}
+
+export function TournamentWizard({ onExit }: Props) {
   const [step, setStep] = useState<Step>({ name: 'loading' })
 
   useEffect(() => {
@@ -87,6 +91,7 @@ export function TournamentWizard() {
       onOpenMatch={(matchId) =>
         setStep({ name: 'partida-ao-vivo', tournamentId: step.tournamentId, matchId })
       }
+      onExit={onExit}
     />
   )
 }

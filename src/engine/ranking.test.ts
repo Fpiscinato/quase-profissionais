@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeStandings } from './ranking'
+import { computeStandings, computeTeamStandings } from './ranking'
 import type { MatchResult } from './types'
 
 describe('computeStandings', () => {
@@ -94,5 +94,81 @@ describe('computeStandings', () => {
     expect(a.pointsWon).toBe(b.pointsWon)
     expect(a.matchesWon).toBeGreaterThan(b.matchesWon)
     expect(standings.indexOf(a)).toBeLessThan(standings.indexOf(b))
+  })
+})
+
+describe('computeTeamStandings (ranking by exact pairing, "Duplas")', () => {
+  it('combines two matches played by the SAME pair into a single row', () => {
+    const matches: MatchResult[] = [
+      { team1: ['A', 'B'], team2: ['C', 'D'], games1: 4, games2: 2, points1: 20, points2: 15, winnerTeam: 'team1' },
+      { team1: ['A', 'B'], team2: ['E', 'F'], games1: 4, games2: 1, points1: 16, points2: 8, winnerTeam: 'team1' },
+    ]
+    const standings = computeTeamStandings(matches)
+    const ab = standings.find((s) => s.playerIds.includes('A') && s.playerIds.includes('B'))!
+    expect(ab.matchesPlayed).toBe(2)
+    expect(ab.matchesWon).toBe(2)
+    expect(ab.gamesWon).toBe(8)
+    expect(ab.gamesLost).toBe(3)
+    expect(ab.pointsWon).toBe(36)
+    expect(ab.pointsLost).toBe(23)
+    // A&B's two matches collapse into one row; {C,D} and {E,F} are separate rows.
+    expect(standings).toHaveLength(3)
+  })
+
+  it('treats different pairings of the same players as different teams', () => {
+    const matches: MatchResult[] = [
+      // Round 1: A partners B. Round 2: A partners C instead (rotation).
+      { team1: ['A', 'B'], team2: ['C', 'D'], games1: 4, games2: 1, points1: 16, points2: 8, winnerTeam: 'team1' },
+      { team1: ['A', 'C'], team2: ['B', 'D'], games1: 2, games2: 4, points1: 9, points2: 17, winnerTeam: 'team2' },
+    ]
+    const standings = computeTeamStandings(matches)
+    // 4 distinct pairings appear across the two matches: {A,B} {C,D} {A,C} {B,D}.
+    expect(standings).toHaveLength(4)
+    for (const s of standings) expect(s.matchesPlayed).toBe(1)
+
+    const abTeam = standings.find((s) => s.playerIds.join() === ['A', 'B'].sort().join())!
+    expect(abTeam.gamesWon).toBe(4)
+    expect(abTeam.matchesWon).toBe(1)
+
+    const acTeam = standings.find((s) => s.playerIds.join() === ['A', 'C'].sort().join())!
+    expect(acTeam.gamesWon).toBe(2)
+    expect(acTeam.matchesWon).toBe(0)
+  })
+
+  it('is order-independent: [A,B] and [B,A] are the same team', () => {
+    const matches: MatchResult[] = [
+      { team1: ['A', 'B'], team2: ['C', 'D'], games1: 4, games2: 0, points1: 16, points2: 4, winnerTeam: 'team1' },
+      { team1: ['B', 'A'], team2: ['E', 'F'], games1: 4, games2: 0, points1: 16, points2: 4, winnerTeam: 'team1' },
+    ]
+    const standings = computeTeamStandings(matches)
+    const ab = standings.find((s) => s.playerIds.includes('A'))!
+    expect(ab.matchesPlayed).toBe(2)
+    expect(ab.playerIds).toEqual(['A', 'B']) // stored sorted, regardless of input order
+  })
+
+  it('reduces to one row per player for singles (team size 1), same numbers as computeStandings', () => {
+    const matches: MatchResult[] = [
+      { team1: ['A'], team2: ['B'], games1: 4, games2: 1, points1: 16, points2: 8, winnerTeam: 'team1' },
+    ]
+    const teamStandings = computeTeamStandings(matches)
+    const playerStandings = computeStandings(matches)
+    expect(teamStandings).toHaveLength(2)
+    const a = teamStandings.find((s) => s.playerIds[0] === 'A')!
+    const aIndividual = playerStandings.find((s) => s.playerId === 'A')!
+    expect(a.gamesWon).toBe(aIndividual.gamesWon)
+    expect(a.pointsWon).toBe(aIndividual.pointsWon)
+    expect(a.matchesWon).toBe(aIndividual.matchesWon)
+  })
+
+  it('orders by Games Won, then Points Won, then Matches Won — same rule as individual ranking', () => {
+    const matches: MatchResult[] = [
+      { team1: ['A', 'B'], team2: ['C', 'D'], games1: 4, games2: 2, points1: 20, points2: 10, winnerTeam: 'team1' },
+      { team1: ['A', 'B'], team2: ['C', 'D'], games1: 4, games2: 2, points1: 20, points2: 10, winnerTeam: 'team1' },
+      { team1: ['E', 'F'], team2: ['G', 'H'], games1: 4, games2: 3, points1: 18, points2: 17, winnerTeam: 'team1' },
+    ]
+    const standings = computeTeamStandings(matches)
+    // A&B: gamesWon=8 tops the table (only pair with 2 matches played together).
+    expect(standings[0].playerIds).toEqual(['A', 'B'])
+    expect(standings[0].gamesWon).toBe(8)
   })
 })

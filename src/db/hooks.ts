@@ -10,9 +10,13 @@ export function usePlayers(): { players: PlayerRow[]; byId: Map<PlayerId, Player
   return { players, byId }
 }
 
-/** All players, including archived ones (Section 1: add/edit/remove). */
+/** All players, including archived ones (Section 1: add/edit/remove). Always alphabetical by name. */
 export function useAllPlayers(): PlayerRow[] {
-  return useLiveQuery(() => db.players.toArray(), [], [])
+  return useLiveQuery(
+    () => db.players.toArray().then((rows) => rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))),
+    [],
+    [],
+  )
 }
 
 export function useSettings() {

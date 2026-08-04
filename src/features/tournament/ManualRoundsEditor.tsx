@@ -85,7 +85,11 @@ export function ManualRoundsEditor({ availablePlayerIds, byId, onChange }: Props
           <div className="mb-2 flex items-center justify-between">
             <span className="font-semibold">Rodada {round.index + 1}</span>
             <span className="text-xs text-cream/60">
-              Descansa: {round.restingPlayerIds.map(name).join(', ') || '—'}
+              Descansa:{' '}
+              {round.restingPlayerIds
+                .map(name)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+                .join(', ') || '—'}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">

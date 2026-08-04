@@ -52,7 +52,7 @@ function App() {
         </header>
       )}
       {view === 'home' && <HomeScreen onNavigate={setView} />}
-      {view === 'torneio' && <TournamentWizard />}
+      {view === 'torneio' && <TournamentWizard onExit={() => setView('home')} />}
       {view === 'jogadores' && <PlayersScreen />}
       {view === 'ranking' && <RankingScreen />}
       {view === 'historico' && <HistoryScreen />}

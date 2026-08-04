@@ -8,7 +8,7 @@ import { ALERT_LABELS, computeAlerts } from './alerts'
 import { computeServeInfo } from './serveInfo'
 import { pointLabel } from './display'
 import { formatDuration } from '../../lib/format'
-import { bigButton, card, secondaryButton } from '../../ui/styles'
+import { bigButton, bigButtonAlt, card, secondaryButton } from '../../ui/styles'
 
 interface Props {
   matchId: string
@@ -66,12 +66,12 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-center">
-        <div className={card}>
-          <div className="text-xs text-cream/60">Time 1</div>
+        <div className={`${card} border-t-4 border-lime`}>
+          <div className="text-xs font-semibold text-lime">Time 1</div>
           <div className="text-lg font-bold">{teamName(match.team1)}</div>
         </div>
-        <div className={card}>
-          <div className="text-xs text-cream/60">Time 2</div>
+        <div className={`${card} border-t-4 border-cream`}>
+          <div className="text-xs font-semibold text-cream">Time 2</div>
           <div className="text-lg font-bold">{teamName(match.team2)}</div>
         </div>
       </div>
@@ -122,7 +122,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
           <button type="button" className={bigButton} onClick={() => handlePoint('team1')}>
             Ponto — Time 1
           </button>
-          <button type="button" className={bigButton} onClick={() => handlePoint('team2')}>
+          <button type="button" className={bigButtonAlt} onClick={() => handlePoint('team2')}>
             Ponto — Time 2
           </button>
         </div>
