@@ -41,7 +41,7 @@ function App() {
   return (
     <div className="mx-auto min-h-svh max-w-md">
       {view !== 'home' && (
-        <header className="flex items-center gap-3 border-b border-cream/10 p-4">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-cream/10 bg-navy p-4">
           <button
             type="button"
             className="flex items-center gap-2 text-sm font-semibold text-cream/80"
