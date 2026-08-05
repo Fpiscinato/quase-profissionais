@@ -86,11 +86,17 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
 
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className={card}>
-          <div className="text-xs font-semibold uppercase tracking-wide text-cream/50">Time 1</div>
+          <div className="flex items-center justify-center gap-1 text-xs font-semibold uppercase tracking-wide text-lime">
+            <span aria-hidden="true">{match.team1.length === 2 ? '🧑🧑' : '🧑'}</span>
+            Time 1
+          </div>
           <div className="text-lg font-bold">{teamName(match.team1)}</div>
         </div>
         <div className={card}>
-          <div className="text-xs font-semibold uppercase tracking-wide text-cream/50">Time 2</div>
+          <div className="flex items-center justify-center gap-1 text-xs font-semibold uppercase tracking-wide text-cream">
+            <span aria-hidden="true">{match.team2.length === 2 ? '🧑🧑' : '🧑'}</span>
+            Time 2
+          </div>
           <div className="text-lg font-bold">{teamName(match.team2)}</div>
         </div>
       </div>
@@ -142,11 +148,15 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
 
       {serveInfo && (
         <div
+          data-testid="serve-banner"
           className={`rounded-xl border-l-4 border-lime bg-navy-light px-4 py-3 text-center text-xl font-bold text-cream ${
             serverPulse ? 'animate-serve-pulse' : ''
           }`}
         >
-          Saca agora: {name(serveInfo.serverId)} — {serveInfo.side}
+          <span aria-hidden="true">🎾</span> Saca agora: {name(serveInfo.serverId)} —{' '}
+          <span className={serveInfo.side === 'Direita' ? 'text-lime' : 'text-gold'}>
+            {serveInfo.side}
+          </span>
         </div>
       )}
 

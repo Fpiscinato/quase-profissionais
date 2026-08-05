@@ -25,11 +25,24 @@ const desfazer = async () => {
   await Promise.resolve()
 }
 
-async function expectText(text: string) {
+async function expectText(text: string | RegExp) {
   await screen.findByText(text)
 }
-async function expectGone(text: string) {
+async function expectGone(text: string | RegExp) {
   await waitFor(() => expect(screen.queryByText(text)).toBeNull())
+}
+
+// The "Saca agora" banner leads with a 🎾 emoji and wraps the side in its own
+// <span> (for the Direita/Esquerda color), so getByText can't match its full
+// text as one string (testing-library doesn't cross element boundaries) —
+// query the banner by test id and check its combined textContent instead.
+function serveBanner() {
+  return screen.getByTestId('serve-banner')
+}
+async function expectServe(playerName: string, side: 'Direita' | 'Esquerda') {
+  await waitFor(() => {
+    expect(serveBanner().textContent).toContain(`Saca agora: ${playerName} — ${side}`)
+  })
 }
 
 async function seedOneRoundMatch() {
@@ -58,10 +71,14 @@ async function seedOneRoundMatch() {
 async function openLiveMatch() {
   render(<App />)
   await screen.findByText('Rodadas')
-  // First open: "Iniciar partida" (status scheduled). Resuming later in the
-  // same match: "Continuar partida" (status in_progress) — accept either.
-  fireEvent.click(screen.getByRole('button', { name: /Iniciar partida|Continuar partida/ }))
-  await screen.findByText(/Saca agora:/)
+  // The round's matches liveQuery resolves separately from (and slightly
+  // after) the "Rodadas" heading, so the round can still show "Configurar
+  // partida" for a moment even though a match already exists — poll
+  // (findByRole) rather than reading synchronously (getByRole).
+  fireEvent.click(
+    await screen.findByRole('button', { name: /Iniciar partida|Continuar partida/ }),
+  )
+  await screen.findByTestId('serve-banner')
 }
 
 describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
@@ -70,31 +87,31 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     await openLiveMatch()
 
     // Game 1 serves from serveOrder[0] = Jarede (team1), point 1 always Direita.
-    await expectText('Saca agora: Jarede — Direita')
+    await expectServe('Jarede', 'Direita')
     await expectText('0 – 0')
 
     await ponto1()
     await expectText('15 – 0')
-    await expectText('Saca agora: Jarede — Esquerda')
+    await expectServe('Jarede', 'Esquerda')
 
     await ponto1()
     await ponto1()
     await expectText('40 – 0')
     // 3 points completed (odd) -> Esquerda.
-    await expectText('Saca agora: Jarede — Esquerda')
+    await expectServe('Jarede', 'Esquerda')
 
     await ponto1() // closes game 1, 4-0
     await expectText('Game!')
     await expectText('Troquem de lado') // 1 total game = odd
     await expectText('Games: 1 – 0')
     // Next server is serveOrder[1] = Mateus Adv (team2), fresh game -> Direita.
-    await expectText('Saca agora: Mateus Adv — Direita')
+    await expectServe('Mateus Adv', 'Direita')
 
     // Undo the game-winning point: back to 40-0, game 1 still open, server back to Jarede/Esquerda.
     await desfazer()
     await expectText('40 – 0')
     await expectText('Games: 0 – 0')
-    await expectText('Saca agora: Jarede — Esquerda')
+    await expectServe('Jarede', 'Esquerda')
     await expectGone('Game!')
 
     await ponto1() // re-close game 1 (4-0)
@@ -111,7 +128,7 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     // Persisted correctly: reload mid-match resumes straight into the live screen, not the rounds list.
     cleanup()
     render(<App />)
-    await screen.findByText(/Saca agora:/)
+    await screen.findByTestId('serve-banner')
     expect(screen.queryByText('Quem joga hoje?')).toBeNull()
     expect(screen.queryByText('Rodadas')).toBeNull()
     await expectText('Games: 1 – 0')
@@ -126,7 +143,7 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     // previous test. It's still in_progress, so a fresh mount resumes
     // straight into the live screen — there's no rounds list to click through.
     render(<App />)
-    await screen.findByText(/Saca agora:/)
+    await screen.findByTestId('serve-banner')
     await expectText('Games: 1 – 0')
 
     const winGame = async (side: 'team1' | 'team2') => {
@@ -201,28 +218,28 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     await openLiveMatch()
 
     // Fresh match, first server ever shown — nothing to compare against, no pulse.
-    await expectText('Saca agora: Jarede — Direita')
-    expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse')
+    await expectServe('Jarede', 'Direita')
+    expect(serveBanner()).not.toHaveClass('animate-serve-pulse')
 
     // Same server (Jarede) serves the whole game 1 — no pulse on these points.
     await ponto1()
-    await expectText('Saca agora: Jarede — Esquerda')
-    expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse')
+    await expectServe('Jarede', 'Esquerda')
+    expect(serveBanner()).not.toHaveClass('animate-serve-pulse')
     await ponto1()
     await expectText('30 – 0')
-    expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse')
+    expect(serveBanner()).not.toHaveClass('animate-serve-pulse')
 
     await ponto1()
     await ponto1() // closes game 1 (4-0) -> server changes to Mateus Adv
-    await expectText('Saca agora: Mateus Adv — Direita')
+    await expectServe('Mateus Adv', 'Direita')
 
-    const banner = screen.getByText(/Saca agora:/)
+    const banner = serveBanner()
     expect(banner).toHaveClass('animate-serve-pulse')
     expect(banner.textContent).toContain('Mateus Adv')
 
     // Self-clears shortly after.
     await waitFor(
-      () => expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse'),
+      () => expect(serveBanner()).not.toHaveClass('animate-serve-pulse'),
       { timeout: 2000 },
     )
 
