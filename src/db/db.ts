@@ -117,6 +117,8 @@ export interface CreateTournamentInput {
   format: TournamentFormat
   teamFormationMode: TeamFormationMode
   rounds: Array<{ team1: Team; team2: Team; restingPlayerIds: PlayerId[] }>
+  /** Defaults to DEFAULT_MATCH_CONFIG (4 games) when not given. */
+  options?: MatchConfig
 }
 
 export async function createTournament(input: CreateTournamentInput): Promise<TournamentRow> {
@@ -126,7 +128,7 @@ export async function createTournament(input: CreateTournamentInput): Promise<To
     availablePlayerIds: input.availablePlayerIds,
     format: input.format,
     teamFormationMode: input.teamFormationMode,
-    options: DEFAULT_MATCH_CONFIG,
+    options: input.options ?? DEFAULT_MATCH_CONFIG,
     rounds: input.rounds.map((r, index) => ({ ...r, index })),
     status: 'in_progress',
     createdAt: Date.now(),

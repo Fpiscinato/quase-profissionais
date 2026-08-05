@@ -3,7 +3,7 @@ import { generateDoublesRotation } from '../../engine/schedule'
 import type { PlayerId, ScheduledMatch } from '../../engine/types'
 import type { PlayerRow } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
-import { card } from '../../ui/styles'
+import { card, toggleButton } from '../../ui/styles'
 
 interface Props {
   availablePlayerIds: PlayerId[]
@@ -100,9 +100,7 @@ export function ManualRoundsEditor({ availablePlayerIds, byId, onChange }: Props
                   key={playerId}
                   type="button"
                   onClick={() => togglePlayer(round.index, playerId)}
-                  className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${
-                    onTeam1 ? 'bg-lime text-navy' : 'bg-navy border border-cream/30 text-cream'
-                  }`}
+                  className={toggleButton(onTeam1, false)}
                 >
                   {name(playerId)} {onTeam1 ? '· Time 1' : ''}
                 </button>

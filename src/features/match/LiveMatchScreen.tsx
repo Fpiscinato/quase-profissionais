@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, recordPoint, saveMatch, startMatch, undoLastPoint } from '../../db/db'
 import { usePlayers, useTournament } from '../../db/hooks'
@@ -7,6 +7,7 @@ import type { PlayerId, TeamSide } from '../../engine/types'
 import { ALERT_LABELS, computeAlerts } from './alerts'
 import { computeServeInfo } from './serveInfo'
 import { pointLabel } from './display'
+import { ChangeEndsCourt } from './ChangeEndsCourt'
 import { formatDuration } from '../../lib/format'
 import { bigButton, bigButtonAlt, card, secondaryButton } from '../../ui/styles'
 
@@ -31,14 +32,32 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
     return () => clearInterval(interval)
   }, [])
 
-  if (!match || !tournament) {
+  // Derived values are computed defensively (before the loading guard below)
+  // so every hook in this component stays unconditional, per rules of hooks.
+  const config = tournament?.options
+  const state = match && config ? computeMatchState(match.pointLog, config) : undefined
+  const alerts = state && config ? computeAlerts(state, config.deuceMode) : []
+  const serveInfo = state && match ? computeServeInfo(state, match.serveOrder) : null
+
+  // Brief pulse on the "Saca agora" banner whenever the server actually
+  // changes, so a new server isn't just a silent text swap.
+  const [serverPulse, setServerPulse] = useState(false)
+  const prevServerId = useRef<PlayerId | undefined>(undefined)
+  useEffect(() => {
+    const current = serveInfo?.serverId
+    if (current && prevServerId.current && prevServerId.current !== current) {
+      setServerPulse(true)
+      const t = setTimeout(() => setServerPulse(false), 700)
+      prevServerId.current = current
+      return () => clearTimeout(t)
+    }
+    prevServerId.current = current
+  }, [serveInfo?.serverId])
+
+  if (!match || !tournament || !state || !config) {
     return <div className="p-4 text-cream/70">Carregando partida...</div>
   }
 
-  const config = tournament.options
-  const state = computeMatchState(match.pointLog, config)
-  const alerts = computeAlerts(state, config.deuceMode)
-  const serveInfo = computeServeInfo(state, match.serveOrder)
   const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
@@ -66,26 +85,36 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-center">
-        <div className={`${card} border-t-4 border-lime`}>
-          <div className="text-xs font-semibold text-lime">Time 1</div>
+        <div className={card}>
+          <div className="text-xs font-semibold uppercase tracking-wide text-cream/50">Time 1</div>
           <div className="text-lg font-bold">{teamName(match.team1)}</div>
         </div>
-        <div className={`${card} border-t-4 border-cream`}>
-          <div className="text-xs font-semibold text-cream">Time 2</div>
+        <div className={card}>
+          <div className="text-xs font-semibold uppercase tracking-wide text-cream/50">Time 2</div>
           <div className="text-lg font-bold">{teamName(match.team2)}</div>
         </div>
       </div>
 
       {alerts.length > 0 && (
         <div className="flex flex-col gap-1">
-          {alerts.map((alert) => (
-            <div
-              key={alert}
-              className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
-            >
-              {ALERT_LABELS[alert]}
-            </div>
-          ))}
+          {alerts.map((alert) =>
+            alert === 'change-ends' ? (
+              <div
+                key={alert}
+                className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
+              >
+                {ALERT_LABELS[alert]}
+                <ChangeEndsCourt />
+              </div>
+            ) : (
+              <div
+                key={alert}
+                className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
+              >
+                {ALERT_LABELS[alert]}
+              </div>
+            ),
+          )}
         </div>
       )}
 
@@ -112,7 +141,11 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
       </div>
 
       {serveInfo && (
-        <div className="rounded-xl bg-lime px-4 py-3 text-center text-xl font-bold text-navy">
+        <div
+          className={`rounded-xl border-l-4 border-lime bg-navy-light px-4 py-3 text-center text-xl font-bold text-cream ${
+            serverPulse ? 'animate-serve-pulse' : ''
+          }`}
+        >
           Saca agora: {name(serveInfo.serverId)} — {serveInfo.side}
         </div>
       )}

@@ -4,7 +4,7 @@ import type { PlayerId, Team } from '../../engine/types'
 import type { PlayerRow, RoundRecord } from '../../db/db'
 import { createMatchForRound } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
-import { card, primaryButton, secondaryButton } from '../../ui/styles'
+import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
 
 interface Props {
@@ -87,9 +87,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
           <button
             type="button"
             onClick={() => setMode('random')}
-            className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
-              mode === 'random' ? 'bg-lime text-navy' : 'border border-cream/30'
-            }`}
+            className={toggleButton(mode === 'random')}
           >
             Sortear
           </button>
@@ -99,9 +97,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
               setMode('manual')
               setManualOrder([])
             }}
-            className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
-              mode === 'manual' ? 'bg-lime text-navy' : 'border border-cream/30'
-            }`}
+            className={toggleButton(mode === 'manual')}
           >
             Escolher
           </button>

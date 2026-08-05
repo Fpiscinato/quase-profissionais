@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import { generateDoublesRotation, generateSinglesRotation } from '../../engine/schedule'
+import { DEFAULT_MATCH_CONFIG } from '../../engine/types'
 import type { PlayerId, ScheduledMatch } from '../../engine/types'
 import { usePlayers } from '../../db/hooks'
 import { createTournament, type TeamFormationMode, type TournamentFormat } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
 import { ManualRoundsEditor } from './ManualRoundsEditor'
-import { card, primaryButton, secondaryButton } from '../../ui/styles'
+import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
+
+const GAMES_TO_WIN_OPTIONS = [2, 3, 4, 5, 6] as const
 
 interface Props {
   availablePlayerIds: PlayerId[]
@@ -19,6 +22,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   const canDoDoubles = availablePlayerIds.length >= 4
   const [format, setFormat] = useState<TournamentFormat>(canDoDoubles ? 'duplas' : 'individual')
   const [mode, setMode] = useState<TeamFormationMode>('balanced')
+  const [gamesToWinSet, setGamesToWinSet] = useState(DEFAULT_MATCH_CONFIG.gamesToWinSet)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [manualRounds, setManualRounds] = useState<ScheduledMatch[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -49,6 +53,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         team2: r.team2,
         restingPlayerIds: r.restingPlayerIds,
       })),
+      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet },
     })
     onCreated(tournament.id)
   }
@@ -74,9 +79,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
               setMode('balanced')
               setManualRounds(null)
             }}
-            className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold disabled:opacity-30 ${
-              format === 'duplas' ? 'bg-lime text-navy' : 'border border-cream/30'
-            }`}
+            className={`${toggleButton(format === 'duplas')} disabled:opacity-30`}
           >
             Duplas (Americano)
           </button>
@@ -87,9 +90,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
               setMode('balanced')
               setManualRounds(null)
             }}
-            className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
-              format === 'individual' ? 'bg-lime text-navy' : 'border border-cream/30'
-            }`}
+            className={toggleButton(format === 'individual')}
           >
             Individual
           </button>
@@ -109,24 +110,39 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             <button
               type="button"
               onClick={() => setMode('balanced')}
-              className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
-                mode === 'balanced' ? 'bg-lime text-navy' : 'border border-cream/30'
-              }`}
+              className={toggleButton(mode === 'balanced')}
             >
               Balanceado (recomendado)
             </button>
             <button
               type="button"
               onClick={() => setMode('manual')}
-              className={`min-h-11 flex-1 rounded-lg px-3 py-2 font-semibold ${
-                mode === 'manual' ? 'bg-lime text-navy' : 'border border-cream/30'
-              }`}
+              className={toggleButton(mode === 'manual')}
             >
               Manual
             </button>
           </div>
         </div>
       )}
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          Games para vencer o set
+          <HelpHint text="Quantos games o time precisa fazer (com 2 de vantagem) pra vencer o set. Padrão: 4. Se empatar nesse número, vai pro tiebreak." />
+        </span>
+        <div className="flex gap-2">
+          {GAMES_TO_WIN_OPTIONS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setGamesToWinSet(n)}
+              className={toggleButton(gamesToWinSet === n)}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {format === 'individual' && (
         <p className="text-sm text-cream/70">

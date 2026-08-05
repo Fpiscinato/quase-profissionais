@@ -33,8 +33,8 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
     fireEvent.click(screen.getByRole('button', { name: /Continuar \(5 jogadores\)/ }))
 
     await screen.findByText('Formato e rotação')
-    expect(screen.getByRole('button', { name: 'Duplas (Americano)' })).toHaveClass('bg-lime')
-    expect(screen.getByRole('button', { name: 'Balanceado (recomendado)' })).toHaveClass('bg-lime')
+    expect(screen.getByRole('button', { name: 'Duplas (Americano)' })).toHaveClass('border-lime')
+    expect(screen.getByRole('button', { name: 'Balanceado (recomendado)' })).toHaveClass('border-lime')
     // Canonical 5-player schedule (Section 2) has exactly 5 rounds.
     expect(screen.getAllByText(/^Rodada \d$/)).toHaveLength(5)
 

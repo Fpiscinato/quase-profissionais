@@ -5,6 +5,7 @@ import type { MatchRow } from '../../db/db'
 import { usePlayers } from '../../db/hooks'
 import { computeStandings, computeTeamStandings } from '../../engine/ranking'
 import type { MatchResult, PlayerId } from '../../engine/types'
+import { toggleButton } from '../../ui/styles'
 
 function toMatchResult(m: MatchRow): MatchResult {
   return {
@@ -16,12 +17,6 @@ function toMatchResult(m: MatchRow): MatchResult {
     points2: m.points2,
     winnerTeam: m.winnerTeam!,
   }
-}
-
-function tabClass(active: boolean) {
-  return `min-h-11 flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${
-    active ? 'bg-lime text-navy' : 'border border-cream/30'
-  }`
 }
 
 type Tab = 'dia' | 'geral'
@@ -67,10 +62,10 @@ export function RankingScreen() {
       <h1 className="text-xl font-bold">Ranking</h1>
 
       <div className="flex gap-2">
-        <button type="button" onClick={() => setTab('dia')} className={tabClass(tab === 'dia')}>
+        <button type="button" onClick={() => setTab('dia')} className={toggleButton(tab === 'dia')}>
           Ranking do dia
         </button>
-        <button type="button" onClick={() => setTab('geral')} className={tabClass(tab === 'geral')}>
+        <button type="button" onClick={() => setTab('geral')} className={toggleButton(tab === 'geral')}>
           Ranking geral
         </button>
       </div>
@@ -79,14 +74,14 @@ export function RankingScreen() {
         <button
           type="button"
           onClick={() => setMode('individual')}
-          className={tabClass(mode === 'individual')}
+          className={toggleButton(mode === 'individual')}
         >
           Individual
         </button>
         <button
           type="button"
           onClick={() => setMode('duplas')}
-          className={tabClass(mode === 'duplas')}
+          className={toggleButton(mode === 'duplas')}
         >
           Duplas
         </button>

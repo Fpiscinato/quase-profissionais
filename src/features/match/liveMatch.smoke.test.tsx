@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react'
 import App from '../../App'
 import { createMatchForRound, createTournament, db, ensurePlayersSeeded } from '../../db/db'
 import { buildServeOrder } from '../../engine/serve'
@@ -194,5 +194,43 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     render(<App />)
     await screen.findByText('Rodadas')
     await expectText('Concluída ✓')
+  })
+
+  it('pulses "Saca agora" only when the server actually changes, and flips a mini-court for "Troquem de lado"', async () => {
+    await seedOneRoundMatch()
+    await openLiveMatch()
+
+    // Fresh match, first server ever shown — nothing to compare against, no pulse.
+    await expectText('Saca agora: Jarede — Direita')
+    expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse')
+
+    // Same server (Jarede) serves the whole game 1 — no pulse on these points.
+    await ponto1()
+    await expectText('Saca agora: Jarede — Esquerda')
+    expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse')
+    await ponto1()
+    await expectText('30 – 0')
+    expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse')
+
+    await ponto1()
+    await ponto1() // closes game 1 (4-0) -> server changes to Mateus Adv
+    await expectText('Saca agora: Mateus Adv — Direita')
+
+    const banner = screen.getByText(/Saca agora:/)
+    expect(banner).toHaveClass('animate-serve-pulse')
+    expect(banner.textContent).toContain('Mateus Adv')
+
+    // Self-clears shortly after.
+    await waitFor(
+      () => expect(screen.getByText(/Saca agora:/)).not.toHaveClass('animate-serve-pulse'),
+      { timeout: 2000 },
+    )
+
+    // "Troquem de lado" (1 total game = odd) shows the flipping mini-court alongside the label.
+    await expectText('Troquem de lado')
+    const changeEndsBanner = screen.getByText('Troquem de lado').closest('div')!
+    expect(within(changeEndsBanner).getByText('T1')).toBeInTheDocument()
+    expect(within(changeEndsBanner).getByText('T2')).toBeInTheDocument()
+    expect(changeEndsBanner.querySelector('.animate-court-flip')).toBeTruthy()
   })
 })
