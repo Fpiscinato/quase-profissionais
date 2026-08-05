@@ -5,6 +5,7 @@ import { PlayersScreen } from './features/players/PlayersScreen'
 import { RankingScreen } from './features/ranking/RankingScreen'
 import { HistoryScreen } from './features/history/HistoryScreen'
 import { GuideScreen } from './features/guide/GuideScreen'
+import { ManualScreen } from './features/guide/ManualScreen'
 import { BackupScreen } from './features/backup/BackupScreen'
 import { HomeScreen, type View } from './features/home/HomeScreen'
 
@@ -57,6 +58,7 @@ function App() {
       {view === 'ranking' && <RankingScreen />}
       {view === 'historico' && <HistoryScreen />}
       {view === 'guia' && <GuideScreen />}
+      {view === 'manual' && <ManualScreen />}
       {view === 'backup' && <BackupScreen />}
     </div>
   )

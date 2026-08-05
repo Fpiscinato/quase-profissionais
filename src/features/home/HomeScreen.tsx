@@ -1,4 +1,12 @@
-export type View = 'home' | 'torneio' | 'jogadores' | 'ranking' | 'historico' | 'guia' | 'backup'
+export type View =
+  | 'home'
+  | 'torneio'
+  | 'jogadores'
+  | 'ranking'
+  | 'historico'
+  | 'guia'
+  | 'manual'
+  | 'backup'
 
 interface NavItem {
   view: View
@@ -11,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { view: 'ranking', label: 'Ranking', hint: 'Do dia e geral' },
   { view: 'historico', label: 'Histórico', hint: 'Torneios e partidas anteriores' },
   { view: 'guia', label: 'Como jogar', hint: 'Regras básicas em 6 cards' },
+  { view: 'manual', label: 'Como usar', hint: 'Passo a passo do app' },
   { view: 'backup', label: 'Backup', hint: 'Exportar / importar dados' },
 ]
 
