@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { applyPoint, computeMatchState } from '../engine/score'
+import type { CourtSide } from '../engine/serve'
 import { DEFAULT_MATCH_CONFIG } from '../engine/types'
 import type { MatchConfig, PlayerId, PointLog, Team, TeamSide } from '../engine/types'
 
@@ -46,6 +47,8 @@ export interface MatchRow {
   team1: Team
   team2: Team
   serveOrder: PlayerId[]
+  /** Physical side of the court Team 1 starts the set on; Team 2 starts on the opposite side. Absent on matches created before this feature — treat as 'Direita'. */
+  team1InitialSide?: CourtSide
   pointLog: PointLog
   games1: number
   games2: number
@@ -63,6 +66,8 @@ export interface AppSettingsRow {
   schemaVersion: number
   currentTournamentId?: string
   currentMatchId?: string
+  /** UI language, device-local. Defaults to 'pt' when absent. */
+  lang?: 'pt' | 'en'
 }
 
 const db = new Dexie('quase-profissionais') as Dexie & {
@@ -93,10 +98,19 @@ export async function seedDefaultPlayers(): Promise<void> {
   )
 }
 
-/** Seeds the 5 default players only if the table is empty (first run). */
+/**
+ * Seeds the 5 default players only if the table is empty (first run).
+ * Wrapped in a transaction so the check-then-seed isn't racy: React
+ * StrictMode double-invokes mount effects in dev (and two tabs opened at
+ * once could do the same in prod), so two concurrent callers both seeing an
+ * empty table must not both seed — the transaction serializes them, and the
+ * second sees the first's rows and no-ops.
+ */
 export async function ensurePlayersSeeded(): Promise<void> {
-  const count = await db.players.count()
-  if (count === 0) await seedDefaultPlayers()
+  await db.transaction('rw', db.players, async () => {
+    const count = await db.players.count()
+    if (count === 0) await seedDefaultPlayers()
+  })
 }
 
 export async function getSettings(): Promise<AppSettingsRow> {
@@ -144,6 +158,8 @@ export interface CreateMatchInput {
   team1: Team
   team2: Team
   serveOrder: PlayerId[]
+  /** Physical side of the court Team 1 starts on. Defaults to 'Direita'. */
+  team1InitialSide?: CourtSide
 }
 
 /** Creates the Match row for a round's "Configurar partida" step and links it back to the round. */
@@ -155,6 +171,7 @@ export async function createMatchForRound(input: CreateMatchInput): Promise<Matc
     team1: input.team1,
     team2: input.team2,
     serveOrder: input.serveOrder,
+    team1InitialSide: input.team1InitialSide ?? 'Direita',
     pointLog: [],
     games1: 0,
     games2: 0,
@@ -176,13 +193,16 @@ export async function createMatchForRound(input: CreateMatchInput): Promise<Matc
 }
 
 export class DuplicatePlayerNameError extends Error {
+  /** Raw player name, so callers can rebuild a translated message from the "{name}" template. */
+  playerName: string
   constructor(name: string) {
     super(`Já existe um jogador chamado "${name}".`)
     this.name = 'DuplicatePlayerNameError'
+    this.playerName = name
   }
 }
 
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name.trim().toLowerCase()
 }
 

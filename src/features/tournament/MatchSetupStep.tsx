@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { buildServeOrder } from '../../engine/serve'
+import { buildServeOrder, type CourtSide } from '../../engine/serve'
 import type { PlayerId, Team } from '../../engine/types'
 import type { PlayerRow, RoundRecord } from '../../db/db'
 import { createMatchForRound } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
 import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
+import { useT } from '../../i18n/useT'
 
 interface Props {
   tournamentId: string
@@ -25,11 +26,13 @@ function randomServeOrder(team1: Team, team2: Team): PlayerId[] {
 }
 
 export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Props) {
+  const { t } = useT()
   const [mode, setMode] = useState<OrderMode>('random')
   const [randomOrder, setRandomOrder] = useState<PlayerId[]>(() =>
     randomServeOrder(round.team1, round.team2),
   )
   const [manualOrder, setManualOrder] = useState<PlayerId[]>([])
+  const [team1InitialSide, setTeam1InitialSide] = useState<CourtSide>('Direita')
   const [saving, setSaving] = useState(false)
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
@@ -64,6 +67,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
       team1: round.team1,
       team2: round.team2,
       serveOrder,
+      team1InitialSide,
     })
     onDone()
   }
@@ -71,7 +75,9 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
-        <h1 className="text-xl font-bold">Configurar partida — Rodada {round.index + 1}</h1>
+        <h1 className="text-xl font-bold">
+          {t('Configurar partida')} — {t('Rodada')} {round.index + 1}
+        </h1>
         <p className="text-sm text-cream/70">
           {teamName(round.team1)} <span className="text-cream/50">vs</span>{' '}
           {teamName(round.team2)}
@@ -80,8 +86,12 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-cream/80">
-          Ordem de saque
-          <HelpHint text="Cada jogador saca um game inteiro; a ordem roda entre os dois times, então quem saca em seguida é sempre do time adversário." />
+          {t('Ordem de saque')}
+          <HelpHint
+            text={t(
+              'Cada jogador saca um game inteiro; a ordem roda entre os dois times, então quem saca em seguida é sempre do time adversário.',
+            )}
+          />
         </span>
         <div className="flex gap-2">
           <button
@@ -89,7 +99,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
             onClick={() => setMode('random')}
             className={toggleButton(mode === 'random')}
           >
-            Sortear
+            {t('Sortear')}
           </button>
           <button
             type="button"
@@ -99,7 +109,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
             }}
             className={toggleButton(mode === 'manual')}
           >
-            Escolher
+            {t('Escolher')}
           </button>
         </div>
       </div>
@@ -118,7 +128,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
             className={`${secondaryButton} mt-3`}
             onClick={() => setRandomOrder(randomServeOrder(round.team1, round.team2))}
           >
-            Sortear novamente
+            {t('Sortear novamente')}
           </button>
         </div>
       )}
@@ -126,8 +136,9 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
       {mode === 'manual' && (
         <div className={card}>
           <p className="mb-2 text-xs text-cream/60">
-            Toque na ordem em que cada jogador vai sacar (jogadores consecutivos são sempre de
-            times opostos).
+            {t(
+              'Toque na ordem em que cada jogador vai sacar (jogadores consecutivos são sempre de times opostos).',
+            )}
           </p>
           <ol className="mb-3 flex flex-col gap-1">
             {manualOrder.map((id, i) => (
@@ -160,15 +171,42 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
               className={`${secondaryButton} mt-3`}
               onClick={() => setManualOrder([])}
             >
-              Reiniciar
+              {t('Reiniciar')}
             </button>
           )}
         </div>
       )}
 
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          {t('Lado inicial da quadra')}
+          <HelpHint
+            text={t(
+              'De que lado da quadra o Time 1 começa (visto de quem está assistindo). O Time 2 começa do lado oposto. Isso muda a cada troca de lado durante a partida.',
+            )}
+          />
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setTeam1InitialSide('Esquerda')}
+            className={toggleButton(team1InitialSide === 'Esquerda')}
+          >
+            {t('Time 1 na esquerda')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTeam1InitialSide('Direita')}
+            className={toggleButton(team1InitialSide === 'Direita')}
+          >
+            {t('Time 1 na direita')}
+          </button>
+        </div>
+      </div>
+
       <div className="mt-2 flex gap-2">
         <button type="button" className={secondaryButton} onClick={onBack}>
-          Voltar
+          {t('Voltar')}
         </button>
         <button
           type="button"
@@ -176,7 +214,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
           disabled={!canConfirm}
           onClick={handleConfirm}
         >
-          {saving ? 'Salvando...' : 'Confirmar partida'}
+          {saving ? t('Salvando...') : t('Confirmar partida')}
         </button>
       </div>
     </div>

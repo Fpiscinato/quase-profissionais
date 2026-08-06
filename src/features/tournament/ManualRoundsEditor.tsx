@@ -4,6 +4,7 @@ import type { PlayerId, ScheduledMatch } from '../../engine/types'
 import type { PlayerRow } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
 import { card, toggleButton } from '../../ui/styles'
+import { useT } from '../../i18n/useT'
 
 interface Props {
   availablePlayerIds: PlayerId[]
@@ -25,6 +26,7 @@ interface RoundDraft {
  * players instead of the algorithm.
  */
 export function ManualRoundsEditor({ availablePlayerIds, byId, onChange }: Props) {
+  const { t } = useT()
   const base = useMemo(
     () => generateDoublesRotation(shuffle(availablePlayerIds)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,15 +79,18 @@ export function ManualRoundsEditor({ availablePlayerIds, byId, onChange }: Props
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-cream/70">
-        Toque em 2 jogadores de cada rodada para formar o Time 1 — os outros 2 formam o Time 2.
-        Quem descansa já está balanceado.
+        {t(
+          'Toque em 2 jogadores de cada rodada para formar o Time 1 — os outros 2 formam o Time 2. Quem descansa já está balanceado.',
+        )}
       </p>
       {rounds.map((round) => (
         <div key={round.index} className={card}>
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-semibold">Rodada {round.index + 1}</span>
+            <span className="font-semibold">
+              {t('Rodada')} {round.index + 1}
+            </span>
             <span className="text-xs text-cream/60">
-              Descansa:{' '}
+              {t('Descansa:')}{' '}
               {round.restingPlayerIds
                 .map(name)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -102,13 +107,15 @@ export function ManualRoundsEditor({ availablePlayerIds, byId, onChange }: Props
                   onClick={() => togglePlayer(round.index, playerId)}
                   className={toggleButton(onTeam1, false)}
                 >
-                  {name(playerId)} {onTeam1 ? '· Time 1' : ''}
+                  {name(playerId)} {onTeam1 ? `· ${t('Time 1')}` : ''}
                 </button>
               )
             })}
           </div>
           {round.team1.size !== 2 && (
-            <p className="mt-2 text-xs text-destructive">Escolha exatamente 2 para o Time 1.</p>
+            <p className="mt-2 text-xs text-destructive">
+              {t('Escolha exatamente 2 para o Time 1.')}
+            </p>
           )}
         </div>
       ))}

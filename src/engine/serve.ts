@@ -77,3 +77,49 @@ export function shouldChangeEnds(state: ChangeEndsState): boolean {
   }
   return state.totalGamesCompleted % 2 === 1
 }
+
+/**
+ * The physical side of the court a team occupies — distinct from
+ * ServeSide/serveSide above, which is the service box (Direita/Esquerda)
+ * used *within* a game. CourtSide is which end of the court (as seen by a
+ * spectator) a team stands on, chosen once at match setup and then flipped
+ * by every change of ends.
+ */
+export type CourtSide = 'Esquerda' | 'Direita'
+
+function flipCourtSide(side: CourtSide): CourtSide {
+  return side === 'Direita' ? 'Esquerda' : 'Direita'
+}
+
+/**
+ * How many change-of-ends events have happened so far in the set: one after
+ * every odd total-games-completed boundary (1, 3, 5, ...), plus one every 6
+ * points once a tiebreak is underway. totalGamesCompleted stays constant for
+ * the whole tiebreak (games1/games2 don't change until it's decided), so the
+ * two counts are simply additive.
+ */
+export function changeEndsCount(state: ChangeEndsState): number {
+  const gameSwaps = Math.ceil(state.totalGamesCompleted / 2)
+  const tiebreakSwaps = state.isTiebreak ? Math.floor(state.tiebreakPointsCompleted / 6) : 0
+  return gameSwaps + tiebreakSwaps
+}
+
+/** Team 1's current physical side, given the side it started the set on. */
+export function currentCourtSide(team1InitialSide: CourtSide, swaps: number): CourtSide {
+  return swaps % 2 === 0 ? team1InitialSide : flipCourtSide(team1InitialSide)
+}
+
+/**
+ * Team 1's full side history, one entry per segment played so far (the
+ * current segment is last) — e.g. ['Direita', 'Esquerda', 'Direita'] after 2
+ * changes of ends. Team 2's side at any index is always the opposite.
+ */
+export function courtSideHistory(team1InitialSide: CourtSide, swaps: number): CourtSide[] {
+  const history: CourtSide[] = []
+  let side = team1InitialSide
+  for (let i = 0; i <= swaps; i++) {
+    history.push(side)
+    side = flipCourtSide(side)
+  }
+  return history
+}

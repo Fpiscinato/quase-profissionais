@@ -41,10 +41,8 @@ describe('Live match screen — Individual (singles) gets the same visual treatm
     expect(banner.textContent).toContain('🎾')
     expect(banner.textContent).toContain('Saca agora: Jarede — Direita')
 
-    // Team cards: single-player icon (🧑), not the doubled duo icon (🧑🧑) — team size is 1.
+    // Team cards: same colored-card treatment for singles as for doubles.
     const team1Card = screen.getByText('Time 1').closest('div')!
-    expect(team1Card.textContent).toContain('🧑')
-    expect(team1Card.textContent).not.toContain('🧑🧑')
     expect(team1Card).toHaveClass('text-lime')
 
     const team2Card = screen.getByText('Time 2').closest('div')!

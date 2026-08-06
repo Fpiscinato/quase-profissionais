@@ -6,8 +6,10 @@ import { computePlayerPlayTime, computeTeamPlayTime, totalPlaySeconds } from '..
 import type { PlayerId } from '../../engine/types'
 import { formatDate, formatDuration, formatHoursMinutes } from '../../lib/format'
 import { card, destructiveButton, secondaryButton } from '../../ui/styles'
+import { useT } from '../../i18n/useT'
 
 export function HistoryScreen() {
+  const { t } = useT()
   const tournaments = useLiveQuery(
     () => db.tournaments.orderBy('createdAt').reverse().toArray(),
     [],
@@ -38,8 +40,8 @@ export function HistoryScreen() {
   if (tournaments.length === 0) {
     return (
       <div className="p-4">
-        <h1 className="text-xl font-bold">Histórico</h1>
-        <p className="mt-2 text-sm text-cream/70">Nenhum torneio registrado ainda.</p>
+        <h1 className="text-xl font-bold">{t('Histórico')}</h1>
+        <p className="mt-2 text-sm text-cream/70">{t('Nenhum torneio registrado ainda.')}</p>
       </div>
     )
   }
@@ -52,24 +54,24 @@ export function HistoryScreen() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-bold">Histórico</h1>
+      <h1 className="text-xl font-bold">{t('Histórico')}</h1>
 
       <div className={card}>
-        <h2 className="mb-2 font-semibold">Tempo jogado (todos os torneios)</h2>
+        <h2 className="mb-2 font-semibold">{t('Tempo jogado (todos os torneios)')}</h2>
         <p className="mb-3 text-lg font-bold text-lime">
           {formatHoursMinutes(totalPlaySeconds(completedMatches))}
         </p>
 
         {playerTimes.length > 0 && (
           <>
-            <div className="mb-1 text-xs font-semibold text-cream/60">Por jogador</div>
+            <div className="mb-1 text-xs font-semibold text-cream/60">{t('Por jogador')}</div>
             <ul className="mb-3 flex flex-col gap-1 text-sm">
-              {playerTimes.map((t) => (
-                <li key={t.playerId} className="flex justify-between">
-                  <span>{name(t.playerId)}</span>
+              {playerTimes.map((pt) => (
+                <li key={pt.playerId} className="flex justify-between">
+                  <span>{name(pt.playerId)}</span>
                   <span className="text-cream/70">
-                    {formatHoursMinutes(t.totalSeconds)} · {t.matchesPlayed} partida
-                    {t.matchesPlayed > 1 ? 's' : ''}
+                    {formatHoursMinutes(pt.totalSeconds)} · {pt.matchesPlayed}{' '}
+                    {t(pt.matchesPlayed > 1 ? 'partidas' : 'partida')}
                   </span>
                 </li>
               ))}
@@ -79,14 +81,14 @@ export function HistoryScreen() {
 
         {teamTimes.length > 0 && (
           <>
-            <div className="mb-1 text-xs font-semibold text-cream/60">Por dupla</div>
+            <div className="mb-1 text-xs font-semibold text-cream/60">{t('Por dupla')}</div>
             <ul className="flex flex-col gap-1 text-sm">
-              {teamTimes.map((t) => (
-                <li key={t.playerIds.join('|')} className="flex justify-between">
-                  <span>{teamName(t.playerIds)}</span>
+              {teamTimes.map((tt) => (
+                <li key={tt.playerIds.join('|')} className="flex justify-between">
+                  <span>{teamName(tt.playerIds)}</span>
                   <span className="text-cream/70">
-                    {formatHoursMinutes(t.totalSeconds)} · {t.matchesPlayed} partida
-                    {t.matchesPlayed > 1 ? 's' : ''}
+                    {formatHoursMinutes(tt.totalSeconds)} · {tt.matchesPlayed}{' '}
+                    {t(tt.matchesPlayed > 1 ? 'partidas' : 'partida')}
                   </span>
                 </li>
               ))}
@@ -112,10 +114,10 @@ export function HistoryScreen() {
                 <div>
                   <div className="font-semibold">{formatDate(tournament.date)}</div>
                   <div className="text-xs text-cream/60">
-                    {tournament.format === 'duplas' ? 'Duplas (Americano)' : 'Individual'} ·{' '}
-                    {tournamentMatches.length}/{tournament.rounds.length} partida
-                    {tournament.rounds.length > 1 ? 's' : ''} concluída
-                    {tournamentMatches.length !== 1 ? 's' : ''}
+                    {t(tournament.format === 'duplas' ? 'Duplas (Americano)' : 'Individual')} ·{' '}
+                    {tournamentMatches.length}/{tournament.rounds.length}{' '}
+                    {t(tournament.rounds.length > 1 ? 'partidas' : 'partida')}{' '}
+                    {t(tournamentMatches.length !== 1 ? 'concluídas' : 'concluída')}
                   </div>
                 </div>
                 <span className="text-cream/50">{isOpen ? '▲' : '▼'}</span>
@@ -124,11 +126,13 @@ export function HistoryScreen() {
               {isOpen && (
                 <div className="mt-3 flex flex-col gap-2 border-t border-cream/10 pt-3">
                   {tournamentMatches.length === 0 && (
-                    <p className="text-sm text-cream/60">Nenhuma partida concluída.</p>
+                    <p className="text-sm text-cream/60">{t('Nenhuma partida concluída.')}</p>
                   )}
                   {tournamentMatches.map((match) => (
                     <div key={match.id} className="rounded-lg bg-navy px-3 py-2 text-sm">
-                      <div className="text-xs text-cream/60">Rodada {match.roundIndex + 1}</div>
+                      <div className="text-xs text-cream/60">
+                        {t('Rodada')} {match.roundIndex + 1}
+                      </div>
                       <div>
                         <span className={match.winnerTeam === 'team1' ? 'font-bold text-lime' : ''}>
                           {teamName(match.team1)}
@@ -139,7 +143,7 @@ export function HistoryScreen() {
                         </span>
                       </div>
                       <div className="text-xs text-cream/60">
-                        Pontos: {match.points1} – {match.points2} · Duração:{' '}
+                        {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
                         {formatDuration(match.durationSeconds ?? 0)}
                       </div>
                     </div>
@@ -148,8 +152,9 @@ export function HistoryScreen() {
                   {confirmDeleteId === tournament.id ? (
                     <div className="flex flex-col gap-2 border-t border-cream/10 pt-2">
                       <p className="text-xs text-destructive">
-                        ⚠ Excluir este torneio e todas as suas partidas do histórico e do
-                        ranking? Essa ação não pode ser desfeita.
+                        {t(
+                          '⚠ Excluir este torneio e todas as suas partidas do histórico e do ranking? Essa ação não pode ser desfeita.',
+                        )}
                       </p>
                       <div className="flex gap-2">
                         <button
@@ -157,14 +162,14 @@ export function HistoryScreen() {
                           className={secondaryButton}
                           onClick={() => setConfirmDeleteId(null)}
                         >
-                          Cancelar
+                          {t('Cancelar')}
                         </button>
                         <button
                           type="button"
                           className={`${destructiveButton} flex-1`}
                           onClick={() => handleDelete(tournament.id)}
                         >
-                          Sim, excluir
+                          {t('Sim, excluir')}
                         </button>
                       </div>
                     </div>
@@ -174,7 +179,7 @@ export function HistoryScreen() {
                       className={`${secondaryButton} self-start`}
                       onClick={() => setConfirmDeleteId(tournament.id)}
                     >
-                      Excluir torneio
+                      {t('Excluir torneio')}
                     </button>
                   )}
                 </div>

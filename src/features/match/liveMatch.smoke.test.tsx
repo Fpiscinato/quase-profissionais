@@ -45,7 +45,7 @@ async function expectServe(playerName: string, side: 'Direita' | 'Esquerda') {
   })
 }
 
-async function seedOneRoundMatch() {
+async function seedOneRoundMatch(team1InitialSide: 'Esquerda' | 'Direita' = 'Direita') {
   await ensurePlayersSeeded()
   const players = await db.players.toArray()
   const byName = (n: string) => players.find((p) => p.name === n)!.id
@@ -64,6 +64,7 @@ async function seedOneRoundMatch() {
     team1: [a, b],
     team2: [c, d],
     serveOrder,
+    team1InitialSide,
   })
   return { tournament, match }
 }
@@ -233,8 +234,12 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     await ponto1() // closes game 1 (4-0) -> server changes to Mateus Adv
     await expectServe('Mateus Adv', 'Direita')
 
+    // The pulse is set by a useEffect that fires after the banner text
+    // itself commits, so there's a brief window where the text has already
+    // updated but the effect hasn't run yet — wait for the class rather than
+    // assuming it's there the instant the text matches.
+    await waitFor(() => expect(serveBanner()).toHaveClass('animate-serve-pulse'))
     const banner = serveBanner()
-    expect(banner).toHaveClass('animate-serve-pulse')
     expect(banner.textContent).toContain('Mateus Adv')
 
     // Self-clears shortly after.
@@ -249,5 +254,38 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     expect(within(changeEndsBanner).getByText('T1')).toBeInTheDocument()
     expect(within(changeEndsBanner).getByText('T2')).toBeInTheDocument()
     expect(changeEndsBanner.querySelector('.animate-court-flip')).toBeTruthy()
+  })
+
+  it('lays out team cards/buttons by physical court side, flips them on change of ends, and shows a D/E side history', async () => {
+    await seedOneRoundMatch('Esquerda')
+    await openLiveMatch()
+
+    const pointButtons = () => screen.getAllByRole('button', { name: /^Ponto —/ })
+    // Team 1 started on the Esquerda (left) -> its card and button render first.
+    expect(pointButtons()[0]).toHaveTextContent('Time 1')
+    expect(pointButtons()[1]).toHaveTextContent('Time 2')
+
+    const team1Card = screen.getByText('Time 1').closest('div')!.parentElement!
+    const team2Card = screen.getByText('Time 2').closest('div')!.parentElement!
+    expect(within(team1Card).getByLabelText('Histórico de lados: Esquerda')).toBeInTheDocument()
+    expect(within(team2Card).getByLabelText('Histórico de lados: Direita')).toBeInTheDocument()
+
+    // Close game 1 (4-0 for team1) -> 1 total game completed (odd) -> change of ends.
+    await ponto1()
+    await ponto1()
+    await ponto1()
+    await ponto1()
+    await expectText('Troquem de lado')
+
+    // Sides flip: Team 2 is now on the left, Team 1 on the right — same DOM
+    // nodes (stable `key`), just reordered, so the captured refs still work.
+    expect(pointButtons()[0]).toHaveTextContent('Time 2')
+    expect(pointButtons()[1]).toHaveTextContent('Time 1')
+    expect(
+      within(team1Card).getByLabelText('Histórico de lados: Esquerda, Direita'),
+    ).toBeInTheDocument()
+    expect(
+      within(team2Card).getByLabelText('Histórico de lados: Direita, Esquerda'),
+    ).toBeInTheDocument()
   })
 })

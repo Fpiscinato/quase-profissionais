@@ -158,6 +158,100 @@ describe('Backup merge-import — union by UUID, skip duplicates (Phase 4)', () 
     expect(await db.players.count()).toBe(6)
   })
 
+  it('reconciles default players by name instead of duplicating them when ids differ across installs', async () => {
+    // Default players get a fresh crypto.randomUUID() every time
+    // seedDefaultPlayers runs (first launch of each install/reinstall), so a
+    // backup from another phone — or an old backup restored after a reset —
+    // carries the SAME 5 names under DIFFERENT ids. Reproduce that here: the
+    // incoming "Jarede" has a brand-new id, not the local one.
+    // Clear state left over from the previous test in this file (fake-indexeddb persists across `it` blocks).
+    await db.players.clear()
+    await db.tournaments.clear()
+    await db.matches.clear()
+    await ensurePlayersSeeded()
+    const localPlayers = await db.players.toArray()
+    const localJaredeId = localPlayers.find((p) => p.name === 'Jarede')!.id
+    const localMateusId = localPlayers.find((p) => p.name === 'Mateus')!.id
+    expect(await db.players.count()).toBe(5)
+
+    const foreignJaredeId = crypto.randomUUID()
+    const foreignMateusId = crypto.randomUUID()
+    const foreignTournamentId = crypto.randomUUID()
+    const foreignMatchId = crypto.randomUUID()
+
+    const incoming: BackupPayload = {
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      players: [
+        // Same 5 default names, different ids — as if seeded on another phone.
+        { id: foreignJaredeId, name: 'Jarede', active: true },
+        { id: foreignMateusId, name: ' mateus ', active: true }, // whitespace/case drift too
+      ],
+      tournaments: [
+        {
+          id: foreignTournamentId,
+          date: '2026-08-05',
+          availablePlayerIds: [foreignJaredeId, foreignMateusId],
+          format: 'individual',
+          teamFormationMode: 'balanced',
+          options: DEFAULT_MATCH_CONFIG,
+          rounds: [
+            {
+              index: 0,
+              team1: [foreignJaredeId],
+              team2: [foreignMateusId],
+              restingPlayerIds: [],
+            },
+          ],
+          status: 'completed',
+          createdAt: Date.now(),
+        },
+      ],
+      matches: [
+        {
+          id: foreignMatchId,
+          tournamentId: foreignTournamentId,
+          roundIndex: 0,
+          team1: [foreignJaredeId],
+          team2: [foreignMateusId],
+          serveOrder: [foreignJaredeId, foreignMateusId],
+          pointLog: [],
+          games1: 4,
+          games2: 1,
+          points1: 20,
+          points2: 10,
+          winnerTeam: 'team1',
+          status: 'completed',
+        },
+      ],
+    }
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Backup' }))
+    await screen.findByText('Importar')
+
+    const file = new File([JSON.stringify(incoming)], 'backup.json', { type: 'application/json' })
+    const input = screen.getByTestId('import-file-input') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    await screen.findByText('Importação concluída:')
+    // Both incoming players matched an existing local player by name — none added.
+    expect(screen.getByText(/Jogadores: 0 adicionados, 2 já existiam/)).toBeInTheDocument()
+    expect(await db.players.count()).toBe(5) // still just the 5 seeded — no duplicates
+
+    // The imported tournament/match still reference the LOCAL ids, not the
+    // foreign ones, so history/ranking resolve to the existing player rows.
+    const importedTournament = await db.tournaments.get(foreignTournamentId)
+    expect(importedTournament!.availablePlayerIds).toEqual([localJaredeId, localMateusId])
+    expect(importedTournament!.rounds[0].team1).toEqual([localJaredeId])
+    expect(importedTournament!.rounds[0].team2).toEqual([localMateusId])
+
+    const importedMatch = await db.matches.get(foreignMatchId)
+    expect(importedMatch!.team1).toEqual([localJaredeId])
+    expect(importedMatch!.team2).toEqual([localMateusId])
+    expect(importedMatch!.serveOrder).toEqual([localJaredeId, localMateusId])
+  })
+
   it('rejects a file that is not a valid backup payload', async () => {
     await ensurePlayersSeeded()
     render(<App />)

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildServeOrder,
+  changeEndsCount,
+  courtSideHistory,
+  currentCourtSide,
   nextServer,
   serveSide,
   shouldChangeEnds,
@@ -74,6 +77,41 @@ describe('shouldChangeEnds', () => {
     expect(shouldChangeEnds({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 12 })).toBe(true)
     expect(shouldChangeEnds({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 5 })).toBe(false)
     expect(shouldChangeEnds({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 0 })).toBe(false)
+  })
+})
+
+describe('changeEndsCount', () => {
+  it('counts one swap after each odd total of completed games', () => {
+    expect(changeEndsCount({ isTiebreak: false, totalGamesCompleted: 0, tiebreakPointsCompleted: 0 })).toBe(0)
+    expect(changeEndsCount({ isTiebreak: false, totalGamesCompleted: 1, tiebreakPointsCompleted: 0 })).toBe(1)
+    expect(changeEndsCount({ isTiebreak: false, totalGamesCompleted: 2, tiebreakPointsCompleted: 0 })).toBe(1)
+    expect(changeEndsCount({ isTiebreak: false, totalGamesCompleted: 3, tiebreakPointsCompleted: 0 })).toBe(2)
+    expect(changeEndsCount({ isTiebreak: false, totalGamesCompleted: 4, tiebreakPointsCompleted: 0 })).toBe(2)
+    expect(changeEndsCount({ isTiebreak: false, totalGamesCompleted: 7, tiebreakPointsCompleted: 0 })).toBe(4)
+  })
+
+  it('adds a swap every 6 points once a tiebreak starts, on top of the games-completed swaps', () => {
+    // Tiebreak starts at 4-4 (8 games completed) -> 4 swaps already banked from the set.
+    expect(changeEndsCount({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 0 })).toBe(4)
+    expect(changeEndsCount({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 5 })).toBe(4)
+    expect(changeEndsCount({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 6 })).toBe(5)
+    expect(changeEndsCount({ isTiebreak: true, totalGamesCompleted: 8, tiebreakPointsCompleted: 12 })).toBe(6)
+  })
+})
+
+describe('currentCourtSide / courtSideHistory', () => {
+  it('team 1 stays on its initial side with 0 swaps, flips with an odd swap count', () => {
+    expect(currentCourtSide('Direita', 0)).toBe('Direita')
+    expect(currentCourtSide('Direita', 1)).toBe('Esquerda')
+    expect(currentCourtSide('Direita', 2)).toBe('Direita')
+    expect(currentCourtSide('Esquerda', 1)).toBe('Direita')
+  })
+
+  it('history has one entry per segment played, alternating from the initial side', () => {
+    expect(courtSideHistory('Direita', 0)).toEqual(['Direita'])
+    expect(courtSideHistory('Direita', 1)).toEqual(['Direita', 'Esquerda'])
+    expect(courtSideHistory('Direita', 2)).toEqual(['Direita', 'Esquerda', 'Direita'])
+    expect(courtSideHistory('Esquerda', 3)).toEqual(['Esquerda', 'Direita', 'Esquerda', 'Direita'])
   })
 })
 

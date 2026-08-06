@@ -8,6 +8,7 @@ import { shuffle } from '../../lib/shuffle'
 import { ManualRoundsEditor } from './ManualRoundsEditor'
 import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
+import { useT } from '../../i18n/useT'
 
 const GAMES_TO_WIN_OPTIONS = [2, 3, 4, 5, 6] as const
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Props) {
+  const { t } = useT()
   const { byId } = usePlayers()
   const canDoDoubles = availablePlayerIds.length >= 4
   const [format, setFormat] = useState<TournamentFormat>(canDoDoubles ? 'duplas' : 'individual')
@@ -61,14 +63,20 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
-        <h1 className="text-xl font-bold">Formato e rotação</h1>
-        <p className="text-sm text-cream/70">{availablePlayerIds.length} jogadores disponíveis.</p>
+        <h1 className="text-xl font-bold">{t('Formato e rotação')}</h1>
+        <p className="text-sm text-cream/70">
+          {availablePlayerIds.length} {t('jogadores disponíveis.')}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-cream/80">
-          Formato
-          <HelpHint text="Duplas (Americano) precisa de 4+ jogadores e forma times de 2. Individual é todos-contra-todos, um jogador por vez, a partir de 2." />
+          {t('Formato')}
+          <HelpHint
+            text={t(
+              'Duplas (Americano) precisa de 4+ jogadores e forma times de 2. Individual é todos-contra-todos, um jogador por vez, a partir de 2.',
+            )}
+          />
         </span>
         <div className="flex gap-2">
           <button
@@ -81,7 +89,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             }}
             className={`${toggleButton(format === 'duplas')} disabled:opacity-30`}
           >
-            Duplas (Americano)
+            {t('Duplas (Americano)')}
           </button>
           <button
             type="button"
@@ -92,19 +100,23 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             }}
             className={toggleButton(format === 'individual')}
           >
-            Individual
+            {t('Individual')}
           </button>
         </div>
         {!canDoDoubles && (
-          <p className="text-xs text-cream/60">Duplas precisa de 4+ jogadores disponíveis.</p>
+          <p className="text-xs text-cream/60">{t('Duplas precisa de 4+ jogadores disponíveis.')}</p>
         )}
       </div>
 
       {format === 'duplas' && (
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold text-cream/80">
-            Formação das duplas
-            <HelpHint text="Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada." />
+            {t('Formação das duplas')}
+            <HelpHint
+              text={t(
+                'Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada.',
+              )}
+            />
           </span>
           <div className="flex gap-2">
             <button
@@ -112,14 +124,14 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
               onClick={() => setMode('balanced')}
               className={toggleButton(mode === 'balanced')}
             >
-              Balanceado (recomendado)
+              {t('Balanceado (recomendado)')}
             </button>
             <button
               type="button"
               onClick={() => setMode('manual')}
               className={toggleButton(mode === 'manual')}
             >
-              Manual
+              {t('Manual')}
             </button>
           </div>
         </div>
@@ -127,8 +139,12 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-cream/80">
-          Games para vencer o set
-          <HelpHint text="Quantos games o time precisa fazer (com 2 de vantagem) pra vencer o set. Padrão: 4. Se empatar nesse número, vai pro tiebreak." />
+          {t('Games para vencer o set')}
+          <HelpHint
+            text={t(
+              'Quantos games o time precisa fazer (com 2 de vantagem) pra vencer o set. Padrão: 4. Se empatar nesse número, vai pro tiebreak.',
+            )}
+          />
         </span>
         <div className="flex gap-2">
           {GAMES_TO_WIN_OPTIONS.map((n) => (
@@ -146,7 +162,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
 
       {format === 'individual' && (
         <p className="text-sm text-cream/70">
-          No Individual todo mundo joga contra todo mundo uma vez — não há escolha de duplas.
+          {t('No Individual todo mundo joga contra todo mundo uma vez — não há escolha de duplas.')}
         </p>
       )}
 

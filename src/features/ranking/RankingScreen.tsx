@@ -6,6 +6,7 @@ import { usePlayers } from '../../db/hooks'
 import { computeStandings, computeTeamStandings } from '../../engine/ranking'
 import type { MatchResult, PlayerId } from '../../engine/types'
 import { toggleButton } from '../../ui/styles'
+import { useT } from '../../i18n/useT'
 
 function toMatchResult(m: MatchRow): MatchResult {
   return {
@@ -23,6 +24,7 @@ type Tab = 'dia' | 'geral'
 type Mode = 'individual' | 'duplas'
 
 export function RankingScreen() {
+  const { t } = useT()
   const [tab, setTab] = useState<Tab>('dia')
   const [mode, setMode] = useState<Mode>('individual')
   const { byId } = usePlayers()
@@ -59,14 +61,14 @@ export function RankingScreen() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-bold">Ranking</h1>
+      <h1 className="text-xl font-bold">{t('Ranking')}</h1>
 
       <div className="flex gap-2">
         <button type="button" onClick={() => setTab('dia')} className={toggleButton(tab === 'dia')}>
-          Ranking do dia
+          {t('Ranking do dia')}
         </button>
         <button type="button" onClick={() => setTab('geral')} className={toggleButton(tab === 'geral')}>
-          Ranking geral
+          {t('Ranking geral')}
         </button>
       </div>
 
@@ -76,40 +78,44 @@ export function RankingScreen() {
           onClick={() => setMode('individual')}
           className={toggleButton(mode === 'individual')}
         >
-          Individual
+          {t('Individual')}
         </button>
         <button
           type="button"
           onClick={() => setMode('duplas')}
           className={toggleButton(mode === 'duplas')}
         >
-          Duplas
+          {t('Duplas')}
         </button>
       </div>
 
       {rowCount === 0 ? (
         <p className="text-sm text-cream/70">
-          {tab === 'dia'
-            ? 'Nenhuma partida concluída no torneio mais recente ainda.'
-            : 'Nenhuma partida concluída ainda.'}
+          {t(
+            tab === 'dia'
+              ? 'Nenhuma partida concluída no torneio mais recente ainda.'
+              : 'Nenhuma partida concluída ainda.',
+          )}
         </p>
       ) : (
         <>
           {uneven && (
-            <p className="text-xs text-gold">Nem todos jogaram o mesmo número de partidas.</p>
+            <p className="text-xs text-gold">
+              {t('Nem todos jogaram o mesmo número de partidas.')}
+            </p>
           )}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="text-left text-cream/60">
                   <th className="py-1 pr-2">#</th>
-                  <th className="py-1 pr-2">{mode === 'individual' ? 'Jogador' : 'Dupla'}</th>
-                  <th className="py-1 pr-2 text-right">PJ</th>
-                  <th className="py-1 pr-2 text-right">PV</th>
-                  <th className="py-1 pr-2 text-right">GV</th>
-                  <th className="py-1 pr-2 text-right">GP</th>
-                  <th className="py-1 pr-2 text-right">PtV</th>
-                  <th className="py-1 text-right">PtP</th>
+                  <th className="py-1 pr-2">{t(mode === 'individual' ? 'Jogador' : 'Dupla')}</th>
+                  <th className="py-1 pr-2 text-right">{t('PJ')}</th>
+                  <th className="py-1 pr-2 text-right">{t('PV')}</th>
+                  <th className="py-1 pr-2 text-right">{t('GV')}</th>
+                  <th className="py-1 pr-2 text-right">{t('GP')}</th>
+                  <th className="py-1 pr-2 text-right">{t('PtV')}</th>
+                  <th className="py-1 text-right">{t('PtP')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,9 +148,11 @@ export function RankingScreen() {
             </table>
           </div>
           <p className="text-xs text-cream/50">
-            PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos ·
-            PtV pontos vencidos · PtP pontos perdidos
-            {mode === 'duplas' && ' · Duplas: só conta quem jogou junto na mesma dupla.'}
+            {t(
+              'PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+            )}
+            {mode === 'duplas' &&
+              ` · ${t('Duplas: só conta quem jogou junto na mesma dupla.')}`}
           </p>
         </>
       )}

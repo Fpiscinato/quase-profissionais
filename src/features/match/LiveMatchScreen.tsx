@@ -1,15 +1,43 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, recordPoint, saveMatch, startMatch, undoLastPoint } from '../../db/db'
 import { usePlayers, useTournament } from '../../db/hooks'
 import { computeMatchState } from '../../engine/score'
+import type { CourtSide } from '../../engine/serve'
 import type { PlayerId, TeamSide } from '../../engine/types'
 import { ALERT_LABELS, computeAlerts } from './alerts'
 import { computeServeInfo } from './serveInfo'
+import { computeCourtSides } from './courtSide'
 import { pointLabel } from './display'
 import { ChangeEndsCourt } from './ChangeEndsCourt'
 import { formatDuration } from '../../lib/format'
 import { bigButton, bigButtonAlt, card, secondaryButton } from '../../ui/styles'
+import { useT } from '../../i18n/useT'
+import type { Translator } from '../../i18n/i18n'
+
+function sideLetter(t: Translator, side: CourtSide): string {
+  return t(side)[0]
+}
+
+/** Small "D - E - D" trail below a team's card, one letter per side the team has occupied so far. */
+function SideHistory({ history }: { history: CourtSide[] }) {
+  const { t } = useT()
+  return (
+    <div
+      className="mt-1 flex items-center justify-center gap-1 text-xs font-bold tabular-nums"
+      aria-label={`${t('Histórico de lados:')} ${history.map((s) => t(s)).join(', ')}`}
+    >
+      {history.map((side, i) => (
+        <span key={i} className="flex items-center gap-1">
+          {i > 0 && <span className="text-cream/30">-</span>}
+          <span className={side === 'Direita' ? 'text-lime' : 'text-gold'}>
+            {sideLetter(t, side)}
+          </span>
+        </span>
+      ))}
+    </div>
+  )
+}
 
 interface Props {
   matchId: string
@@ -17,6 +45,7 @@ interface Props {
 }
 
 export function LiveMatchScreen({ matchId, onSaved }: Props) {
+  const { t } = useT()
   const match = useLiveQuery(() => db.matches.get(matchId), [matchId])
   const tournament = useTournament(match?.tournamentId)
   const { byId } = usePlayers()
@@ -55,10 +84,11 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
   }, [serveInfo?.serverId])
 
   if (!match || !tournament || !state || !config) {
-    return <div className="p-4 text-cream/70">Carregando partida...</div>
+    return <div className="p-4 text-cream/70">{t('Carregando partida...')}</div>
   }
 
   const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
+  const courtSides = computeCourtSides(state, match.team1InitialSide ?? 'Direita')
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
   const teamName = (ids: PlayerId[]) => ids.map(name).join(' & ')
@@ -77,28 +107,72 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
     onSaved()
   }
 
+  // Team cards and point buttons are laid out left-to-right by physical
+  // court side (not always Time 1 first), so whichever screen column shows
+  // a team stays the column a spectator actually sees them standing in —
+  // and both rows use the same order so the button lines up under its card.
+  interface TeamSlot {
+    key: TeamSide
+    cardClass: string
+    labelClass: string
+    label: string
+    name: string
+    history: CourtSide[]
+    button: ReactNode
+  }
+  const team1Slot: TeamSlot = {
+    key: 'team1',
+    cardClass: 'border-lime bg-lime/10',
+    labelClass: 'text-lime',
+    label: 'Time 1',
+    name: teamName(match.team1),
+    history: courtSides.team1History,
+    button: (
+      <button key="team1" type="button" className={bigButton} onClick={() => handlePoint('team1')}>
+        {t('Ponto')} — {t('Time 1')}
+      </button>
+    ),
+  }
+  const team2Slot: TeamSlot = {
+    key: 'team2',
+    cardClass: 'border-cream bg-cream/10',
+    labelClass: 'text-cream',
+    label: 'Time 2',
+    name: teamName(match.team2),
+    history: courtSides.team2History,
+    button: (
+      <button
+        key="team2"
+        type="button"
+        className={bigButtonAlt}
+        onClick={() => handlePoint('team2')}
+      >
+        {t('Ponto')} — {t('Time 2')}
+      </button>
+    ),
+  }
+  const orderedSlots: TeamSlot[] =
+    courtSides.team1 === 'Esquerda' ? [team1Slot, team2Slot] : [team2Slot, team1Slot]
+
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between text-sm text-cream/60">
         <span className="tabular-nums">{formatDuration(elapsedSeconds)}</span>
-        <span>Rodada {match.roundIndex + 1}</span>
+        <span>
+          {t('Rodada')} {match.roundIndex + 1}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-center">
-        <div className={card}>
-          <div className="flex items-center justify-center gap-1 text-xs font-semibold uppercase tracking-wide text-lime">
-            <span aria-hidden="true">{match.team1.length === 2 ? '🧑🧑' : '🧑'}</span>
-            Time 1
+        {orderedSlots.map((slot) => (
+          <div key={slot.key} className={`${card} border-2 ${slot.cardClass}`}>
+            <div className={`text-sm font-black uppercase tracking-wide ${slot.labelClass}`}>
+              {t(slot.label)}
+            </div>
+            <div className="text-lg font-bold text-cream">{slot.name}</div>
+            <SideHistory history={slot.history} />
           </div>
-          <div className="text-lg font-bold">{teamName(match.team1)}</div>
-        </div>
-        <div className={card}>
-          <div className="flex items-center justify-center gap-1 text-xs font-semibold uppercase tracking-wide text-cream">
-            <span aria-hidden="true">{match.team2.length === 2 ? '🧑🧑' : '🧑'}</span>
-            Time 2
-          </div>
-          <div className="text-lg font-bold">{teamName(match.team2)}</div>
-        </div>
+        ))}
       </div>
 
       {alerts.length > 0 && (
@@ -109,7 +183,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
                 key={alert}
                 className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
               >
-                {ALERT_LABELS[alert]}
+                {t(ALERT_LABELS[alert])}
                 <ChangeEndsCourt />
               </div>
             ) : (
@@ -117,7 +191,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
                 key={alert}
                 className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
               >
-                {ALERT_LABELS[alert]}
+                {t(ALERT_LABELS[alert])}
               </div>
             ),
           )}
@@ -128,7 +202,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
         {state.isTiebreak ? (
           <>
             <div className="text-sm font-semibold uppercase tracking-wide text-lime">
-              Tiebreak
+              {t('Tiebreak')}
             </div>
             <div className="text-7xl font-black tabular-nums">
               {state.tiebreak.points1} – {state.tiebreak.points2}
@@ -142,7 +216,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
           </div>
         )}
         <div className="mt-2 text-2xl font-semibold text-cream/80 tabular-nums">
-          Games: {state.games1} – {state.games2}
+          {t('Games:')} {state.games1} – {state.games2}
         </div>
       </div>
 
@@ -153,31 +227,25 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
             serverPulse ? 'animate-serve-pulse' : ''
           }`}
         >
-          <span aria-hidden="true">🎾</span> Saca agora: {name(serveInfo.serverId)} —{' '}
+          <span aria-hidden="true">🎾</span> {t('Saca agora:')} {name(serveInfo.serverId)} —{' '}
           <span className={serveInfo.side === 'Direita' ? 'text-lime' : 'text-gold'}>
-            {serveInfo.side}
+            {t(serveInfo.side)}
           </span>
         </div>
       )}
 
       {!state.isMatchOver ? (
-        <div className="flex gap-3">
-          <button type="button" className={bigButton} onClick={() => handlePoint('team1')}>
-            Ponto — Time 1
-          </button>
-          <button type="button" className={bigButtonAlt} onClick={() => handlePoint('team2')}>
-            Ponto — Time 2
-          </button>
-        </div>
+        <div className="flex gap-3">{orderedSlots.map((slot) => slot.button)}</div>
       ) : (
         <div className={card}>
-          <h2 className="mb-2 text-xl font-bold">Resultado final</h2>
+          <h2 className="mb-2 text-xl font-bold">{t('Resultado final')}</h2>
           <p className="text-lg font-semibold">
             {teamName(match.team1)} {state.finalGames1} × {state.finalGames2}{' '}
             {teamName(match.team2)}
           </p>
           <p className="text-sm text-cream/70">
-            Pontos: {match.points1} – {match.points2} · Duração: {formatDuration(elapsedSeconds)}
+            {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
+            {formatDuration(elapsedSeconds)}
           </p>
           <button
             type="button"
@@ -185,7 +253,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
             disabled={saving}
             onClick={handleSave}
           >
-            {saving ? 'Salvando...' : 'Salvar partida'}
+            {saving ? t('Salvando...') : t('Salvar partida')}
           </button>
         </div>
       )}
@@ -196,7 +264,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
         disabled={match.pointLog.length === 0}
         onClick={handleUndo}
       >
-        Desfazer
+        {t('Desfazer')}
       </button>
     </div>
   )

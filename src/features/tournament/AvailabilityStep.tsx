@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { usePlayers } from '../../db/hooks'
 import type { PlayerId } from '../../engine/types'
 import { primaryButton, label as labelClass } from '../../ui/styles'
+import { useT } from '../../i18n/useT'
 
 interface Props {
   onContinue: (availablePlayerIds: PlayerId[]) => void
 }
 
 export function AvailabilityStep({ onContinue }: Props) {
+  const { t } = useT()
   const { players } = usePlayers()
   const [selected, setSelected] = useState<Set<PlayerId>>(new Set())
 
@@ -25,8 +27,8 @@ export function AvailabilityStep({ onContinue }: Props) {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
-        <h1 className="text-xl font-bold">Quem joga hoje?</h1>
-        <p className="text-sm text-cream/70">Marque os jogadores disponíveis. Mínimo 2.</p>
+        <h1 className="text-xl font-bold">{t('Quem joga hoje?')}</h1>
+        <p className="text-sm text-cream/70">{t('Marque os jogadores disponíveis. Mínimo 2.')}</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -44,7 +46,7 @@ export function AvailabilityStep({ onContinue }: Props) {
       </div>
 
       {selected.size === 1 && (
-        <p className="text-sm text-destructive">Marque pelo menos mais um jogador.</p>
+        <p className="text-sm text-destructive">{t('Marque pelo menos mais um jogador.')}</p>
       )}
 
       <button
@@ -53,7 +55,7 @@ export function AvailabilityStep({ onContinue }: Props) {
         disabled={!canContinue}
         onClick={() => onContinue(Array.from(selected))}
       >
-        Continuar ({selected.size} {selected.size === 1 ? 'jogador' : 'jogadores'})
+        {t('Continuar')} ({selected.size} {selected.size === 1 ? t('jogador') : t('jogadores')})
       </button>
     </div>
   )

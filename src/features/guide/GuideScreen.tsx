@@ -1,4 +1,5 @@
 import { card } from '../../ui/styles'
+import { useT } from '../../i18n/useT'
 
 const CARDS = [
   {
@@ -7,7 +8,7 @@ const CARDS = [
   },
   {
     title: 'Set curto',
-    body: 'Vence o set quem fizer primeiro um número de games definido pelo organizador na criação do torneio (de 2 a 6, padrão 4), com 2 de diferença. Se os dois times chegarem juntos nesse número (ex.: 4-4), vai pro tiebreak.',
+    body: 'Vence o set quem fizer primeiro um número de games definido pelo organizador na criação do torneio (de 2 a 6, padrão 4), com 2 de diferença. Se os dois times chegarem juntos nesse número (ex.: 4-4), vai pro tiebreak. No tênis oficial o padrão é set até 6 games — aqui usamos um set mais curto de propósito, pra jogos mais rápidos e mais rodadas no dia. Todas as outras regras (pontuação, saque, troca de lado, tiebreak) seguem exatamente o padrão oficial.',
   },
   {
     title: 'Saque em duplas',
@@ -28,21 +29,23 @@ const CARDS = [
 ]
 
 export function GuideScreen() {
+  const { t } = useT()
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
-        <h1 className="text-xl font-bold">Como jogar</h1>
+        <h1 className="text-xl font-bold">{t('Como jogar')}</h1>
         <p className="text-sm text-cream/70">
-          As regras do Tennis Americano, resumidas. A tela ao vivo te guia durante a partida —
-          quem saca, de que lado, e quando trocar de lado.
+          {t(
+            'As regras do Tennis Americano, resumidas. A tela ao vivo te guia durante a partida — quem saca, de que lado, e quando trocar de lado.',
+          )}
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
         {CARDS.map((c) => (
           <div key={c.title} className={card}>
-            <h2 className="mb-1 font-bold text-lime">{c.title}</h2>
-            <p className="text-sm text-cream/85">{c.body}</p>
+            <h2 className="mb-1 font-bold text-lime">{t(c.title)}</h2>
+            <p className="text-sm text-cream/85">{t(c.body)}</p>
           </div>
         ))}
       </div>

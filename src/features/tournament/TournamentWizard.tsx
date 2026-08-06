@@ -5,6 +5,7 @@ import { AvailabilityStep } from './AvailabilityStep'
 import { FormatRotationStep } from './FormatRotationStep'
 import { RoundsListStep } from './RoundsListStep'
 import { LiveMatchScreen } from '../match/LiveMatchScreen'
+import { useT } from '../../i18n/useT'
 
 type Step =
   | { name: 'loading' }
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function TournamentWizard({ onExit }: Props) {
+  const { t } = useT()
   const [step, setStep] = useState<Step>({ name: 'loading' })
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function TournamentWizard({ onExit }: Props) {
   }, [])
 
   if (step.name === 'loading') {
-    return <div className="p-4 text-cream/70">Carregando...</div>
+    return <div className="p-4 text-cream/70">{t('Carregando...')}</div>
   }
 
   if (step.name === 'disponibilidade') {

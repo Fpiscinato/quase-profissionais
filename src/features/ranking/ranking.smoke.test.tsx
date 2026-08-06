@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, waitFor } from '@testing-library/react'
 import App from '../../App'
 import { db, ensurePlayersSeeded } from '../../db/db'
 import { DEFAULT_MATCH_CONFIG } from '../../engine/types'
@@ -82,7 +82,17 @@ async function seedTwoTournaments() {
   })
 }
 
-function dataRows() {
+// usePlayers() resolves its own liveQuery separately from (and sometimes
+// slightly after) the standings table's, so rows can briefly render with
+// "?" placeholders — wait for names to actually settle before reading rows.
+async function dataRows() {
+  await waitFor(() => {
+    const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1)
+    const hasPlaceholder = rows.some((r) =>
+      within(r).getAllByRole('cell')[1].textContent?.includes('?'),
+    )
+    expect(hasPlaceholder).toBe(false)
+  })
   return within(screen.getByRole('table')).getAllByRole('row').slice(1)
 }
 
@@ -96,7 +106,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
 
     // Mateus & Emerson (team2 of the T2-only match) both won 4 games / 17
     // points — a genuine tie, order between the two is not asserted.
-    const rows = dataRows()
+    const rows = await dataRows()
     const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
     expect([nameOf(rows[0]), nameOf(rows[1])].sort()).toEqual(['Emerson', 'Mateus'])
     expect([nameOf(rows[2]), nameOf(rows[3])].sort()).toEqual(['Jarede', 'Mateus Adv'])
@@ -114,7 +124,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
     await screen.findByRole('table')
 
-    const rows = dataRows()
+    const rows = await dataRows()
     const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
     // Mateus won both matches (T1 as A's partner, T2 as D's partner) -> most games.
     expect(rows.map(nameOf)).toEqual(['Mateus', 'Jarede', 'Emerson', 'Mateus Adv'])
@@ -138,7 +148,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     // The 4 pairings across T1+T2 never repeat, so each plays exactly once —
     // ranked by Games Won, tiebroken by Points Won (Section 6's rule, same
     // one computeStandings uses, just applied per-pairing instead of per-player).
-    const rows = dataRows()
+    const rows = await dataRows()
     const pairOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
     expect(rows.map(pairOf)).toEqual([
       'Emerson & Mateus', // team2 of T2: gamesWon 4, pointsWon 17

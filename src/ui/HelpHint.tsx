@@ -1,14 +1,16 @@
 import { useState } from 'react'
+import { useT } from '../i18n/useT'
 
 /** Small "?" affordance with a one-line explanation (Section 10: context help on setup options). */
 export function HelpHint({ text }: { text: string }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
 
   return (
     <span className="relative inline-flex items-center">
       <button
         type="button"
-        aria-label="Ajuda"
+        aria-label={t('Ajuda')}
         onClick={() => setOpen((o) => !o)}
         className="ml-1 flex h-5 w-5 items-center justify-center rounded-full border border-cream/40 text-xs font-bold text-cream/70"
       >

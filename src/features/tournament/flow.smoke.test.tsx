@@ -52,6 +52,8 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
 
     await screen.findByText(/Configurar partida — Rodada 1/)
     // "Sortear" (random serve order) is the default mode and is already valid.
+    // Lado inicial defaults to "Direita" — explicitly pick "Esquerda" here.
+    fireEvent.click(screen.getByRole('button', { name: 'Time 1 na esquerda' }))
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar partida' }))
 
     await screen.findByText('Rodadas')
@@ -63,6 +65,7 @@ describe('Phase 2 flow (availability -> rotation -> match setup), persisted to D
     expect(matches).toHaveLength(1)
     expect(matches[0].serveOrder).toHaveLength(4)
     expect(matches[0].status).toBe('scheduled')
+    expect(matches[0].team1InitialSide).toBe('Esquerda')
 
     const settings = await db.appSettings.get('settings')
     expect(settings?.currentTournamentId).toBe(tournamentsAfterCreate[0].id)
