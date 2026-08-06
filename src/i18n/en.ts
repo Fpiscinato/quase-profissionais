@@ -56,6 +56,8 @@ export const EN: Record<string, string> = {
   'Games para vencer o set': 'Games to win the set',
   'Quantos games o time precisa fazer (com 2 de vantagem) pra vencer o set. Padrão: 4. Se empatar nesse número, vai pro tiebreak.':
     'How many games a team needs (winning by 2) to take the set. Default: 4. A tie at that number goes to a tiebreak.',
+  'No tênis oficial o set vai até 6 games (com 2 de vantagem) — vale pra Duplas e Individual. Aqui você pode encurtar pra jogos mais rápidos.':
+    'In official tennis the set goes up to 6 games (winning by 2) — the same for Doubles and Singles. Here you can shorten it for faster matches.',
   'No Individual todo mundo joga contra todo mundo uma vez — não há escolha de duplas.':
     'In Singles everyone plays everyone once — there is no pairing to choose.',
   'Sortear novamente': 'Redraw',
@@ -224,9 +226,11 @@ export const EN: Record<string, string> = {
   GP: 'GL',
   PtV: 'PW',
   PtP: 'PL',
-  'PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos':
-    'MP matches played · MW matches won · GW games won · GL games lost · PW points won · PL points lost',
+  'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos':
+    'Sorted by GW, tiebroken by PW and then MW. MP matches played · MW matches won · GW games won · GL games lost · PW points won · PL points lost',
   'Duplas: só conta quem jogou junto na mesma dupla.': 'Pairs: only counts those who played together as the same pair.',
+  'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.':
+    'Ranked by Games Won (GW) — whoever won the most games overall. Ties are broken by Points Won (PW), and if still tied, by Matches Won (MW). The criteria are the same for the Individual and Pair rankings; the only difference is who gets credited: Individual credits each player separately, Pair only counts it when the two played together as that exact pair.',
 
   // HistoryScreen
   'Nenhum torneio registrado ainda.': 'No tournament recorded yet.',

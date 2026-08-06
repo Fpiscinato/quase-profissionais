@@ -166,6 +166,11 @@ export function QuickMatchScreen({ onCreated, onBack }: Props) {
             </button>
           ))}
         </div>
+        <p className="text-xs text-cream/60">
+          {t(
+            'No tênis oficial o set vai até 6 games (com 2 de vantagem) — vale pra Duplas e Individual. Aqui você pode encurtar pra jogos mais rápidos.',
+          )}
+        </p>
       </div>
 
       {team1.length === maxPerTeam && team2.length === maxPerTeam && (

@@ -7,6 +7,7 @@ import { computeStandings, computeTeamStandings } from '../../engine/ranking'
 import type { MatchResult, PlayerId } from '../../engine/types'
 import { toggleButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
+import { HelpHint } from '../../ui/HelpHint'
 
 function toMatchResult(m: MatchRow): MatchResult {
   return {
@@ -61,7 +62,14 @@ export function RankingScreen() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-bold">{t('Ranking')}</h1>
+      <h1 className="text-xl font-bold">
+        {t('Ranking')}
+        <HelpHint
+          text={t(
+            'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
+          )}
+        />
+      </h1>
 
       <div className="flex gap-2">
         <button type="button" onClick={() => setTab('dia')} className={toggleButton(tab === 'dia')}>
@@ -108,8 +116,10 @@ export function RankingScreen() {
             <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="text-left text-cream/60">
-                  <th className="py-1 pr-2">#</th>
-                  <th className="py-1 pr-2">{t(mode === 'individual' ? 'Jogador' : 'Dupla')}</th>
+                  <th className="sticky left-0 z-10 w-8 bg-navy py-1 pr-2">#</th>
+                  <th className="sticky left-8 z-10 bg-navy py-1 pr-2">
+                    {t(mode === 'individual' ? 'Jogador' : 'Dupla')}
+                  </th>
                   <th className="py-1 pr-2 text-right">{t('PJ')}</th>
                   <th className="py-1 pr-2 text-right">{t('PV')}</th>
                   <th className="py-1 pr-2 text-right">{t('GV')}</th>
@@ -122,8 +132,16 @@ export function RankingScreen() {
                 {mode === 'individual'
                   ? individualStandings.map((s, i) => (
                       <tr key={s.playerId} className={i === 0 ? 'font-bold text-gold' : ''}>
-                        <td className="py-1 pr-2">{i + 1}</td>
-                        <td className="py-1 pr-2">{name(s.playerId)}</td>
+                        <td
+                          className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                        >
+                          {i + 1}
+                        </td>
+                        <td
+                          className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                        >
+                          {name(s.playerId)}
+                        </td>
                         <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
                         <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
                         <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
@@ -134,8 +152,16 @@ export function RankingScreen() {
                     ))
                   : teamStandings.map((s, i) => (
                       <tr key={s.playerIds.join('|')} className={i === 0 ? 'font-bold text-gold' : ''}>
-                        <td className="py-1 pr-2">{i + 1}</td>
-                        <td className="py-1 pr-2">{teamName(s.playerIds)}</td>
+                        <td
+                          className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                        >
+                          {i + 1}
+                        </td>
+                        <td
+                          className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                        >
+                          {teamName(s.playerIds)}
+                        </td>
                         <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
                         <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
                         <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
@@ -149,7 +175,7 @@ export function RankingScreen() {
           </div>
           <p className="text-xs text-cream/50">
             {t(
-              'PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+              'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
             )}
             {mode === 'duplas' &&
               ` · ${t('Duplas: só conta quem jogou junto na mesma dupla.')}`}

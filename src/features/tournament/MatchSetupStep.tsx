@@ -32,7 +32,7 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
     randomServeOrder(round.team1, round.team2),
   )
   const [manualOrder, setManualOrder] = useState<PlayerId[]>([])
-  const [team1InitialSide, setTeam1InitialSide] = useState<CourtSide>('Direita')
+  const [team1InitialSide, setTeam1InitialSide] = useState<CourtSide>('Esquerda')
   const [saving, setSaving] = useState(false)
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
@@ -79,8 +79,9 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
           {t('Configurar partida')} — {t('Rodada')} {round.index + 1}
         </h1>
         <p className="text-sm text-cream/70">
-          {teamName(round.team1)} <span className="text-cream/50">vs</span>{' '}
-          {teamName(round.team2)}
+          <span className="font-semibold text-lime">{t('Time 1')}:</span> {teamName(round.team1)}
+          <span className="text-cream/50"> {t('vs')} </span>
+          <span className="font-semibold text-cream">{t('Time 2')}:</span> {teamName(round.team2)}
         </p>
       </div>
 

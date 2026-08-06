@@ -171,7 +171,7 @@ export async function createMatchForRound(input: CreateMatchInput): Promise<Matc
     team1: input.team1,
     team2: input.team2,
     serveOrder: input.serveOrder,
-    team1InitialSide: input.team1InitialSide ?? 'Direita',
+    team1InitialSide: input.team1InitialSide ?? 'Esquerda',
     pointLog: [],
     games1: 0,
     games2: 0,

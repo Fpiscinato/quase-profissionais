@@ -45,7 +45,7 @@ async function expectServe(playerName: string, side: 'Direita' | 'Esquerda') {
   })
 }
 
-async function seedOneRoundMatch(team1InitialSide: 'Esquerda' | 'Direita' = 'Direita') {
+async function seedOneRoundMatch(team1InitialSide: 'Esquerda' | 'Direita' = 'Esquerda') {
   await ensurePlayersSeeded()
   const players = await db.players.toArray()
   const byName = (n: string) => players.find((p) => p.name === n)!.id
@@ -103,8 +103,8 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
 
     await ponto1() // closes game 1, 4-0
     await expectText('Game!')
-    await expectText('Troquem de lado') // 1 total game = odd
-    await expectText('Games: 1 – 0')
+    await expectText('Troquem de lado') // 1 total game = odd -> sides already flipped: team1 now Direita.
+    await expectText('Games: 0 – 1')
     // Next server is serveOrder[1] = Mateus Adv (team2), fresh game -> Direita.
     await expectServe('Mateus Adv', 'Direita')
 
@@ -115,15 +115,15 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     await expectServe('Jarede', 'Esquerda')
     await expectGone('Game!')
 
-    await ponto1() // re-close game 1 (4-0)
-    await expectText('Games: 1 – 0')
+    await ponto1() // re-close game 1 (4-0) -> team1 flips to Direita again
+    await expectText('Games: 0 – 1')
     await ponto2()
     await ponto2() // game 2 now at 0-2 for team2
 
     // Undo twice in a row: step back past the point of the "mistake" (both game-2 points).
     await desfazer()
     await desfazer()
-    await expectText('Games: 1 – 0')
+    await expectText('Games: 0 – 1')
     await expectText('0 – 0') // back to a fresh game 2, no points yet
 
     // Persisted correctly: reload mid-match resumes straight into the live screen, not the rounds list.
@@ -132,7 +132,7 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     await screen.findByTestId('serve-banner')
     expect(screen.queryByText('Quem joga hoje?')).toBeNull()
     expect(screen.queryByText('Rodadas')).toBeNull()
-    await expectText('Games: 1 – 0')
+    await expectText('Games: 0 – 1')
 
     const persisted = await db.matches.get(match.id)
     expect(persisted?.status).toBe('in_progress')
@@ -140,12 +140,13 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
   })
 
   it('plays through a tiebreak to match point, reviews the result, and locks it on save', async () => {
-    // Continues the match left at "Games: 1 – 0" (team1 up one game) from the
-    // previous test. It's still in_progress, so a fresh mount resumes
-    // straight into the live screen — there's no rounds list to click through.
+    // Continues the match left at "Games: 0 – 1" (team1 up one game, but on
+    // the Direita/right side after the 1st change of ends) from the previous
+    // test. It's still in_progress, so a fresh mount resumes straight into
+    // the live screen — there's no rounds list to click through.
     render(<App />)
     await screen.findByTestId('serve-banner')
-    await expectText('Games: 1 – 0')
+    await expectText('Games: 0 – 1')
 
     const winGame = async (side: 'team1' | 'team2') => {
       for (let i = 0; i < 4; i++) await (side === 'team1' ? ponto1() : ponto2())
@@ -166,8 +167,9 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     await expectText('0 – 0') // tiebreak points display
 
     // Play the tiebreak: team2 wins it 7-0 -> final set recorded 4-5.
+    // At exactly 6 tiebreak points, sides change again (team1 -> Direita/right).
     for (let i = 0; i < 6; i++) await ponto2()
-    await expectText('0 – 6')
+    await expectText('6 – 0')
     expect(screen.queryByText('Set encerrado')).toBeNull()
 
     await ponto2() // 7th tiebreak point -> match over

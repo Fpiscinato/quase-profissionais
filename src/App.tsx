@@ -27,9 +27,13 @@ function LangToggle() {
     </button>
   )
   return (
-    <div className="ml-auto flex gap-1 rounded-lg border border-cream/20 p-0.5">
-      {option('pt', 'PT')}
-      {option('en', 'EN')}
+    <div className="ml-auto flex flex-col items-end gap-1">
+      <div className="flex gap-1 rounded-lg border border-cream/20 p-0.5">
+        {option('pt', 'PT')}
+        {option('en', 'EN')}
+      </div>
+      {/* Build's git commit hash — lets you confirm a deployed site matches the latest commit. */}
+      <span className="font-mono text-[10px] text-cream/30">v{__APP_VERSION__}</span>
     </div>
   )
 }

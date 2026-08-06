@@ -88,7 +88,7 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
   }
 
   const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
-  const courtSides = computeCourtSides(state, match.team1InitialSide ?? 'Direita')
+  const courtSides = computeCourtSides(state, match.team1InitialSide ?? 'Esquerda')
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
   const teamName = (ids: PlayerId[]) => ids.map(name).join(' & ')
@@ -151,8 +151,19 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
       </button>
     ),
   }
-  const orderedSlots: TeamSlot[] =
-    courtSides.team1 === 'Esquerda' ? [team1Slot, team2Slot] : [team2Slot, team1Slot]
+  const leftIsTeam1 = courtSides.team1 === 'Esquerda'
+  const orderedSlots: TeamSlot[] = leftIsTeam1 ? [team1Slot, team2Slot] : [team2Slot, team1Slot]
+
+  // The score display must follow the same left/right order as the team
+  // cards and point buttons above and below it — it was previously always
+  // showing team1's score on the left regardless of which side team1 was
+  // actually standing on.
+  const leftGamePoints = leftIsTeam1 ? state.currentGame.points1 : state.currentGame.points2
+  const rightGamePoints = leftIsTeam1 ? state.currentGame.points2 : state.currentGame.points1
+  const leftTiebreakPoints = leftIsTeam1 ? state.tiebreak.points1 : state.tiebreak.points2
+  const rightTiebreakPoints = leftIsTeam1 ? state.tiebreak.points2 : state.tiebreak.points1
+  const leftGames = leftIsTeam1 ? state.games1 : state.games2
+  const rightGames = leftIsTeam1 ? state.games2 : state.games1
 
   return (
     <div className="flex flex-col gap-3 p-4">
@@ -205,18 +216,18 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
               {t('Tiebreak')}
             </div>
             <div className="text-7xl font-black tabular-nums">
-              {state.tiebreak.points1} – {state.tiebreak.points2}
+              {leftTiebreakPoints} – {rightTiebreakPoints}
             </div>
           </>
         ) : (
           <div className="text-7xl font-black tabular-nums">
-            {pointLabel(state.currentGame.points1, state.currentGame.points2, config.deuceMode)}
+            {pointLabel(leftGamePoints, rightGamePoints, config.deuceMode)}
             {' – '}
-            {pointLabel(state.currentGame.points2, state.currentGame.points1, config.deuceMode)}
+            {pointLabel(rightGamePoints, leftGamePoints, config.deuceMode)}
           </div>
         )}
         <div className="mt-2 text-2xl font-semibold text-cream/80 tabular-nums">
-          {t('Games:')} {state.games1} – {state.games2}
+          {t('Games:')} {leftGames} – {rightGames}
         </div>
       </div>
 
