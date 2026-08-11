@@ -38,7 +38,7 @@ export function HomeScreen({ onNavigate }: Props) {
         <img
           src="/logo.png"
           alt="Os Quase Profissionais"
-          className="h-24 w-24 rounded-full object-cover shadow-lg"
+          className="h-16 w-16 rounded-full object-cover shadow-lg"
         />
         <div>
           <h1 className="text-2xl font-bold">Os Quase Profissionais</h1>
