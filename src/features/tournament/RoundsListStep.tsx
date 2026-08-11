@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { db, deleteScheduledMatch, deleteTournament, finishTournament } from '../../db/db'
+import { cancelMatch, db, deleteTournament, finishTournament } from '../../db/db'
 import { usePlayers, useTournament } from '../../db/hooks'
 import type { PlayerId } from '../../engine/types'
 import { MatchSetupStep } from './MatchSetupStep'
@@ -73,7 +73,7 @@ export function RoundsListStep({ tournamentId, onOpenMatch, onExit }: Props) {
 
   const handleDeleteMatch = async (matchId: string) => {
     setBusy(true)
-    await deleteScheduledMatch(matchId)
+    await cancelMatch(matchId)
     setConfirm(null)
     setBusy(false)
   }

@@ -83,7 +83,11 @@ export function TournamentWizard({ onExit }: Props) {
   if (step.name === 'partida-ao-vivo') {
     const { tournamentId, matchId } = step
     return (
-      <LiveMatchScreen matchId={matchId} onSaved={() => setStep({ name: 'rodadas', tournamentId })} />
+      <LiveMatchScreen
+        matchId={matchId}
+        onSaved={() => setStep({ name: 'rodadas', tournamentId })}
+        onCancelled={() => setStep({ name: 'rodadas', tournamentId })}
+      />
     )
   }
 

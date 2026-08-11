@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, recordPoint, saveMatch, startMatch, undoLastPoint } from '../../db/db'
+import { cancelMatch, db, recordPoint, saveMatch, startMatch, undoLastPoint } from '../../db/db'
 import { usePlayers, useTournament } from '../../db/hooks'
 import { computeMatchState } from '../../engine/score'
 import type { CourtSide } from '../../engine/serve'
@@ -11,7 +11,7 @@ import { computeCourtSides } from './courtSide'
 import { pointLabel } from './display'
 import { ChangeEndsCourt } from './ChangeEndsCourt'
 import { formatDuration } from '../../lib/format'
-import { bigButton, bigButtonAlt, card, secondaryButton } from '../../ui/styles'
+import { bigButton, bigButtonAlt, card, destructiveButton, secondaryButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import type { Translator } from '../../i18n/i18n'
 
@@ -42,15 +42,18 @@ function SideHistory({ history }: { history: CourtSide[] }) {
 interface Props {
   matchId: string
   onSaved: () => void
+  onCancelled: () => void
 }
 
-export function LiveMatchScreen({ matchId, onSaved }: Props) {
+export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   const { t } = useT()
   const match = useLiveQuery(() => db.matches.get(matchId), [matchId])
   const tournament = useTournament(match?.tournamentId)
   const { byId } = usePlayers()
   const [now, setNow] = useState(() => Date.now())
   const [saving, setSaving] = useState(false)
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     startMatch(matchId)
@@ -105,6 +108,12 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
     setSaving(true)
     await saveMatch(matchId)
     onSaved()
+  }
+
+  const handleCancel = async () => {
+    setCancelling(true)
+    await cancelMatch(matchId)
+    onCancelled()
   }
 
   // Team cards and point buttons are laid out left-to-right by physical
@@ -269,14 +278,46 @@ export function LiveMatchScreen({ matchId, onSaved }: Props) {
         </div>
       )}
 
-      <button
-        type="button"
-        className={secondaryButton}
-        disabled={match.pointLog.length === 0}
-        onClick={handleUndo}
-      >
-        {t('Desfazer')}
-      </button>
+      {confirmingCancel ? (
+        <div className={`${card} border border-destructive/50`}>
+          <p className="mb-3 text-sm text-destructive">
+            {t(
+              '⚠ Cancelar esta partida? Os pontos jogados até agora serão perdidos e você vai precisar configurar a partida de novo (ordem de saque e lado). Isso não pode ser desfeito.',
+            )}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={secondaryButton}
+              onClick={() => setConfirmingCancel(false)}
+            >
+              {t('Voltar')}
+            </button>
+            <button
+              type="button"
+              className={`${destructiveButton} flex-1`}
+              disabled={cancelling}
+              onClick={handleCancel}
+            >
+              {cancelling ? t('Cancelando...') : t('Sim, cancelar partida')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className={`${secondaryButton} flex-1`}
+            disabled={match.pointLog.length === 0}
+            onClick={handleUndo}
+          >
+            {t('Desfazer')}
+          </button>
+          <button type="button" className={secondaryButton} onClick={() => setConfirmingCancel(true)}>
+            {t('Cancelar partida')}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

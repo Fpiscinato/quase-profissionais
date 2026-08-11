@@ -290,4 +290,37 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
       within(team2Card).getByLabelText('Histórico de lados: Direita, Esquerda'),
     ).toBeInTheDocument()
   })
+
+  it('cancels an in-progress match: points played are discarded, the round goes back to Pendente', async () => {
+    const { tournament, match } = await seedOneRoundMatch()
+    await openLiveMatch()
+
+    // Play a few points so there's real progress that cancelling must discard.
+    await ponto1()
+    await ponto1()
+    await expectText('30 – 0')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar partida' }))
+    await expectText(/Cancelar esta partida\?/)
+
+    // Backing out of the confirm keeps the match alive with its points intact.
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    await expectGone(/Cancelar esta partida\?/)
+    await expectText('30 – 0')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar partida' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Sim, cancelar partida' }))
+
+    await screen.findByText('Rodadas')
+    expect(screen.getByText('Pendente')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Continuar partida|Iniciar partida/ })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Configurar partida' })).toBeInTheDocument()
+
+    expect(await db.matches.get(match.id)).toBeUndefined()
+    const persistedTournament = await db.tournaments.get(tournament.id)
+    expect(persistedTournament?.rounds[0].matchId).toBeUndefined()
+
+    const settings = await db.appSettings.get('settings')
+    expect(settings?.currentMatchId).toBeUndefined()
+  })
 })

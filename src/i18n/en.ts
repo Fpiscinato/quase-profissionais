@@ -116,6 +116,11 @@ export const EN: Record<string, string> = {
   'Sim, excluir tudo': 'Yes, delete everything',
   'Encerrar torneio': 'End tournament',
   'Excluir torneio': 'Delete tournament',
+  'Excluir dia': 'Delete day',
+  '⚠ Excluir o dia todo — todos os torneios e partidas dessa data? Essa ação não pode ser desfeita.':
+    '⚠ Delete the whole day — every tournament and match on that date? This action cannot be undone.',
+  'Sim, excluir dia': 'Yes, delete day',
+  'Excluindo...': 'Deleting...',
 
   // GuideScreen
   'As regras do Tennis Americano, resumidas. A tela ao vivo te guia durante a partida — quem saca, de que lado, e quando trocar de lado.':
@@ -187,6 +192,12 @@ export const EN: Record<string, string> = {
   'Duração:': 'Duration:',
   'Salvar partida': 'Save match',
   Desfazer: 'Undo',
+  'Cancelar partida': 'Cancel match',
+  '⚠ Cancelar esta partida? Os pontos jogados até agora serão perdidos e você vai precisar configurar a partida de novo (ordem de saque e lado). Isso não pode ser desfeito.':
+    '⚠ Cancel this match? Points played so far will be lost and you will need to set up the match again (serve order and side). This cannot be undone.',
+  'Cancelando...': 'Cancelling...',
+  'Sim, cancelar partida': 'Yes, cancel match',
+  'Não é possível cancelar uma partida já concluída.': 'A match that has already been completed cannot be cancelled.',
 
   // alerts.ts (ALERT_LABELS)
   'Set encerrado': 'Set over',

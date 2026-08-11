@@ -354,16 +354,43 @@ export async function deleteTournament(tournamentId: string): Promise<void> {
 }
 
 /**
- * Deletes a single not-yet-started match and un-links it from its round, so
- * "Configurar partida" (teams/serve order) can be redone for that round.
- * Refuses to delete a match that's already in progress or completed.
+ * Deletes every tournament (and its matches) recorded on a given date —
+ * "Partida avulsa" means a single day can have several tournament rows
+ * (the main one plus any one-off matches), so deleting "the day" is its own
+ * operation, not the same as deleting a single tournament. Cannot be undone.
  */
-export async function deleteScheduledMatch(matchId: string): Promise<void> {
+export async function deleteDay(date: string): Promise<void> {
+  // 'date' isn't an indexed field (the tournaments table is small enough
+  // that a full scan here is fine) — filter in JS instead of db.where().
+  const allTournaments = await db.tournaments.toArray()
+  const dayTournamentIds = new Set(allTournaments.filter((t) => t.date === date).map((t) => t.id))
+  await db.transaction('rw', db.tournaments, db.matches, async () => {
+    for (const tournamentId of dayTournamentIds) {
+      await db.matches.where('tournamentId').equals(tournamentId).delete()
+      await db.tournaments.delete(tournamentId)
+    }
+  })
+  const settings = await getSettings()
+  if (settings.currentTournamentId && dayTournamentIds.has(settings.currentTournamentId)) {
+    await updateSettings({ currentTournamentId: undefined, currentMatchId: undefined })
+  }
+}
+
+/**
+ * Cancels a match that hasn't been saved yet (scheduled, not started; or
+ * in progress with points already played) and un-links it from its round,
+ * so "Configurar partida" (teams/serve order) can be redone for that round.
+ * This is the escape hatch for "started by mistake" / "need to abandon this
+ * one" — the live screen only otherwise offers Desfazer (undo one point at a
+ * time), which doesn't help if you just want out. Refuses to cancel a match
+ * that's already completed and saved — delete the tournament for that.
+ */
+export async function cancelMatch(matchId: string): Promise<void> {
   await db.transaction('rw', db.tournaments, db.matches, async () => {
     const match = await db.matches.get(matchId)
     if (!match) return
-    if (match.status !== 'scheduled') {
-      throw new Error('Só é possível excluir uma partida que ainda não começou.')
+    if (match.status === 'completed') {
+      throw new Error('Não é possível cancelar uma partida já concluída.')
     }
     const tournament = await db.tournaments.get(match.tournamentId)
     if (tournament) {

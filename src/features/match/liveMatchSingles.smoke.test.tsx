@@ -59,4 +59,40 @@ describe('Live match screen — Individual (singles) gets the same visual treatm
       expect(updated?.points1).toBe(1)
     })
   })
+
+  it('can cancel an in-progress Individual match too — not a Duplas-only escape hatch', async () => {
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b] = ['Jarede', 'Mateus'].map(byName)
+
+    const tournament = await createTournament({
+      availablePlayerIds: [a, b],
+      format: 'individual',
+      teamFormationMode: 'balanced',
+      rounds: [{ team1: [a], team2: [b], restingPlayerIds: [] }],
+    })
+    const match = await createMatchForRound({
+      tournamentId: tournament.id,
+      roundIndex: 0,
+      team1: [a],
+      team2: [b],
+      serveOrder: [a, b],
+    })
+
+    render(<App />)
+    await screen.findByText('Rodadas')
+    fireEvent.click(await screen.findByRole('button', { name: /Iniciar partida/ }))
+    await screen.findByTestId('serve-banner')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ponto — Time 1' }))
+    await waitFor(async () => expect((await db.matches.get(match.id))?.points1).toBe(1))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar partida' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Sim, cancelar partida' }))
+
+    await screen.findByText('Rodadas')
+    expect(screen.getByText('Pendente')).toBeInTheDocument()
+    expect(await db.matches.get(match.id)).toBeUndefined()
+  })
 })

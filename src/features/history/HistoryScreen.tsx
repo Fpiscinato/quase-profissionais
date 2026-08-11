@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { db, deleteTournament } from '../../db/db'
+import { db, deleteDay, deleteTournament } from '../../db/db'
+import type { TournamentRow } from '../../db/db'
 import { usePlayers } from '../../db/hooks'
 import { computePlayerPlayTime, computeTeamPlayTime, totalPlaySeconds } from '../../engine/stats'
 import type { PlayerId } from '../../engine/types'
@@ -19,10 +20,19 @@ export function HistoryScreen() {
   const { byId } = usePlayers()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDeleteDay, setConfirmDeleteDay] = useState<string | null>(null)
+  const [deletingDay, setDeletingDay] = useState(false)
 
   const handleDelete = async (tournamentId: string) => {
     await deleteTournament(tournamentId)
     setConfirmDeleteId(null)
+  }
+
+  const handleDeleteDay = async (date: string) => {
+    setDeletingDay(true)
+    await deleteDay(date)
+    setConfirmDeleteDay(null)
+    setDeletingDay(false)
   }
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
@@ -51,6 +61,21 @@ export function HistoryScreen() {
     .map((m) => ({ ...m, durationSeconds: m.durationSeconds ?? 0 }))
   const playerTimes = computePlayerPlayTime(completedMatches)
   const teamTimes = computeTeamPlayTime(completedMatches).filter((t) => t.playerIds.length === 2)
+
+  // "Partida avulsa" means a single day can have several tournament rows
+  // (the main one plus one-off matches), so group by date to offer a
+  // one-shot "excluir o dia" alongside the existing per-tournament delete.
+  const dayGroups: { date: string; tournaments: TournamentRow[] }[] = []
+  const dayGroupIndex = new Map<string, number>()
+  for (const tournament of tournaments) {
+    const existingIndex = dayGroupIndex.get(tournament.date)
+    if (existingIndex === undefined) {
+      dayGroupIndex.set(tournament.date, dayGroups.length)
+      dayGroups.push({ date: tournament.date, tournaments: [tournament] })
+    } else {
+      dayGroups[existingIndex].tournaments.push(tournament)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -97,31 +122,74 @@ export function HistoryScreen() {
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        {tournaments.map((tournament) => {
-          const tournamentMatches = matches
-            .filter((m) => m.tournamentId === tournament.id && m.status === 'completed')
-            .sort((a, b) => a.roundIndex - b.roundIndex)
-          const isOpen = expanded.has(tournament.id)
+      <div className="flex flex-col gap-4">
+        {dayGroups.map((group) => (
+          <div key={group.date} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-cream/80">{formatDate(group.date)}</h2>
+              {confirmDeleteDay !== group.date && (
+                <button
+                  type="button"
+                  className={`${secondaryButton} text-xs`}
+                  onClick={() => setConfirmDeleteDay(group.date)}
+                >
+                  {t('Excluir dia')}
+                </button>
+              )}
+            </div>
 
-          return (
-            <div key={tournament.id} className={card}>
-              <button
-                type="button"
-                className="flex w-full items-center justify-between text-left"
-                onClick={() => toggle(tournament.id)}
-              >
-                <div>
-                  <div className="font-semibold">{formatDate(tournament.date)}</div>
-                  <div className="text-xs text-cream/60">
-                    {t(tournament.format === 'duplas' ? 'Duplas (Americano)' : 'Individual')} ·{' '}
-                    {tournamentMatches.length}/{tournament.rounds.length}{' '}
-                    {t(tournament.rounds.length > 1 ? 'partidas' : 'partida')}{' '}
-                    {t(tournamentMatches.length !== 1 ? 'concluídas' : 'concluída')}
-                  </div>
+            {confirmDeleteDay === group.date && (
+              <div className={`${card} border border-destructive/50`}>
+                <p className="mb-2 text-xs text-destructive">
+                  {t(
+                    '⚠ Excluir o dia todo — todos os torneios e partidas dessa data? Essa ação não pode ser desfeita.',
+                  )}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={secondaryButton}
+                    onClick={() => setConfirmDeleteDay(null)}
+                  >
+                    {t('Cancelar')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${destructiveButton} flex-1`}
+                    disabled={deletingDay}
+                    onClick={() => handleDeleteDay(group.date)}
+                  >
+                    {deletingDay ? t('Excluindo...') : t('Sim, excluir dia')}
+                  </button>
                 </div>
-                <span className="text-cream/50">{isOpen ? '▲' : '▼'}</span>
-              </button>
+              </div>
+            )}
+
+            {group.tournaments.map((tournament) => {
+              const tournamentMatches = matches
+                .filter((m) => m.tournamentId === tournament.id && m.status === 'completed')
+                .sort((a, b) => a.roundIndex - b.roundIndex)
+              const isOpen = expanded.has(tournament.id)
+
+              return (
+                <div key={tournament.id} className={card}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between text-left"
+                    onClick={() => toggle(tournament.id)}
+                  >
+                    <div>
+                      <div className="font-semibold">
+                        {t(tournament.format === 'duplas' ? 'Duplas (Americano)' : 'Individual')}
+                      </div>
+                      <div className="text-xs text-cream/60">
+                        {tournamentMatches.length}/{tournament.rounds.length}{' '}
+                        {t(tournament.rounds.length > 1 ? 'partidas' : 'partida')}{' '}
+                        {t(tournamentMatches.length !== 1 ? 'concluídas' : 'concluída')}
+                      </div>
+                    </div>
+                    <span className="text-cream/50">{isOpen ? '▲' : '▼'}</span>
+                  </button>
 
               {isOpen && (
                 <div className="mt-3 flex flex-col gap-2 border-t border-cream/10 pt-3">
@@ -184,9 +252,11 @@ export function HistoryScreen() {
                   )}
                 </div>
               )}
-            </div>
-          )
-        })}
+                </div>
+              )
+            })}
+          </div>
+        ))}
       </div>
     </div>
   )
