@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ensurePlayersSeeded, getSettings } from './db/db'
+import { ensurePlayersSeeded, getSettings, updateSettings } from './db/db'
+import { useSettings } from './db/hooks'
 import { TournamentWizard } from './features/tournament/TournamentWizard'
 import { QuickMatchScreen } from './features/quickmatch/QuickMatchScreen'
 import { PlayersScreen } from './features/players/PlayersScreen'
@@ -11,6 +12,32 @@ import { BackupScreen } from './features/backup/BackupScreen'
 import { HomeScreen, type View } from './features/home/HomeScreen'
 import { useT } from './i18n/useT'
 import type { Lang } from './i18n/i18n'
+import { APP_VERSION } from './version'
+
+/**
+ * Hands-free voice mode: on the live match screen this speaks score/serve
+ * updates and listens for "Ponto Time 1/2" commands. It's a device-local
+ * setting (like language) so it can be toggled here without leaving the
+ * screen you're on — most matches are played with it off.
+ */
+function VoiceToggle() {
+  const { t } = useT()
+  const settings = useSettings()
+  const voiceOn = settings?.voiceMode ?? false
+  return (
+    <button
+      type="button"
+      aria-pressed={voiceOn}
+      aria-label={t('Modo viva-voz')}
+      onClick={() => updateSettings({ voiceMode: !voiceOn })}
+      className={`flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
+        voiceOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
+      }`}
+    >
+      <span aria-hidden="true">🎙</span> {voiceOn ? t('Voz: ON') : t('Voz: OFF')}
+    </button>
+  )
+}
 
 function LangToggle() {
   const { lang, setLang } = useT()
@@ -28,12 +55,14 @@ function LangToggle() {
   )
   return (
     <div className="ml-auto flex flex-col items-end gap-1">
-      <div className="flex gap-1 rounded-lg border border-cream/20 p-0.5">
-        {option('pt', 'PT')}
-        {option('en', 'EN')}
+      <div className="flex items-center gap-1">
+        <VoiceToggle />
+        <div className="flex gap-1 rounded-lg border border-cream/20 p-0.5">
+          {option('pt', 'PT')}
+          {option('en', 'EN')}
+        </div>
       </div>
-      {/* Build's git commit hash — lets you confirm a deployed site matches the latest commit. */}
-      <span className="font-mono text-[10px] text-cream/30">v{__APP_VERSION__}</span>
+      <span className="font-mono text-[10px] text-cream/30">v{APP_VERSION}</span>
     </div>
   )
 }

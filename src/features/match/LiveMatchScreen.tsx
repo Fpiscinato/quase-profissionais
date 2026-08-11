@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { cancelMatch, db, recordPoint, saveMatch, startMatch, undoLastPoint } from '../../db/db'
-import { usePlayers, useTournament } from '../../db/hooks'
+import { usePlayers, useSettings, useTournament } from '../../db/hooks'
 import { computeMatchState } from '../../engine/score'
 import type { CourtSide } from '../../engine/serve'
 import type { PlayerId, TeamSide } from '../../engine/types'
@@ -14,6 +14,9 @@ import { formatDuration } from '../../lib/format'
 import { bigButton, bigButtonAlt, card, destructiveButton, secondaryButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import type { Translator } from '../../i18n/i18n'
+import { useVoiceAnnouncer } from '../voice/useVoiceAnnouncer'
+import { useVoiceCommands } from '../voice/useVoiceCommands'
+import { repeatLastAnnouncement } from '../voice/speech'
 
 function sideLetter(t: Translator, side: CourtSide): string {
   return t(side)[0]
@@ -46,10 +49,11 @@ interface Props {
 }
 
 export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const match = useLiveQuery(() => db.matches.get(matchId), [matchId])
   const tournament = useTournament(match?.tournamentId)
   const { byId } = usePlayers()
+  const settings = useSettings()
   const [now, setNow] = useState(() => Date.now())
   const [saving, setSaving] = useState(false)
   const [confirmingCancel, setConfirmingCancel] = useState(false)
@@ -64,12 +68,17 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     return () => clearInterval(interval)
   }, [])
 
+  const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
+  const teamName = (ids: PlayerId[]) => ids.map(name).join(' & ')
+
   // Derived values are computed defensively (before the loading guard below)
   // so every hook in this component stays unconditional, per rules of hooks.
   const config = tournament?.options
   const state = match && config ? computeMatchState(match.pointLog, config) : undefined
   const alerts = state && config ? computeAlerts(state, config.deuceMode) : []
   const serveInfo = state && match ? computeServeInfo(state, match.serveOrder) : null
+  const courtSidesForVoice =
+    state && match ? computeCourtSides(state, match.team1InitialSide ?? 'Esquerda') : undefined
 
   // Brief pulse on the "Saca agora" banner whenever the server actually
   // changes, so a new server isn't just a silent text swap.
@@ -86,15 +95,34 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     prevServerId.current = current
   }, [serveInfo?.serverId])
 
+  const voiceModeOn = settings?.voiceMode ?? false
+  useVoiceCommands({
+    enabled: voiceModeOn && !!state && !state.isMatchOver,
+    lang,
+    onTeam1: () => config && recordPoint(matchId, 'team1', config),
+    onTeam2: () => config && recordPoint(matchId, 'team2', config),
+    onRepeat: repeatLastAnnouncement,
+  })
+  useVoiceAnnouncer({
+    enabled: voiceModeOn,
+    lang,
+    matchId,
+    state,
+    deuceMode: config?.deuceMode,
+    alerts,
+    serveInfo,
+    serverName: serveInfo ? name(serveInfo.serverId) : '',
+    courtSides: courtSidesForVoice,
+    team1Name: match ? teamName(match.team1) : '',
+    team2Name: match ? teamName(match.team2) : '',
+  })
+
   if (!match || !tournament || !state || !config) {
     return <div className="p-4 text-cream/70">{t('Carregando partida...')}</div>
   }
 
   const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
-  const courtSides = computeCourtSides(state, match.team1InitialSide ?? 'Esquerda')
-
-  const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
-  const teamName = (ids: PlayerId[]) => ids.map(name).join(' & ')
+  const courtSides = courtSidesForVoice ?? computeCourtSides(state, match.team1InitialSide ?? 'Esquerda')
 
   const handlePoint = (side: TeamSide) => {
     recordPoint(matchId, side, config)

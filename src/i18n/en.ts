@@ -292,4 +292,16 @@ export const EN: Record<string, string> = {
 
   // HelpHint
   Ajuda: 'Help',
+
+  // Voice mode (App.tsx toggle + features/voice/*)
+  'Modo viva-voz': 'Hands-free voice mode',
+  'Voz: ON': 'Voice: ON',
+  'Voz: OFF': 'Voice: OFF',
+  '{server} saca da {side}.': '{server} serves from the {side}.',
+  'Fim de partida! {winner} venceu, {g1} a {g2}.': 'Match over! {winner} won, {g1} to {g2}.',
+  'Troca de lado! Time 1 na {side1}, Time 2 na {side2}.':
+    'Change of ends! Team 1 on the {side1}, Team 2 on the {side2}.',
+  'Game! Games: Time 1, {g1}. Time 2, {g2}.': 'Game! Games: Team 1, {g1}. Team 2, {g2}.',
+  'Tiebreak. Time 1, {p1}. Time 2, {p2}.': 'Tiebreak. Team 1, {p1}. Team 2, {p2}.',
+  'Time 1, {p1}. Time 2, {p2}.': 'Team 1, {p1}. Team 2, {p2}.',
 }

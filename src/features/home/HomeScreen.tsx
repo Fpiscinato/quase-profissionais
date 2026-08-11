@@ -34,11 +34,11 @@ export function HomeScreen({ onNavigate }: Props) {
   const { t } = useT()
   return (
     <div className="flex flex-col gap-6 p-4">
-      <div className="flex flex-col items-center gap-3 pt-4 text-center">
+      <div className="flex flex-col items-center gap-2 pt-2 text-center">
         <img
           src="/logo.png"
           alt="Os Quase Profissionais"
-          className="h-40 w-40 rounded-full object-cover shadow-lg"
+          className="h-24 w-24 rounded-full object-cover shadow-lg"
         />
         <div>
           <h1 className="text-2xl font-bold">Os Quase Profissionais</h1>

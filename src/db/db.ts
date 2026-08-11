@@ -68,6 +68,8 @@ export interface AppSettingsRow {
   currentMatchId?: string
   /** UI language, device-local. Defaults to 'pt' when absent. */
   lang?: 'pt' | 'en'
+  /** Hands-free voice mode (speaks score/serve, listens for "Ponto Time 1/2"). Defaults to off. */
+  voiceMode?: boolean
 }
 
 const db = new Dexie('quase-profissionais') as Dexie & {
