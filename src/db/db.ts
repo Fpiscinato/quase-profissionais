@@ -70,6 +70,8 @@ export interface AppSettingsRow {
   lang?: 'pt' | 'en'
   /** Hands-free voice mode (speaks score/serve, listens for "Ponto Time 1/2"). Defaults to off. */
   voiceMode?: boolean
+  /** SpeechSynthesis playback rate for voice announcements. Defaults to 1 (normal speed). */
+  voiceRate?: number
 }
 
 const db = new Dexie('quase-profissionais') as Dexie & {

@@ -14,28 +14,58 @@ import { useT } from './i18n/useT'
 import type { Lang } from './i18n/i18n'
 import { APP_VERSION } from './version'
 
+// Cycled through by tapping the speed button — covers "a bit faster" up to
+// noticeably quick without needing a slider for such a small control.
+const VOICE_RATES = [1, 1.25, 1.5, 1.75, 2]
+
+function nextVoiceRate(current: number): number {
+  const index = VOICE_RATES.indexOf(current)
+  return VOICE_RATES[(index + 1) % VOICE_RATES.length] ?? 1
+}
+
 /**
  * Hands-free voice mode: on the live match screen this speaks score/serve
  * updates and listens for "Ponto Time 1/2" commands. It's a device-local
  * setting (like language) so it can be toggled here without leaving the
- * screen you're on — most matches are played with it off.
+ * screen you're on — most matches are played with it off. The speed button
+ * only shows up once voice is on, to save space in an already tight header.
  */
 function VoiceToggle() {
   const { t } = useT()
   const settings = useSettings()
   const voiceOn = settings?.voiceMode ?? false
+  const rate = settings?.voiceRate ?? 1
   return (
-    <button
-      type="button"
-      aria-pressed={voiceOn}
-      aria-label={t('Modo viva-voz')}
-      onClick={() => updateSettings({ voiceMode: !voiceOn })}
-      className={`flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
-        voiceOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
-      }`}
-    >
-      <span aria-hidden="true">🎙</span> {voiceOn ? t('Voz: ON') : t('Voz: OFF')}
-    </button>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        aria-pressed={voiceOn}
+        aria-label={t('Modo viva-voz')}
+        onClick={() => updateSettings({ voiceMode: !voiceOn })}
+        className={`flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
+          voiceOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
+        }`}
+      >
+        <span aria-hidden="true">🎙</span> {voiceOn ? t('Voz: ON') : t('Voz: OFF')}
+      </button>
+      {voiceOn && (
+        <button
+          type="button"
+          aria-label={t('Velocidade da voz')}
+          onClick={async () => {
+            // Reads the DB directly (not the `rate` in this closure) so a
+            // quick double-tap can't read a stale value and lose a step
+            // while the previous write is still propagating through
+            // useLiveQuery.
+            const current = await getSettings()
+            await updateSettings({ voiceRate: nextVoiceRate(current.voiceRate ?? 1) })
+          }}
+          className="flex min-h-8 items-center rounded-md border border-cream/20 px-2 text-xs font-bold text-cream/50"
+        >
+          {rate}x
+        </button>
+      )}
+    </div>
   )
 }
 

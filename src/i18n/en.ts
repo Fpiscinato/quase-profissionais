@@ -296,6 +296,7 @@ export const EN: Record<string, string> = {
 
   // Voice mode (App.tsx toggle + features/voice/*)
   'Modo viva-voz': 'Hands-free voice mode',
+  'Velocidade da voz': 'Voice speed',
   'Voz: ON': 'Voice: ON',
   'Voz: OFF': 'Voice: OFF',
   '{server} saca da {side}.': '{server} serves from the {side}.',

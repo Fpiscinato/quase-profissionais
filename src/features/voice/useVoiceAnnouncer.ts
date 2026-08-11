@@ -10,6 +10,8 @@ import { speak } from './speech'
 interface UseVoiceAnnouncerOptions {
   enabled: boolean
   lang: Lang
+  /** SpeechSynthesis playback rate (1 = normal). */
+  rate: number
   matchId: string
   /** Undefined while the match/tournament data is still loading — hook no-ops until it's ready. */
   state: MatchState | undefined
@@ -42,7 +44,7 @@ export function useVoiceAnnouncer(opts: UseVoiceAnnouncerOptions): void {
       return
     }
 
-    const { matchId, state, lang } = opts
+    const { matchId, state, lang, rate } = opts
     const prev = prevRef.current
     const isFirstForThisMatch = !prev || prev.matchId !== matchId
     if (!isFirstForThisMatch && prev.totalPointsPlayed === state.totalPointsPlayed) {
@@ -61,6 +63,7 @@ export function useVoiceAnnouncer(opts: UseVoiceAnnouncerOptions): void {
             server: opts.serverName,
             side: sideWord(opts.serveInfo.side),
           }),
+          rate,
         )
       }
       return
@@ -76,6 +79,7 @@ export function useVoiceAnnouncer(opts: UseVoiceAnnouncerOptions): void {
           g1: state.finalGames1 ?? state.games1,
           g2: state.finalGames2 ?? state.games2,
         }),
+        rate,
       )
       return
     }
@@ -125,6 +129,6 @@ export function useVoiceAnnouncer(opts: UseVoiceAnnouncerOptions): void {
       )
     }
 
-    speak(lang, parts.join(' '))
+    speak(lang, parts.join(' '), rate)
   })
 }

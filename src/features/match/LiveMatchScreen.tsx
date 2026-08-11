@@ -106,6 +106,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   useVoiceAnnouncer({
     enabled: voiceModeOn,
     lang,
+    rate: settings?.voiceRate ?? 1,
     matchId,
     state,
     deuceMode: config?.deuceMode,
