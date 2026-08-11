@@ -13,6 +13,7 @@ export const EN: Record<string, string> = {
   '‹ Início': '‹ Home',
 
   // HomeScreen
+  'Os Quase Profissionais': 'The Almost Professionals',
   'Atletas de fim de semana. Vai quem aguentar.': 'Weekend athletes. Whoever can hang.',
   Torneio: 'Tournament',
   'Partida avulsa': 'One-off match',

@@ -37,11 +37,11 @@ export function HomeScreen({ onNavigate }: Props) {
       <div className="flex flex-col items-center gap-2 pt-2 text-center">
         <img
           src="/logo.png"
-          alt="Os Quase Profissionais"
+          alt={t('Os Quase Profissionais')}
           className="h-16 w-16 rounded-full object-cover shadow-lg"
         />
         <div>
-          <h1 className="text-2xl font-bold">Os Quase Profissionais</h1>
+          <h1 className="text-2xl font-bold">{t('Os Quase Profissionais')}</h1>
           <p className="text-sm text-cream/70">{t('Atletas de fim de semana. Vai quem aguentar.')}</p>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function HomeScreen({ onNavigate }: Props) {
       <button
         type="button"
         onClick={() => onNavigate('torneio')}
-        className="min-h-16 rounded-2xl bg-lime px-4 text-xl font-bold text-navy active:opacity-80"
+        className="min-h-12 rounded-2xl bg-lime px-4 text-lg font-bold text-navy active:opacity-80"
       >
         {t('Torneio')}
       </button>
