@@ -173,6 +173,15 @@ export const EN: Record<string, string> = {
   '8. Backup': '8. Backup',
   'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.':
     'In "Backup" you export all your data (players, tournaments, matches) to a file, to keep or move to another device. Importing merges that file with what is already saved, never deleting anything without confirmation.',
+  '9. Modo viva-voz': '9. Hands-free voice mode',
+  'No topo da tela, "🎙 Voz" liga os anúncios falados (placar, quem saca, troca de lado), com um botão de velocidade ao lado (padrão 1.5x). "🎤 Comandos" é um toggle separado, desligado por padrão, que liga o reconhecimento de voz pra marcar ponto falando "Ponto Time 1" / "Ponto Time 2" ou repetir o último anúncio dizendo "Repita" — em testes reais isso errou bastante (microfone longe, tela apagando), então fica por sua conta ativar. Só funciona em Android/Chrome.':
+    'At the top of the screen, "🎙 Voice" turns on spoken announcements (score, who serves, change of ends), with a speed button next to it (default 1.5x). "🎤 Commands" is a separate toggle, off by default, that turns on speech recognition to score by saying "Point Team 1" / "Point Team 2" or repeat the last announcement by saying "Repeat" — in real testing this missed a lot (mic too far, screen turning off), so it is up to you to turn on. Only works on Android/Chrome.',
+  '10. Controle remoto': '10. Remote control',
+  'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado.':
+    'In "Remote control" you map a physical remote\'s buttons (e.g. a USB presentation "clicker") to Point Team 1, Point Team 2, Repeat announcement, Undo and Save match. Tap "Set", press the remote\'s button, done — works with any device that emulates a keyboard, not just one specific model. The live screen listens for these buttons the whole time, even with Hands-free voice mode off.',
+  '11. Layout tablet': '11. Tablet layout',
+  'A tela ao vivo tem um botão "📐" (perto do cronômetro) que alterna entre Automático, Tablet e Smartphone. Automático detecta o tamanho da tela sozinho; Tablet espalha os times e o placar lado a lado, útil numa tela maior; Smartphone mantém o layout empilhado de sempre.':
+    'The live screen has a "📐" button (near the timer) that cycles through Automatic, Tablet and Smartphone. Automatic detects the screen size on its own; Tablet spreads the teams and score side by side, useful on a bigger screen; Smartphone keeps the usual stacked layout.',
 
   // QuickMatchScreen
   'Um jogo único, sem rotação de torneio — vale pro ranking e pro histórico normalmente.':
@@ -306,4 +315,24 @@ export const EN: Record<string, string> = {
   'Game! Games: Time 1, {g1}. Time 2, {g2}.': 'Game! Games: Team 1, {g1}. Team 2, {g2}.',
   'Tiebreak. Time 1, {p1}. Time 2, {p2}.': 'Tiebreak. Team 1, {p1}. Team 2, {p2}.',
   'Time 1, {p1}. Time 2, {p2}.': 'Team 1, {p1}. Team 2, {p2}.',
+  'Comandos de voz': 'Voice commands',
+  'Comandos: ON': 'Commands: ON',
+  'Comandos: OFF': 'Commands: OFF',
+
+  // Remote control (features/keys/*)
+  'Controle remoto': 'Remote control',
+  'Mapear teclas do apresentador': 'Map presenter keys',
+  'Mapeie as teclas de um controle físico (ex. um "clicker" de apresentação USB) para marcar pontos e outros comandos sem tocar no aparelho. Funciona com qualquer controle que emule teclado, não só um modelo específico.':
+    'Map the buttons of a physical remote (e.g. a USB presentation "clicker") to score points and other commands without touching the phone. Works with any device that emulates a keyboard, not just one specific model.',
+  'Ponto Time 1': 'Point Team 1',
+  'Ponto Time 2': 'Point Team 2',
+  'Repetir anúncio': 'Repeat announcement',
+  'Não definida': 'Not set',
+  Definir: 'Set',
+  Limpar: 'Clear',
+  'Aguardando tecla... (Esc para cancelar)': 'Waiting for a key... (Esc to cancel)',
+
+  // Layout mode (LiveMatchScreen)
+  'Modo de layout': 'Layout mode',
+  Automático: 'Automatic',
 }

@@ -5,9 +5,9 @@
  */
 export function ChangeEndsCourt() {
   return (
-    <div className="flex justify-center py-1" aria-hidden="true">
+    <div className="flex justify-center" aria-hidden="true">
       <div
-        className="animate-court-flip flex h-8 w-40 overflow-hidden rounded-full border-2 border-gold"
+        className="animate-court-flip flex h-6 w-40 overflow-hidden rounded-full border-2 border-gold"
         style={{ perspective: '400px' }}
       >
         <div className="flex flex-1 items-center justify-center bg-lime text-xs font-bold text-navy">

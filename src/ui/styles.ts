@@ -11,11 +11,11 @@ export const textInput =
   'min-h-11 flex-1 rounded-lg border border-cream/30 bg-navy px-3 py-2 text-cream placeholder:text-cream/40'
 
 export const bigButton =
-  'min-h-24 flex-1 rounded-2xl bg-lime px-4 py-4 text-2xl font-bold text-navy disabled:opacity-30 disabled:cursor-not-allowed active:opacity-80'
+  'min-h-16 flex-1 rounded-2xl bg-lime px-4 py-4 text-2xl font-bold text-navy disabled:opacity-30 disabled:cursor-not-allowed active:opacity-80'
 
 /** Same size/weight as bigButton but in cream instead of lime — for a second "team" action that must read as visually distinct from a distance, not just same-color-different-label. */
 export const bigButtonAlt =
-  'min-h-24 flex-1 rounded-2xl bg-cream px-4 py-4 text-2xl font-bold text-navy disabled:opacity-30 disabled:cursor-not-allowed active:opacity-80'
+  'min-h-16 flex-1 rounded-2xl bg-cream px-4 py-4 text-2xl font-bold text-navy disabled:opacity-30 disabled:cursor-not-allowed active:opacity-80'
 
 /**
  * Selection/toggle buttons (format, formação, ordem de saque, tabs...). Uses

@@ -10,6 +10,7 @@ export type View =
   | 'guia'
   | 'manual'
   | 'backup'
+  | 'atalhos'
 
 interface NavItem {
   view: View
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { view: 'guia', label: 'Como jogar', hint: 'Regras básicas em 6 cards' },
   { view: 'manual', label: 'Como usar', hint: 'Passo a passo do app' },
   { view: 'backup', label: 'Backup', hint: 'Exportar / importar dados' },
+  { view: 'atalhos', label: 'Controle remoto', hint: 'Mapear teclas do apresentador' },
 ]
 
 interface Props {

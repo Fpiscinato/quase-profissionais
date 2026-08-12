@@ -10,6 +10,10 @@ import { GuideScreen } from './features/guide/GuideScreen'
 import { ManualScreen } from './features/guide/ManualScreen'
 import { BackupScreen } from './features/backup/BackupScreen'
 import { HomeScreen, type View } from './features/home/HomeScreen'
+import { KeyBindingsScreen } from './features/keys/KeyBindingsScreen'
+import { voiceCommandsSupported } from './features/voice/useVoiceCommands'
+import { resolveEffectiveLayout, TABLET_MIN_WIDTH_QUERY } from './features/match/layoutMode'
+import { useMatchMedia } from './lib/useMatchMedia'
 import { useT } from './i18n/useT'
 import type { Lang } from './i18n/i18n'
 import { APP_VERSION } from './version'
@@ -25,16 +29,21 @@ function nextVoiceRate(current: number): number {
 
 /**
  * Hands-free voice mode: on the live match screen this speaks score/serve
- * updates and listens for "Ponto Time 1/2" commands. It's a device-local
- * setting (like language) so it can be toggled here without leaving the
- * screen you're on — most matches are played with it off. The speed button
- * only shows up once voice is on, to save space in an already tight header.
+ * updates. It's a device-local setting (like language) so it can be toggled
+ * here without leaving the screen you're on — most matches are played with
+ * it off. The speed button and the separate "Comandos" (listening) toggle
+ * only show up once speaking is on, to save space in an already tight
+ * header. Comandos is its own toggle (not tied to Voz) because on-court
+ * testing found speech recognition unreliable while speaking worked well —
+ * it defaults off so nobody gets surprised by a mic listening they didn't
+ * ask for.
  */
 function VoiceToggle() {
   const { t } = useT()
   const settings = useSettings()
   const voiceOn = settings?.voiceMode ?? false
-  const rate = settings?.voiceRate ?? 1
+  const commandsOn = settings?.voiceCommandsEnabled ?? false
+  const rate = settings?.voiceRate ?? 1.5
   return (
     <div className="flex items-center gap-1">
       <button
@@ -58,11 +67,24 @@ function VoiceToggle() {
             // while the previous write is still propagating through
             // useLiveQuery.
             const current = await getSettings()
-            await updateSettings({ voiceRate: nextVoiceRate(current.voiceRate ?? 1) })
+            await updateSettings({ voiceRate: nextVoiceRate(current.voiceRate ?? 1.5) })
           }}
           className="flex min-h-8 items-center rounded-md border border-cream/20 px-2 text-xs font-bold text-cream/50"
         >
           {rate}x
+        </button>
+      )}
+      {voiceOn && voiceCommandsSupported() && (
+        <button
+          type="button"
+          aria-pressed={commandsOn}
+          aria-label={t('Comandos de voz')}
+          onClick={() => updateSettings({ voiceCommandsEnabled: !commandsOn })}
+          className={`flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
+            commandsOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
+          }`}
+        >
+          <span aria-hidden="true">🎤</span> {commandsOn ? t('Comandos: ON') : t('Comandos: OFF')}
         </button>
       )}
     </div>
@@ -85,7 +107,7 @@ function LangToggle() {
   )
   return (
     <div className="ml-auto flex flex-col items-end gap-1">
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-end gap-1">
         <VoiceToggle />
         <div className="flex gap-1 rounded-lg border border-cream/20 p-0.5">
           {option('pt', 'PT')}
@@ -101,6 +123,9 @@ function App() {
   const [view, setView] = useState<View>('home')
   const [ready, setReady] = useState(false)
   const { t } = useT()
+  const settings = useSettings()
+  const isWideViewport = useMatchMedia(TABLET_MIN_WIDTH_QUERY)
+  const effectiveLayout = resolveEffectiveLayout(settings?.layoutMode ?? 'auto', isWideViewport)
 
   useEffect(() => {
     let cancelled = false
@@ -128,8 +153,8 @@ function App() {
   }
 
   return (
-    <div className="mx-auto min-h-svh max-w-md">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-cream/10 bg-navy px-4 py-2">
+    <div className={`mx-auto min-h-svh ${effectiveLayout === 'tablet' ? 'max-w-3xl' : 'max-w-md'}`}>
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-cream/10 bg-navy px-4 py-1.5">
         {view !== 'home' && (
           <button
             type="button"
@@ -153,6 +178,7 @@ function App() {
       {view === 'guia' && <GuideScreen />}
       {view === 'manual' && <ManualScreen />}
       {view === 'backup' && <BackupScreen />}
+      {view === 'atalhos' && <KeyBindingsScreen />}
     </div>
   )
 }

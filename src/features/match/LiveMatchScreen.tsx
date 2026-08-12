@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { cancelMatch, db, recordPoint, saveMatch, startMatch, undoLastPoint } from '../../db/db'
+import {
+  cancelMatch,
+  db,
+  recordPoint,
+  saveMatch,
+  startMatch,
+  undoLastPoint,
+  updateSettings,
+} from '../../db/db'
 import { usePlayers, useSettings, useTournament } from '../../db/hooks'
 import { computeMatchState } from '../../engine/score'
 import type { CourtSide } from '../../engine/serve'
@@ -17,6 +25,15 @@ import type { Translator } from '../../i18n/i18n'
 import { useVoiceAnnouncer } from '../voice/useVoiceAnnouncer'
 import { useVoiceCommands } from '../voice/useVoiceCommands'
 import { repeatLastAnnouncement } from '../voice/speech'
+import { useWakeLock } from '../../lib/useWakeLock'
+import { useKeyCommands } from '../keys/useKeyCommands'
+import { useMatchMedia } from '../../lib/useMatchMedia'
+import {
+  LAYOUT_MODE_LABELS,
+  nextLayoutMode,
+  resolveEffectiveLayout,
+  TABLET_MIN_WIDTH_QUERY,
+} from './layoutMode'
 
 function sideLetter(t: Translator, side: CourtSide): string {
   return t(side)[0]
@@ -63,6 +80,13 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     startMatch(matchId)
   }, [matchId])
 
+  // Kept on for the whole match, independent of voice mode — a dimmed/locked
+  // screen is the likely cause of voice commands cancelling mid-match, and
+  // staying lit is useful either way.
+  useWakeLock(true)
+
+  const isWideViewport = useMatchMedia(TABLET_MIN_WIDTH_QUERY)
+
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
@@ -96,8 +120,9 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   }, [serveInfo?.serverId])
 
   const voiceModeOn = settings?.voiceMode ?? false
+  const voiceCommandsOn = settings?.voiceCommandsEnabled ?? false
   useVoiceCommands({
-    enabled: voiceModeOn && !!state && !state.isMatchOver,
+    enabled: voiceModeOn && voiceCommandsOn && !!state && !state.isMatchOver,
     lang,
     onTeam1: () => config && recordPoint(matchId, 'team1', config),
     onTeam2: () => config && recordPoint(matchId, 'team2', config),
@@ -106,7 +131,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   useVoiceAnnouncer({
     enabled: voiceModeOn,
     lang,
-    rate: settings?.voiceRate ?? 1,
+    rate: settings?.voiceRate ?? 1.5,
     matchId,
     state,
     deuceMode: config?.deuceMode,
@@ -118,12 +143,34 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     team2Name: match ? teamName(match.team2) : '',
   })
 
+  // Doesn't depend on match/tournament/state/config — safe to define (and
+  // call from useKeyCommands below) before the loading guard.
+  const handleSave = async () => {
+    setSaving(true)
+    await saveMatch(matchId)
+    onSaved()
+  }
+
+  useKeyCommands({
+    enabled: !!state && !!config,
+    bindings: settings?.keyBindings,
+    actions: {
+      team1: () => config && !state?.isMatchOver && recordPoint(matchId, 'team1', config),
+      team2: () => config && !state?.isMatchOver && recordPoint(matchId, 'team2', config),
+      repeat: repeatLastAnnouncement,
+      undo: () => config && undoLastPoint(matchId, config),
+      save: () => state?.isMatchOver && handleSave(),
+    },
+  })
+
   if (!match || !tournament || !state || !config) {
     return <div className="p-4 text-cream/70">{t('Carregando partida...')}</div>
   }
 
   const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
   const courtSides = courtSidesForVoice ?? computeCourtSides(state, match.team1InitialSide ?? 'Esquerda')
+  const layoutMode = settings?.layoutMode ?? 'auto'
+  const isTablet = resolveEffectiveLayout(layoutMode, isWideViewport) === 'tablet'
 
   const handlePoint = (side: TeamSide) => {
     recordPoint(matchId, side, config)
@@ -131,12 +178,6 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
 
   const handleUndo = () => {
     undoLastPoint(matchId, config)
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    await saveMatch(matchId)
-    onSaved()
   }
 
   const handleCancel = async () => {
@@ -203,108 +244,160 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   const leftGames = leftIsTeam1 ? state.games1 : state.games2
   const rightGames = leftIsTeam1 ? state.games2 : state.games1
 
+  const teamCard = (slot: TeamSlot) => (
+    // Padding kept lower than the shared `card` constant's p-4 (built here
+    // instead of layering a conflicting p-3 utility on top of it) — this
+    // screen needs to fit without scrolling on small phones, unlike the
+    // other screens `card` is used on.
+    <div
+      key={slot.key}
+      className={`rounded-xl bg-navy-light p-2 border-2 ${slot.cardClass}`}
+    >
+      <div className={`text-sm font-black uppercase tracking-wide ${slot.labelClass}`}>
+        {t(slot.label)}
+      </div>
+      <div className="text-lg font-bold text-cream">{slot.name}</div>
+      <SideHistory history={slot.history} />
+    </div>
+  )
+
+  const alertsBlock = alerts.length > 0 && (
+    <div className="flex flex-col gap-1">
+      {alerts.map((alert) =>
+        alert === 'change-ends' ? (
+          <div
+            key={alert}
+            className="rounded-lg border border-gold bg-gold/10 py-0.5 text-center text-base font-bold text-gold"
+          >
+            {t(ALERT_LABELS[alert])}
+            <ChangeEndsCourt />
+          </div>
+        ) : (
+          <div
+            key={alert}
+            className="rounded-lg border border-gold bg-gold/10 py-0.5 text-center text-base font-bold text-gold"
+          >
+            {t(ALERT_LABELS[alert])}
+          </div>
+        ),
+      )}
+    </div>
+  )
+
+  const scoreBlock = (
+    <div className="rounded-2xl bg-navy-light py-3 text-center">
+      {state.isTiebreak ? (
+        <>
+          <div className="text-sm font-semibold uppercase tracking-wide text-lime">
+            {t('Tiebreak')}
+          </div>
+          <div className="text-6xl font-black tabular-nums">
+            {leftTiebreakPoints} – {rightTiebreakPoints}
+          </div>
+        </>
+      ) : (
+        <div className="text-6xl font-black tabular-nums">
+          {pointLabel(leftGamePoints, rightGamePoints, config.deuceMode)}
+          {' – '}
+          {pointLabel(rightGamePoints, leftGamePoints, config.deuceMode)}
+        </div>
+      )}
+      <div className="mt-1 text-xl font-semibold text-cream/80 tabular-nums">
+        {t('Games:')} {leftGames} – {rightGames}
+      </div>
+    </div>
+  )
+
+  const serveBanner = serveInfo && (
+    <div
+      data-testid="serve-banner"
+      className={`rounded-xl border-l-4 border-lime bg-navy-light px-4 py-1.5 text-center text-lg font-bold text-cream ${
+        serverPulse ? 'animate-serve-pulse' : ''
+      }`}
+    >
+      <span aria-hidden="true">🎾</span> {t('Saca agora:')} {name(serveInfo.serverId)} —{' '}
+      <span className={serveInfo.side === 'Direita' ? 'text-lime' : 'text-gold'}>
+        {t(serveInfo.side)}
+      </span>
+    </div>
+  )
+
+  const matchOverCard = (
+    <div className="rounded-xl bg-navy-light p-3">
+      <h2 className="mb-1 text-lg font-bold">{t('Resultado final')}</h2>
+      <p className="text-base font-semibold">
+        {teamName(match.team1)} {state.finalGames1} × {state.finalGames2} {teamName(match.team2)}
+      </p>
+      <p className="text-sm text-cream/70">
+        {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
+        {formatDuration(elapsedSeconds)}
+      </p>
+      <button
+        type="button"
+        className={`${bigButton} mt-2 w-full`}
+        disabled={saving}
+        onClick={handleSave}
+      >
+        {saving ? t('Salvando...') : t('Salvar partida')}
+      </button>
+    </div>
+  )
+
+  const layoutToggle = (
+    <button
+      type="button"
+      aria-label={t('Modo de layout')}
+      onClick={() => updateSettings({ layoutMode: nextLayoutMode(layoutMode) })}
+      className="ml-auto flex min-h-7 items-center gap-1 rounded-md border border-cream/20 px-2 text-xs font-bold text-cream/50"
+    >
+      <span aria-hidden="true">📐</span> {t(LAYOUT_MODE_LABELS[layoutMode])}
+    </button>
+  )
+
   return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-center justify-between text-sm text-cream/60">
+    <div className="flex flex-col gap-1.5 p-3">
+      <div className="flex items-center gap-2 text-sm text-cream/60">
         <span className="tabular-nums">{formatDuration(elapsedSeconds)}</span>
         <span>
           {t('Rodada')} {match.roundIndex + 1}
         </span>
+        {layoutToggle}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-center">
-        {orderedSlots.map((slot) => (
-          <div key={slot.key} className={`${card} border-2 ${slot.cardClass}`}>
-            <div className={`text-sm font-black uppercase tracking-wide ${slot.labelClass}`}>
-              {t(slot.label)}
-            </div>
-            <div className="text-lg font-bold text-cream">{slot.name}</div>
-            <SideHistory history={slot.history} />
+      {isTablet ? (
+        <div className="grid grid-cols-[1fr_1.4fr_1fr] items-stretch gap-3">
+          <div className="flex flex-col gap-2">
+            {teamCard(orderedSlots[0])}
+            {!state.isMatchOver && orderedSlots[0].button}
           </div>
-        ))}
-      </div>
-
-      {alerts.length > 0 && (
-        <div className="flex flex-col gap-1">
-          {alerts.map((alert) =>
-            alert === 'change-ends' ? (
-              <div
-                key={alert}
-                className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
-              >
-                {t(ALERT_LABELS[alert])}
-                <ChangeEndsCourt />
-              </div>
+          <div className="flex flex-col gap-2 text-center">
+            {alertsBlock}
+            {!state.isMatchOver ? (
+              <>
+                {scoreBlock}
+                {serveBanner}
+              </>
             ) : (
-              <div
-                key={alert}
-                className="rounded-lg border border-gold bg-gold/10 py-2 text-center text-lg font-bold text-gold"
-              >
-                {t(ALERT_LABELS[alert])}
-              </div>
-            ),
-          )}
-        </div>
-      )}
-
-      <div className="rounded-2xl bg-navy-light py-6 text-center">
-        {state.isTiebreak ? (
-          <>
-            <div className="text-sm font-semibold uppercase tracking-wide text-lime">
-              {t('Tiebreak')}
-            </div>
-            <div className="text-7xl font-black tabular-nums">
-              {leftTiebreakPoints} – {rightTiebreakPoints}
-            </div>
-          </>
-        ) : (
-          <div className="text-7xl font-black tabular-nums">
-            {pointLabel(leftGamePoints, rightGamePoints, config.deuceMode)}
-            {' – '}
-            {pointLabel(rightGamePoints, leftGamePoints, config.deuceMode)}
+              matchOverCard
+            )}
           </div>
-        )}
-        <div className="mt-2 text-2xl font-semibold text-cream/80 tabular-nums">
-          {t('Games:')} {leftGames} – {rightGames}
+          <div className="flex flex-col gap-2">
+            {teamCard(orderedSlots[1])}
+            {!state.isMatchOver && orderedSlots[1].button}
+          </div>
         </div>
-      </div>
-
-      {serveInfo && (
-        <div
-          data-testid="serve-banner"
-          className={`rounded-xl border-l-4 border-lime bg-navy-light px-4 py-3 text-center text-xl font-bold text-cream ${
-            serverPulse ? 'animate-serve-pulse' : ''
-          }`}
-        >
-          <span aria-hidden="true">🎾</span> {t('Saca agora:')} {name(serveInfo.serverId)} —{' '}
-          <span className={serveInfo.side === 'Direita' ? 'text-lime' : 'text-gold'}>
-            {t(serveInfo.side)}
-          </span>
-        </div>
-      )}
-
-      {!state.isMatchOver ? (
-        <div className="flex gap-3">{orderedSlots.map((slot) => slot.button)}</div>
       ) : (
-        <div className={card}>
-          <h2 className="mb-2 text-xl font-bold">{t('Resultado final')}</h2>
-          <p className="text-lg font-semibold">
-            {teamName(match.team1)} {state.finalGames1} × {state.finalGames2}{' '}
-            {teamName(match.team2)}
-          </p>
-          <p className="text-sm text-cream/70">
-            {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
-            {formatDuration(elapsedSeconds)}
-          </p>
-          <button
-            type="button"
-            className={`${bigButton} mt-3 w-full`}
-            disabled={saving}
-            onClick={handleSave}
-          >
-            {saving ? t('Salvando...') : t('Salvar partida')}
-          </button>
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-2 text-center">{orderedSlots.map(teamCard)}</div>
+          {alertsBlock}
+          {scoreBlock}
+          {serveBanner}
+          {!state.isMatchOver ? (
+            <div className="flex gap-3">{orderedSlots.map((slot) => slot.button)}</div>
+          ) : (
+            matchOverCard
+          )}
+        </>
       )}
 
       {confirmingCancel ? (

@@ -68,10 +68,20 @@ export interface AppSettingsRow {
   currentMatchId?: string
   /** UI language, device-local. Defaults to 'pt' when absent. */
   lang?: 'pt' | 'en'
-  /** Hands-free voice mode (speaks score/serve, listens for "Ponto Time 1/2"). Defaults to off. */
+  /** Hands-free voice mode: speaks score/serve announcements. Defaults to off. */
   voiceMode?: boolean
-  /** SpeechSynthesis playback rate for voice announcements. Defaults to 1 (normal speed). */
+  /** SpeechSynthesis playback rate for voice announcements. Defaults to 1.5 (tested well on-court). */
   voiceRate?: number
+  /**
+   * Independent from voiceMode: gates STT listening for "Ponto Time 1/2" commands.
+   * Defaults to off — on-court testing found it unreliable (mic distance, screen-off
+   * cancelling the recognition session), so it's an explicit opt-in on top of voiceMode.
+   */
+  voiceCommandsEnabled?: boolean
+  /** KeyboardEvent.code per action id (see features/keys/actions.ts) for a physical remote/clicker. */
+  keyBindings?: Record<string, string>
+  /** Device-local layout preference for the live match screen. 'auto' picks by viewport width. */
+  layoutMode?: 'auto' | 'tablet' | 'smartphone'
 }
 
 const db = new Dexie('quase-profissionais') as Dexie & {
