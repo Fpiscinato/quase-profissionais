@@ -12,8 +12,17 @@ export const TABLET_MIN_WIDTH_QUERY = '(min-width: 700px) and (min-height: 500px
 // layout up further ("roomy"): requires real width AND real height to be
 // generous, not just the layout mode being 'tablet' — a forced tablet mode
 // on a small/short phone must keep the compact sizes (already verified to
-// fit there) instead of scaling up into a scroll.
-export const TABLET_MIN_HEIGHT_QUERY = '(min-height: 750px)'
+// fit there) instead of scaling up into a scroll. Verified empirically
+// (playwright, worst-case states: change-ends+game alert stacked, deuce/
+// advantage, a double-digit tiebreak): true content needs ~640-650px at
+// this height — 700px keeps a real safety margin above that.
+export const TABLET_MIN_HEIGHT_QUERY = '(min-height: 700px)'
+
+// Roomy also needs its own, wider width floor than the base tablet
+// threshold: the bigger score text (e.g. "AD – 40") wraps to 2 lines in the
+// tablet grid's center column right around 700-740px viewport width —
+// verified empirically the wrap is gone by 750px, so 800px keeps a margin.
+export const TABLET_ROOMY_MIN_WIDTH_QUERY = '(min-width: 800px)'
 
 export function resolveEffectiveLayout(mode: LayoutMode, isWideViewport: boolean): EffectiveLayout {
   if (mode === 'auto') return isWideViewport ? 'tablet' : 'smartphone'

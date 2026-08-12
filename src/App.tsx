@@ -153,7 +153,9 @@ function App() {
   }
 
   return (
-    <div className={`mx-auto min-h-svh ${effectiveLayout === 'tablet' ? 'max-w-3xl' : 'max-w-md'}`}>
+    <div
+      className={`mx-auto min-h-svh ${effectiveLayout === 'tablet' ? 'max-w-[min(95vw,1600px)]' : 'max-w-md'}`}
+    >
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-cream/10 bg-navy px-4 py-1.5">
         {view !== 'home' && (
           <button

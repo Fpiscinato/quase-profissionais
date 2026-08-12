@@ -34,6 +34,7 @@ import {
   resolveEffectiveLayout,
   TABLET_MIN_HEIGHT_QUERY,
   TABLET_MIN_WIDTH_QUERY,
+  TABLET_ROOMY_MIN_WIDTH_QUERY,
 } from './layoutMode'
 
 function sideLetter(t: Translator, side: CourtSide): string {
@@ -88,6 +89,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
 
   const isWideViewport = useMatchMedia(TABLET_MIN_WIDTH_QUERY)
   const isTallViewport = useMatchMedia(TABLET_MIN_HEIGHT_QUERY)
+  const isRoomyWidth = useMatchMedia(TABLET_ROOMY_MIN_WIDTH_QUERY)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -177,7 +179,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   // genuinely both wide AND tall — a forced Tablet mode on a small/short
   // phone keeps the compact sizes (already verified to fit there) instead
   // of scaling into a scroll.
-  const isRoomyTablet = isTablet && isWideViewport && isTallViewport
+  const isRoomyTablet = isTablet && isRoomyWidth && isTallViewport
 
   const handlePoint = (side: TeamSide) => {
     recordPoint(matchId, side, config)
@@ -289,8 +291,16 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     </div>
   )
 
-  const alertsBlock = alerts.length > 0 && (
-    <div className="flex flex-col gap-1">
+  // Always rendered (even with 0 alerts) at a fixed min-height sized to the
+  // tallest possible combination — a game/tiebreak/golden-point alert can
+  // land on the same boundary point as change-ends, stacking two boxes at
+  // once (measured: 88px compact / 160px roomy) — so whatever's below
+  // (score, serve banner, point buttons) never shifts position when an
+  // alert appears/disappears or a second one joins it mid-match.
+  const alertsBlock = (
+    <div
+      className={`flex flex-col justify-center gap-1 ${isRoomyTablet ? 'min-h-[160px]' : 'min-h-[88px]'}`}
+    >
       {alerts.map((alert) =>
         alert === 'change-ends' ? (
           <div
@@ -359,7 +369,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   )
 
   const matchOverCard = (
-    <div className={`rounded-xl bg-navy-light ${isRoomyTablet ? 'p-8' : 'p-3'}`}>
+    <div className={`rounded-xl bg-navy-light ${isRoomyTablet ? 'p-8' : 'p-2'}`}>
       <h2 className={`font-bold ${isRoomyTablet ? 'mb-4 text-3xl' : 'mb-1 text-lg'}`}>
         {t('Resultado final')}
       </h2>
@@ -373,7 +383,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       <button
         type="button"
         className={`${isRoomyTablet ? roomyButtonClass('bg-lime') : bigButton} ${
-          isRoomyTablet ? 'mt-6' : 'mt-2'
+          isRoomyTablet ? 'mt-6' : 'mt-1'
         } w-full`}
         disabled={saving}
         onClick={handleSave}
@@ -395,7 +405,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   )
 
   return (
-    <div className="flex flex-col gap-1.5 p-3">
+    <div className="flex flex-col gap-1 p-3">
       <div className="flex items-center gap-2 text-sm text-cream/60">
         <span className="tabular-nums">{formatDuration(elapsedSeconds)}</span>
         <span>
