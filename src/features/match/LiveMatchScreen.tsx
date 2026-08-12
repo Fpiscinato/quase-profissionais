@@ -32,6 +32,7 @@ import {
   LAYOUT_MODE_LABELS,
   nextLayoutMode,
   resolveEffectiveLayout,
+  TABLET_MIN_HEIGHT_QUERY,
   TABLET_MIN_WIDTH_QUERY,
 } from './layoutMode'
 
@@ -86,6 +87,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   useWakeLock(true)
 
   const isWideViewport = useMatchMedia(TABLET_MIN_WIDTH_QUERY)
+  const isTallViewport = useMatchMedia(TABLET_MIN_HEIGHT_QUERY)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -171,6 +173,11 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   const courtSides = courtSidesForVoice ?? computeCourtSides(state, match.team1InitialSide ?? 'Esquerda')
   const layoutMode = settings?.layoutMode ?? 'auto'
   const isTablet = resolveEffectiveLayout(layoutMode, isWideViewport) === 'tablet'
+  // Scales the tablet layout up further, but only when the viewport is
+  // genuinely both wide AND tall — a forced Tablet mode on a small/short
+  // phone keeps the compact sizes (already verified to fit there) instead
+  // of scaling into a scroll.
+  const isRoomyTablet = isTablet && isWideViewport && isTallViewport
 
   const handlePoint = (side: TeamSide) => {
     recordPoint(matchId, side, config)
@@ -199,6 +206,13 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     history: CourtSide[]
     button: ReactNode
   }
+  // Bigger point-button variant for genuinely spacious tablets (see
+  // isRoomyTablet) — built locally rather than varying bigButton/bigButtonAlt
+  // themselves, since those stay the tuned-to-fit baseline for phones and
+  // cramped/forced tablet sizes.
+  const roomyButtonClass = (bg: 'bg-lime' | 'bg-cream') =>
+    `flex-1 rounded-2xl ${bg} px-4 py-6 text-4xl font-bold text-navy disabled:opacity-30 disabled:cursor-not-allowed active:opacity-80`
+
   const team1Slot: TeamSlot = {
     key: 'team1',
     cardClass: 'border-lime bg-lime/10',
@@ -207,7 +221,12 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     name: teamName(match.team1),
     history: courtSides.team1History,
     button: (
-      <button key="team1" type="button" className={bigButton} onClick={() => handlePoint('team1')}>
+      <button
+        key="team1"
+        type="button"
+        className={isRoomyTablet ? roomyButtonClass('bg-lime') : bigButton}
+        onClick={() => handlePoint('team1')}
+      >
         {t('Ponto')} — {t('Time 1')}
       </button>
     ),
@@ -223,7 +242,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       <button
         key="team2"
         type="button"
-        className={bigButtonAlt}
+        className={isRoomyTablet ? roomyButtonClass('bg-cream') : bigButtonAlt}
         onClick={() => handlePoint('team2')}
       >
         {t('Ponto')} — {t('Time 2')}
@@ -248,15 +267,24 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     // Padding kept lower than the shared `card` constant's p-4 (built here
     // instead of layering a conflicting p-3 utility on top of it) — this
     // screen needs to fit without scrolling on small phones, unlike the
-    // other screens `card` is used on.
+    // other screens `card` is used on. Scales up on a genuinely roomy
+    // tablet (isRoomyTablet) — never on a phone or a cramped/forced tablet.
+    // Prefixed key: in the tablet layout this card and its slot.button (key
+    // "team1"/"team2") end up as siblings in the same column div — without
+    // the prefix their keys would collide (React logs a duplicate-key
+    // warning and may misidentify which node is which across updates).
     <div
-      key={slot.key}
-      className={`rounded-xl bg-navy-light p-2 border-2 ${slot.cardClass}`}
+      key={`card-${slot.key}`}
+      className={`rounded-xl bg-navy-light border-2 ${slot.cardClass} ${isRoomyTablet ? 'p-6' : 'p-2'}`}
     >
-      <div className={`text-sm font-black uppercase tracking-wide ${slot.labelClass}`}>
+      <div
+        className={`font-black uppercase tracking-wide ${slot.labelClass} ${isRoomyTablet ? 'text-xl' : 'text-sm'}`}
+      >
         {t(slot.label)}
       </div>
-      <div className="text-lg font-bold text-cream">{slot.name}</div>
+      <div className={`font-bold text-cream ${isRoomyTablet ? 'text-4xl' : 'text-lg'}`}>
+        {slot.name}
+      </div>
       <SideHistory history={slot.history} />
     </div>
   )
@@ -267,7 +295,9 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
         alert === 'change-ends' ? (
           <div
             key={alert}
-            className="rounded-lg border border-gold bg-gold/10 py-0.5 text-center text-base font-bold text-gold"
+            className={`rounded-lg border border-gold bg-gold/10 text-center font-bold text-gold ${
+              isRoomyTablet ? 'py-4 text-2xl' : 'py-0.5 text-base'
+            }`}
           >
             {t(ALERT_LABELS[alert])}
             <ChangeEndsCourt />
@@ -275,7 +305,9 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
         ) : (
           <div
             key={alert}
-            className="rounded-lg border border-gold bg-gold/10 py-0.5 text-center text-base font-bold text-gold"
+            className={`rounded-lg border border-gold bg-gold/10 text-center font-bold text-gold ${
+              isRoomyTablet ? 'py-4 text-2xl' : 'py-0.5 text-base'
+            }`}
           >
             {t(ALERT_LABELS[alert])}
           </div>
@@ -285,24 +317,28 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   )
 
   const scoreBlock = (
-    <div className="rounded-2xl bg-navy-light py-3 text-center">
+    <div className={`rounded-2xl bg-navy-light text-center ${isRoomyTablet ? 'py-10' : 'py-3'}`}>
       {state.isTiebreak ? (
         <>
-          <div className="text-sm font-semibold uppercase tracking-wide text-lime">
+          <div
+            className={`font-semibold uppercase tracking-wide text-lime ${isRoomyTablet ? 'text-lg' : 'text-sm'}`}
+          >
             {t('Tiebreak')}
           </div>
-          <div className="text-6xl font-black tabular-nums">
+          <div className={`font-black tabular-nums ${isRoomyTablet ? 'text-7xl' : 'text-6xl'}`}>
             {leftTiebreakPoints} – {rightTiebreakPoints}
           </div>
         </>
       ) : (
-        <div className="text-6xl font-black tabular-nums">
+        <div className={`font-black tabular-nums ${isRoomyTablet ? 'text-7xl' : 'text-6xl'}`}>
           {pointLabel(leftGamePoints, rightGamePoints, config.deuceMode)}
           {' – '}
           {pointLabel(rightGamePoints, leftGamePoints, config.deuceMode)}
         </div>
       )}
-      <div className="mt-1 text-xl font-semibold text-cream/80 tabular-nums">
+      <div
+        className={`font-semibold text-cream/80 tabular-nums ${isRoomyTablet ? 'mt-4 text-3xl' : 'mt-1 text-xl'}`}
+      >
         {t('Games:')} {leftGames} – {rightGames}
       </div>
     </div>
@@ -311,9 +347,9 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   const serveBanner = serveInfo && (
     <div
       data-testid="serve-banner"
-      className={`rounded-xl border-l-4 border-lime bg-navy-light px-4 py-1.5 text-center text-lg font-bold text-cream ${
-        serverPulse ? 'animate-serve-pulse' : ''
-      }`}
+      className={`rounded-xl border-l-4 border-lime bg-navy-light text-center font-bold text-cream ${
+        isRoomyTablet ? 'px-6 py-6 text-3xl' : 'px-4 py-1.5 text-lg'
+      } ${serverPulse ? 'animate-serve-pulse' : ''}`}
     >
       <span aria-hidden="true">🎾</span> {t('Saca agora:')} {name(serveInfo.serverId)} —{' '}
       <span className={serveInfo.side === 'Direita' ? 'text-lime' : 'text-gold'}>
@@ -323,18 +359,22 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   )
 
   const matchOverCard = (
-    <div className="rounded-xl bg-navy-light p-3">
-      <h2 className="mb-1 text-lg font-bold">{t('Resultado final')}</h2>
-      <p className="text-base font-semibold">
+    <div className={`rounded-xl bg-navy-light ${isRoomyTablet ? 'p-8' : 'p-3'}`}>
+      <h2 className={`font-bold ${isRoomyTablet ? 'mb-4 text-3xl' : 'mb-1 text-lg'}`}>
+        {t('Resultado final')}
+      </h2>
+      <p className={`font-semibold ${isRoomyTablet ? 'text-2xl' : 'text-base'}`}>
         {teamName(match.team1)} {state.finalGames1} × {state.finalGames2} {teamName(match.team2)}
       </p>
-      <p className="text-sm text-cream/70">
+      <p className={`text-cream/70 ${isRoomyTablet ? 'mt-2 text-lg' : 'text-sm'}`}>
         {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
         {formatDuration(elapsedSeconds)}
       </p>
       <button
         type="button"
-        className={`${bigButton} mt-2 w-full`}
+        className={`${isRoomyTablet ? roomyButtonClass('bg-lime') : bigButton} ${
+          isRoomyTablet ? 'mt-6' : 'mt-2'
+        } w-full`}
         disabled={saving}
         onClick={handleSave}
       >

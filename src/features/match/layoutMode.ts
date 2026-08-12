@@ -1,11 +1,19 @@
 export type LayoutMode = 'auto' | 'tablet' | 'smartphone'
 export type EffectiveLayout = 'tablet' | 'smartphone'
 
-// Conservative threshold: below common phone widths (incl. large phones in
-// landscape) and above typical portrait phone widths, so "auto" doesn't
-// misclassify a phone as a tablet — that would break the no-scroll
-// requirement on the live match screen.
-export const TABLET_MIN_WIDTH_QUERY = '(min-width: 700px)'
+// Conservative width threshold, ALSO gated on a minimum height: width alone
+// would misclassify a wide-but-short landscape phone (e.g. 926x428) as a
+// tablet, which the compact 3-column layout doesn't reliably fit without
+// scrolling at that little height — a real landscape tablet is never that
+// short, so requiring both keeps "auto" from firing on a rotated phone.
+export const TABLET_MIN_WIDTH_QUERY = '(min-width: 700px) and (min-height: 500px)'
+
+// A second, independent (and much taller) threshold for scaling the tablet
+// layout up further ("roomy"): requires real width AND real height to be
+// generous, not just the layout mode being 'tablet' — a forced tablet mode
+// on a small/short phone must keep the compact sizes (already verified to
+// fit there) instead of scaling up into a scroll.
+export const TABLET_MIN_HEIGHT_QUERY = '(min-height: 750px)'
 
 export function resolveEffectiveLayout(mode: LayoutMode, isWideViewport: boolean): EffectiveLayout {
   if (mode === 'auto') return isWideViewport ? 'tablet' : 'smartphone'
