@@ -49,17 +49,25 @@ export function RankingScreen() {
   const [tab, setTab] = useState<Tab>('dia')
   const [mode, setMode] = useState<Mode>('individual')
   const [sameGamesOnly, setSameGamesOnly] = useState(false)
+  const [tournamentOnly, setTournamentOnly] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const { byId } = usePlayers()
 
   const tournaments = useLiveQuery(() => db.tournaments.toArray(), [], [])
-  const allCompletedMatches = useLiveQuery(
+  const allCompletedMatchesRaw = useLiveQuery(
     () => db.matches.where('status').equals('completed').toArray(),
     [],
     [],
   )
 
   const tournamentDateById = new Map(tournaments.map((tour) => [tour.id, tour.date]))
+  // Absent on tournaments created before this field existed — treated as
+  // 'torneio' so old data keeps counting exactly as it did before, both when
+  // the filter is off and (as a reasonable default) when it's on.
+  const tournamentOriginById = new Map(tournaments.map((tour) => [tour.id, tour.origin ?? 'torneio']))
+  const allCompletedMatches = tournamentOnly
+    ? allCompletedMatchesRaw.filter((m) => tournamentOriginById.get(m.tournamentId) !== 'avulsa')
+    : allCompletedMatchesRaw
 
   // Distinct dates that actually have a completed match, most recent first —
   // "Ranking do dia" used to mean "the most recently created tournament",
@@ -212,6 +220,16 @@ export function RankingScreen() {
         </button>
       </div>
 
+      <label className="flex items-center gap-2 text-sm text-cream/80">
+        <input
+          type="checkbox"
+          className="h-5 w-5 accent-lime"
+          checked={tournamentOnly}
+          onChange={() => setTournamentOnly((v) => !v)}
+        />
+        <span>{t('Somente partidas de torneio')}</span>
+      </label>
+
       <button type="button" className={secondaryButton} disabled={sharing} onClick={handleShare}>
         {sharing ? t('Gerando...') : t('Compartilhar')}
       </button>
@@ -287,9 +305,17 @@ export function RankingScreen() {
                       if (section.matchesPlayed === null) return rows
                       return [
                         <tr key={`group-${section.matchesPlayed}`}>
-                          <td colSpan={8} className="bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                          {/* Two plain (non-colspan) sticky cells, not one
+                              colspan={8} cell — Chromium doesn't apply
+                              `position: sticky` to table cells that have a
+                              colspan, so a single wide cell here would just
+                              scroll away with the rest of the row instead of
+                              staying pinned like the # / name columns do. */}
+                          <td className="sticky left-0 z-10 w-8 bg-navy pt-3 pb-1" />
+                          <td className="sticky left-8 z-10 bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
                             {groupLabel(section.matchesPlayed)}
                           </td>
+                          <td colSpan={6} className="bg-navy pt-3 pb-1" />
                         </tr>,
                         ...rows,
                       ]
@@ -318,9 +344,17 @@ export function RankingScreen() {
                       if (section.matchesPlayed === null) return rows
                       return [
                         <tr key={`group-${section.matchesPlayed}`}>
-                          <td colSpan={8} className="bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                          {/* Two plain (non-colspan) sticky cells, not one
+                              colspan={8} cell — Chromium doesn't apply
+                              `position: sticky` to table cells that have a
+                              colspan, so a single wide cell here would just
+                              scroll away with the rest of the row instead of
+                              staying pinned like the # / name columns do. */}
+                          <td className="sticky left-0 z-10 w-8 bg-navy pt-3 pb-1" />
+                          <td className="sticky left-8 z-10 bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
                             {groupLabel(section.matchesPlayed)}
                           </td>
+                          <td colSpan={6} className="bg-navy pt-3 pb-1" />
                         </tr>,
                         ...rows,
                       ]

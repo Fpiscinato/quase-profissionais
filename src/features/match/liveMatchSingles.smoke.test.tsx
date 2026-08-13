@@ -20,6 +20,7 @@ describe('Live match screen — Individual (singles) gets the same visual treatm
       format: 'individual',
       teamFormationMode: 'balanced',
       rounds: [{ team1: [a], team2: [b], restingPlayerIds: [] }],
+      origin: 'torneio',
     })
     const match = await createMatchForRound({
       tournamentId: tournament.id,
@@ -71,6 +72,7 @@ describe('Live match screen — Individual (singles) gets the same visual treatm
       format: 'individual',
       teamFormationMode: 'balanced',
       rounds: [{ team1: [a], team2: [b], restingPlayerIds: [] }],
+      origin: 'torneio',
     })
     const match = await createMatchForRound({
       tournamentId: tournament.id,

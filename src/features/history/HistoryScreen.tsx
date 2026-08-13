@@ -22,6 +22,7 @@ export function HistoryScreen() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmDeleteDay, setConfirmDeleteDay] = useState<string | null>(null)
   const [deletingDay, setDeletingDay] = useState(false)
+  const [tournamentOnly, setTournamentOnly] = useState(false)
 
   const handleDelete = async (tournamentId: string) => {
     await deleteTournament(tournamentId)
@@ -56,8 +57,13 @@ export function HistoryScreen() {
     )
   }
 
+  // Absent on tournaments created before this field existed — treated as
+  // 'torneio' so old data keeps counting exactly as before either way.
+  const tournamentOriginById = new Map(tournaments.map((tour) => [tour.id, tour.origin ?? 'torneio']))
+
   const completedMatches = matches
     .filter((m) => m.status === 'completed')
+    .filter((m) => !tournamentOnly || tournamentOriginById.get(m.tournamentId) !== 'avulsa')
     .map((m) => ({ ...m, durationSeconds: m.durationSeconds ?? 0 }))
   const playerTimes = computePlayerPlayTime(completedMatches)
   const teamTimes = computeTeamPlayTime(completedMatches).filter((t) => t.playerIds.length === 2)
@@ -83,6 +89,15 @@ export function HistoryScreen() {
 
       <div className={card}>
         <h2 className="mb-2 font-semibold">{t('Tempo jogado (todos os torneios)')}</h2>
+        <label className="mb-2 flex items-center gap-2 text-sm text-cream/80">
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-lime"
+            checked={tournamentOnly}
+            onChange={() => setTournamentOnly((v) => !v)}
+          />
+          <span>{t('Somente partidas de torneio')}</span>
+        </label>
         <p className="mb-3 text-lg font-bold text-lime">
           {formatHoursMinutes(totalPlaySeconds(completedMatches))}
         </p>

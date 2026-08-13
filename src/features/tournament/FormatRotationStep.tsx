@@ -56,6 +56,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         restingPlayerIds: r.restingPlayerIds,
       })),
       options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet },
+      origin: 'torneio',
     })
     onCreated(tournament.id)
   }

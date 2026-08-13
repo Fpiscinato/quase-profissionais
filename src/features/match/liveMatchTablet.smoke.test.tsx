@@ -29,6 +29,7 @@ async function seedTabletMatch() {
     format: 'duplas',
     teamFormationMode: 'manual',
     rounds: [{ team1: [a, b], team2: [c, d], restingPlayerIds: [e] }],
+    origin: 'torneio',
   })
   const serveOrder = buildServeOrder([a, b], [c, d])
   await createMatchForRound({

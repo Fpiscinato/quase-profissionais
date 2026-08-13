@@ -73,6 +73,7 @@ export function QuickMatchScreen({ onCreated, onBack }: Props) {
       teamFormationMode: 'manual',
       rounds: [{ team1, team2, restingPlayerIds: [] }],
       options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet },
+      origin: 'avulsa',
     })
     onCreated(tournament.id)
   }
@@ -80,7 +81,7 @@ export function QuickMatchScreen({ onCreated, onBack }: Props) {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
-        <h1 className="text-xl font-bold">{t('Partida avulsa')}</h1>
+        <h1 className="text-xl font-bold">{t('Praticar')}</h1>
         <p className="text-sm text-cream/70">
           {t('Um jogo único, sem rotação de torneio — vale pro ranking e pro histórico normalmente.')}
         </p>

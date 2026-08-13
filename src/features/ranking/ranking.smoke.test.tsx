@@ -221,6 +221,99 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
   })
 })
 
+describe('Ranking screen — "Somente partidas de torneio"', () => {
+  it('excludes matches from Praticar (origin "avulsa") tournaments when checked', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await db.players.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b, c, d] = ['Jarede', 'Mateus', 'Mateus Adv', 'Emerson'].map(byName)
+
+    const realTournamentId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: realTournamentId,
+      date: '2026-08-13',
+      availablePlayerIds: [a, b, c, d],
+      format: 'duplas',
+      teamFormationMode: 'balanced',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [{ index: 0, team1: [a, b], team2: [c, d], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now() - 1000,
+      origin: 'torneio',
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: realTournamentId,
+      roundIndex: 0,
+      team1: [a, b],
+      team2: [c, d],
+      serveOrder: [a, c, b, d],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+    })
+
+    const practiceTournamentId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: practiceTournamentId,
+      date: '2026-08-13',
+      availablePlayerIds: [a, c],
+      format: 'individual',
+      teamFormationMode: 'manual',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [{ index: 0, team1: [a], team2: [c], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now(),
+      origin: 'avulsa',
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: practiceTournamentId,
+      roundIndex: 0,
+      team1: [a],
+      team2: [c],
+      serveOrder: [a, c],
+      pointLog: [],
+      games1: 4,
+      games2: 0,
+      points1: 16,
+      points2: 4,
+      winnerTeam: 'team1',
+      status: 'completed',
+    })
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    await screen.findByRole('table')
+
+    // Both matches count by default (checkbox off) — Jarede played 2.
+    let rows = await dataRows()
+    let nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
+    let jaredeRow = rows.find((r) => nameOf(r) === 'Jarede')!
+    expect(within(jaredeRow).getAllByRole('cell')[2].textContent).toBe('2') // PJ
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Somente partidas de torneio' }))
+    rows = await dataRows()
+    nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
+    // Jarede and Mateus Adv played both matches -> drop to 1 (avulsa excluded).
+    jaredeRow = rows.find((r) => nameOf(r) === 'Jarede')!
+    expect(within(jaredeRow).getAllByRole('cell')[2].textContent).toBe('1')
+    const mateusAdvRow = rows.find((r) => nameOf(r) === 'Mateus Adv')!
+    expect(within(mateusAdvRow).getAllByRole('cell')[2].textContent).toBe('1')
+    // Emerson only ever played the torneio match -> unaffected, still shown.
+    const emersonRow = rows.find((r) => nameOf(r) === 'Emerson')!
+    expect(within(emersonRow).getAllByRole('cell')[2].textContent).toBe('1')
+  })
+})
+
 describe('Ranking screen — "do dia" scoped by date, with a day selector', () => {
   it('defaults to the most recent date played and lets you switch to an earlier one', async () => {
     await seedTwoTournaments()
@@ -365,7 +458,9 @@ describe('Ranking screen — "mesmo número de jogos" grouping', () => {
     const rowsAfterGrouping = within(screen.getByRole('table')).getAllByRole('row').slice(1)
     expect(rowsAfterGrouping.length).toBe(7) // 2 header rows + 5 data rows
 
-    const dataRowsGrouped = rowsAfterGrouping.filter((r) => within(r).getAllByRole('cell').length > 1)
+    // Data rows have all 8 columns; group-header rows have only 3 <td>s
+    // (empty sticky #, the label, and a colspan filler — see RankingScreen.tsx).
+    const dataRowsGrouped = rowsAfterGrouping.filter((r) => within(r).getAllByRole('cell').length === 8)
     const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
     const posOf = (row: HTMLElement) => within(row).getAllByRole('cell')[0].textContent
     expect(dataRowsGrouped.map(nameOf).sort()).toEqual(['Emerson', 'Fernando', 'Jarede', 'Mateus', 'Mateus Adv'])

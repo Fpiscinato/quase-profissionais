@@ -11,8 +11,8 @@ const SECTIONS = [
     body: 'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe) e quantos games decidem o set. Toque em "Confirmar e criar torneio".',
   },
   {
-    title: '3. Ou jogue uma partida avulsa',
-    body: 'Em "Partida avulsa" você escolhe o formato, os jogadores dos dois times e quantos games decidem o set, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente.',
+    title: '3. Ou pratique (sem torneio)',
+    body: 'Em "Praticar" você escolhe o formato, os jogadores dos dois times e quantos games decidem o set, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.',
   },
   {
     title: '4. Jogue as rodadas',
@@ -24,11 +24,11 @@ const SECTIONS = [
   },
   {
     title: '6. Ranking',
-    body: '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. O botão "Compartilhar" gera uma imagem com os dois rankings e o tempo jogado, pronta pra mandar no grupo.',
+    body: '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings e o tempo jogado, pronta pra mandar no grupo.',
   },
   {
     title: '7. Histórico',
-    body: '"Histórico" guarda todos os torneios e partidas anteriores, com placar, duração e tempo total jogado por jogador e por dupla.',
+    body: '"Histórico" guarda todos os torneios e partidas anteriores, com placar, duração e tempo total jogado por jogador e por dupla — o mesmo checkbox "Somente partidas de torneio" também funciona aqui, só pro card de tempo jogado.',
   },
   {
     title: '8. Backup',

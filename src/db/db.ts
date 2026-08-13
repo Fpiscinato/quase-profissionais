@@ -16,6 +16,7 @@ export interface PlayerRow {
 export type TournamentFormat = 'duplas' | 'individual'
 export type TeamFormationMode = 'balanced' | 'manual'
 export type TournamentStatus = 'setup' | 'in_progress' | 'completed'
+export type TournamentOrigin = 'torneio' | 'avulsa'
 
 export interface RoundRecord {
   index: number
@@ -36,6 +37,14 @@ export interface TournamentRow {
   rounds: RoundRecord[]
   status: TournamentStatus
   createdAt: number
+  /**
+   * 'torneio' (full wizard) vs 'avulsa' (Praticar, a single quick match) —
+   * lets Ranking/History optionally exclude practice matches. Absent on
+   * rows created before this field existed; always treat that as 'torneio'
+   * (keeps old behavior unchanged when the filter is off, and errs toward
+   * still counting old data when it's on rather than silently dropping it).
+   */
+  origin?: TournamentOrigin
 }
 
 export type MatchStatus = 'scheduled' | 'in_progress' | 'completed'
@@ -147,6 +156,7 @@ export interface CreateTournamentInput {
   rounds: Array<{ team1: Team; team2: Team; restingPlayerIds: PlayerId[] }>
   /** Defaults to DEFAULT_MATCH_CONFIG (4 games) when not given. */
   options?: MatchConfig
+  origin: TournamentOrigin
 }
 
 export async function createTournament(input: CreateTournamentInput): Promise<TournamentRow> {
@@ -160,6 +170,7 @@ export async function createTournament(input: CreateTournamentInput): Promise<To
     rounds: input.rounds.map((r, index) => ({ ...r, index })),
     status: 'in_progress',
     createdAt: Date.now(),
+    origin: input.origin,
   }
   await db.tournaments.add(tournament)
   await updateSettings({ currentTournamentId: tournament.id, currentMatchId: undefined })

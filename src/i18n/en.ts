@@ -16,7 +16,7 @@ export const EN: Record<string, string> = {
   'Os Quase Profissionais': 'The Almost Professionals',
   'Atletas de fim de semana. Vai quem aguentar.': 'Weekend athletes. Whoever can hang.',
   Torneio: 'Tournament',
-  'Partida avulsa': 'One-off match',
+  Praticar: 'Practice',
   'Um jogo único (1×1 ou uma dupla), sem montar um torneio inteiro.':
     'A single match (1v1 or one pair), without setting up a whole tournament.',
   Jogadores: 'Players',
@@ -155,9 +155,9 @@ export const EN: Record<string, string> = {
   '2. Comece um torneio': '2. Start a tournament',
   'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe) e quantos games decidem o set. Toque em "Confirmar e criar torneio".':
     'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose) and how many games decide the set. Tap "Confirm and create tournament".',
-  '3. Ou jogue uma partida avulsa': '3. Or play a one-off match',
-  'Em "Partida avulsa" você escolhe o formato, os jogadores dos dois times e quantos games decidem o set, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente.':
-    'In "One-off match" you pick the format, the players on each side, and how many games decide the set, skipping availability and rotation entirely — straight to setup and play. It counts toward ranking and history like any other match.',
+  '3. Ou pratique (sem torneio)': '3. Or practice (no tournament)',
+  'Em "Praticar" você escolhe o formato, os jogadores dos dois times e quantos games decidem o set, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.':
+    'In "Practice" you pick the format, the players on each side, and how many games decide the set, skipping availability and rotation entirely — straight to setup and play. It counts toward ranking and history like any other match, but you can exclude these matches with the "Tournament matches only" checkbox on Ranking and History, if you want to keep practice separate from real matches.',
   '4. Jogue as rodadas': '4. Play the rounds',
   'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro e o lado inicial da quadra, depois "Iniciar partida" pra abrir a tela ao vivo.':
     'The "Rounds" screen lists the day\'s matchups. Tap "Set up match" to set who serves first and the starting side of the court, then "Start match" to open the live screen.',
@@ -165,11 +165,11 @@ export const EN: Record<string, string> = {
   'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.':
     'The big buttons add a point for each team. The screen shows who is serving, from which side, and alerts you when to change ends or when the set closes. Mistapped? "Undo" steps back one point. At the end, "Save match" records the result.',
   '6. Ranking': '6. Ranking',
-  '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. O botão "Compartilhar" gera uma imagem com os dois rankings e o tempo jogado, pronta pra mandar no grupo.':
-    '"Ranking" shows today\'s tournament standings and the overall ranking (every tournament ever played), both individual and by pair. The "Compartilhar" button generates an image with both rankings and the time played, ready to send to the group.',
+  '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings e o tempo jogado, pronta pra mandar no grupo.':
+    '"Ranking" shows today\'s tournament standings and the overall ranking (every tournament ever played), both individual and by pair. Check "Tournament matches only" to leave out matches made in "Practice". The "Compartilhar" button generates an image with both rankings and the time played, ready to send to the group.',
   '7. Histórico': '7. History',
-  '"Histórico" guarda todos os torneios e partidas anteriores, com placar, duração e tempo total jogado por jogador e por dupla.':
-    '"History" keeps every past tournament and match, with score, duration and total time played per player and per pair.',
+  '"Histórico" guarda todos os torneios e partidas anteriores, com placar, duração e tempo total jogado por jogador e por dupla — o mesmo checkbox "Somente partidas de torneio" também funciona aqui, só pro card de tempo jogado.':
+    '"History" keeps every past tournament and match, with score, duration and total time played per player and per pair — the same "Tournament matches only" checkbox also works here, just for the time-played card.',
   '8. Backup': '8. Backup',
   'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. No celular, "Exportar dados" abre o menu de compartilhar — escolha "Salvar no Drive" (ou outra pasta compartilhada) pra que os outros aparelhos consigam importar de lá depois. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.':
     'In "Backup" you export all your data (players, tournaments, matches) to a file, to keep or move to another device. On a phone, "Exportar dados" opens the share menu — choose "Save to Drive" (or another shared folder) so other devices can import it from there later. Importing merges that file with what is already saved, never deleting anything without confirmation.',
@@ -238,6 +238,7 @@ export const EN: Record<string, string> = {
   'Nenhuma partida concluída ainda.': 'No completed matches yet.',
   'Nem todos jogaram o mesmo número de partidas.': 'Not everyone has played the same number of matches.',
   'Agrupar por número de partidas jogadas': 'Group by number of matches played',
+  'Somente partidas de torneio': 'Tournament matches only',
   Compartilhar: 'Share',
   'Gerando...': 'Generating...',
   'Gerado por Os Quase Profissionais': 'Generated by Os Quase Profissionais',

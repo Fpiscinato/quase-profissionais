@@ -8,11 +8,11 @@ import { db } from '../../db/db'
 
 afterEach(cleanup)
 
-describe('Partida avulsa — a single match outside the full tournament flow', () => {
+describe('Praticar — a single match outside the full tournament flow', () => {
   it('skips disponibilidade/rotação: pick 2 players a side, land straight on Rodadas with 1 round', async () => {
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Partida avulsa' }))
-    await screen.findByText('Partida avulsa')
+    fireEvent.click(await screen.findByRole('button', { name: 'Praticar' }))
+    await screen.findByText('Praticar')
 
     // Individual (1 per side) is simpler to assert on than doubles.
     fireEvent.click(screen.getByRole('button', { name: 'Individual' }))
@@ -39,6 +39,7 @@ describe('Partida avulsa — a single match outside the full tournament flow', (
     expect(tournaments[0].format).toBe('individual')
     expect(tournaments[0].options.gamesToWinSet).toBe(3)
     expect(tournaments[0].rounds).toHaveLength(1)
+    expect(tournaments[0].origin).toBe('avulsa')
 
     // Configuring and playing it counts normally: reuses the same setup/live flow.
     fireEvent.click(screen.getByRole('button', { name: 'Configurar partida' }))
@@ -56,8 +57,8 @@ describe('Partida avulsa — a single match outside the full tournament flow', (
     // that so App lands back on Home instead of resuming into Rodadas.
     await db.appSettings.clear()
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Partida avulsa' }))
-    await screen.findByText('Partida avulsa')
+    fireEvent.click(await screen.findByRole('button', { name: 'Praticar' }))
+    await screen.findByText('Praticar')
 
     // Duplas is the default format (2 per team).
     const jarede = await screen.findByRole('button', { name: 'Jarede' })

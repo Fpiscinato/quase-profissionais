@@ -56,6 +56,7 @@ async function seedOneRoundMatch(team1InitialSide: 'Esquerda' | 'Direita' = 'Esq
     format: 'duplas',
     teamFormationMode: 'manual',
     rounds: [{ team1: [a, b], team2: [c, d], restingPlayerIds: [e] }],
+    origin: 'torneio',
   })
   const serveOrder = buildServeOrder([a, b], [c, d]) // [a, c, b, d]
   const match = await createMatchForRound({

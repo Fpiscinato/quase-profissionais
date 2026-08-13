@@ -137,3 +137,60 @@ describe('History screen — play-time stats (Section 11), wired to Dexie', () =
     expect(await db.matches.get(day2.matchId)).toBeDefined()
   })
 })
+
+describe('History screen — "Somente partidas de torneio" filters the tempo jogado card', () => {
+  it('excludes Praticar (origin "avulsa") matches from the time-played stats when checked', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b] = ['Jarede', 'Mateus'].map(byName)
+
+    const addTournamentWithMatch = async (origin: 'torneio' | 'avulsa', durationSeconds: number) => {
+      const tournamentId = crypto.randomUUID()
+      await db.tournaments.add({
+        id: tournamentId,
+        date: '2026-08-13',
+        availablePlayerIds: [a, b],
+        format: 'individual',
+        teamFormationMode: 'balanced',
+        options: DEFAULT_MATCH_CONFIG,
+        rounds: [{ index: 0, team1: [a], team2: [b], restingPlayerIds: [] }],
+        status: 'in_progress',
+        createdAt: Date.now(),
+        origin,
+      })
+      await db.matches.add({
+        id: crypto.randomUUID(),
+        tournamentId,
+        roundIndex: 0,
+        team1: [a],
+        team2: [b],
+        serveOrder: [a, b],
+        pointLog: [],
+        games1: 4,
+        games2: 1,
+        points1: 16,
+        points2: 8,
+        winnerTeam: 'team1',
+        status: 'completed',
+        durationSeconds,
+      })
+    }
+
+    await addTournamentWithMatch('torneio', 600) // 10min
+    await addTournamentWithMatch('avulsa', 300) // 5min
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Histórico' }))
+    await screen.findByText('Tempo jogado (todos os torneios)')
+
+    // Both count by default.
+    expect(screen.getByText('15min')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Somente partidas de torneio' }))
+    await screen.findByText('10min')
+    expect(screen.queryByText('15min')).not.toBeInTheDocument()
+  })
+})

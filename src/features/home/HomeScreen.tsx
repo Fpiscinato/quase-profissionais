@@ -62,7 +62,7 @@ export function HomeScreen({ onNavigate }: Props) {
           onClick={() => onNavigate('partida-avulsa')}
           className="min-h-12 rounded-xl border-2 border-cream/30 px-4 text-base font-semibold text-cream active:bg-white/10"
         >
-          {t('Partida avulsa')}
+          {t('Praticar')}
         </button>
         <p className="text-center text-xs text-cream/60">
           {t('Um jogo único (1×1 ou uma dupla), sem montar um torneio inteiro.')}
