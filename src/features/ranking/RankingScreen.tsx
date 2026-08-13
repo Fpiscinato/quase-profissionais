@@ -69,7 +69,10 @@ function ShareIcon() {
 // SAME single class (never layered with bg-navy on the same element: two
 // background utilities on one element race on Tailwind's generated rule
 // order, not class order, so only one of the two backgrounds would win).
-const rowBg = (i: number) => (i % 2 === 1 ? 'bg-navy-light/40' : 'bg-navy')
+// Fully opaque (no /alpha) on purpose — a translucent stripe on the sticky
+// #/name cells let the PJ/PV/... text scrolling underneath show through
+// during a horizontal scroll, which read as "numbers on top of the names".
+const rowBg = (i: number) => (i % 2 === 1 ? 'bg-[#1a2650]' : 'bg-navy')
 
 export function RankingScreen() {
   const { t } = useT()
@@ -208,12 +211,12 @@ export function RankingScreen() {
         </h1>
         <button
           type="button"
-          aria-label={t('Compartilhar')}
           disabled={sharing}
           onClick={handleShare}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-cream/30 text-cream disabled:opacity-40 active:bg-white/10"
+          className="flex h-9 items-center gap-1 rounded-full border border-cream/30 px-3 text-xs font-semibold text-cream disabled:opacity-40 active:bg-white/10"
         >
           <ShareIcon />
+          {t('Compartilhar')}
         </button>
       </div>
 
@@ -300,108 +303,116 @@ export function RankingScreen() {
               scrolls horizontally — on a phone the scrollbar itself is
               usually invisible (iOS/Android hide it by default), and with
               every column filled in the same navy the grid gave no visual
-              cue that PtV/PtP were off-screen until you scrolled by accident. */}
+              cue that PtV/PtP were off-screen until you scrolled by accident.
+
+              This is a CSS Grid, not an HTML <table> — `position: sticky` on
+              real <td>/<th> elements is notoriously unreliable during an
+              active scroll gesture on mobile browsers (the frozen columns
+              can visibly slide/overlap the scrolling ones mid-scroll even
+              though the settled end state looks fine — a real bug report,
+              not just a static rendering issue). Sticky works reliably on
+              plain grid/flex items, so `role="table"/"row"/"cell"` recreates
+              table semantics (for a11y and the existing role-based tests)
+              on top of div/grid layout instead. Each "row" wrapper uses
+              `display: contents` so its cells flow directly into the parent
+              grid's columns/rows — but that also means the wrapper itself
+              paints nothing, so zebra/gold styling has to live on every
+              individual cell rather than once on the row. */}
           <div className="relative">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="text-left text-cream/60">
-                  <th className="sticky left-0 z-10 w-8 bg-navy py-1 pr-2">#</th>
-                  <th className="sticky left-8 z-10 bg-navy py-1 pr-2">
+              <div
+                role="table"
+                className="grid min-w-[480px] grid-cols-[2rem_minmax(100px,max-content)_repeat(6,minmax(2.5rem,max-content))] text-sm"
+              >
+                <div role="row" className="contents">
+                  <div role="columnheader" className="sticky left-0 z-10 bg-navy py-1 pr-2 text-left text-cream/60">
+                    #
+                  </div>
+                  <div role="columnheader" className="sticky left-8 z-10 bg-navy py-1 pr-2 text-left text-cream/60">
                     {t(mode === 'individual' ? 'Jogador' : 'Dupla')}
-                  </th>
-                  <th className="py-1 pr-2 text-right">{t('PJ')}</th>
-                  <th className="py-1 pr-2 text-right">{t('PV')}</th>
-                  <th className="py-1 pr-2 text-right">{t('GV')}</th>
-                  <th className="py-1 pr-2 text-right">{t('GP')}</th>
-                  <th className="py-1 pr-2 text-right">{t('PtV')}</th>
-                  <th className="py-1 text-right">{t('PtP')}</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </div>
+                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('PJ')}</div>
+                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('PV')}</div>
+                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('GV')}</div>
+                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('GP')}</div>
+                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('PtV')}</div>
+                  <div role="columnheader" className="py-1 text-right text-cream/60">{t('PtP')}</div>
+                </div>
+
                 {mode === 'individual'
                   ? sectionsFor(individualStandings, sameGamesOnly).flatMap((section) => {
-                      const rows = section.rows.map((s, i) => (
-                        <tr key={s.playerId} className={`${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`}>
-                          <td
-                            className={`sticky left-0 z-10 w-8 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                          >
-                            {i + 1}
-                          </td>
-                          <td
-                            className={`sticky left-8 z-10 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                          >
-                            {name(s.playerId)}
-                          </td>
-                          <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
-                          <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
-                          <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
-                          <td className="py-1 pr-2 text-right">{s.gamesLost}</td>
-                          <td className="py-1 pr-2 text-right">{s.pointsWon}</td>
-                          <td className="py-1 text-right">{s.pointsLost}</td>
-                        </tr>
-                      ))
+                      const rows = section.rows.map((s, i) => {
+                        const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
+                        return (
+                          <div role="row" className="contents" key={s.playerId}>
+                            <div role="cell" className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>
+                              {i + 1}
+                            </div>
+                            <div role="cell" className={`sticky left-8 z-10 whitespace-nowrap ${cell} py-1 pr-2`}>
+                              {name(s.playerId)}
+                            </div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</div>
+                            <div role="cell" className={`${cell} py-1 text-right`}>{s.pointsLost}</div>
+                          </div>
+                        )
+                      })
                       if (section.matchesPlayed === null) return rows
                       return [
-                        <tr key={`group-${section.matchesPlayed}`}>
-                          {/* Two plain (non-colspan) sticky cells, not one
-                              colspan={8} cell — Chromium doesn't apply
-                              `position: sticky` to table cells that have a
-                              colspan, so a single wide cell here would just
-                              scroll away with the rest of the row instead of
-                              staying pinned like the # / name columns do. */}
-                          <td className="sticky left-0 z-10 w-8 bg-navy pt-3 pb-1" />
-                          <td className="sticky left-8 z-10 bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                        <div role="row" className="contents" key={`group-${section.matchesPlayed}`}>
+                          <div role="cell" className="sticky left-0 z-10 bg-navy pt-3 pb-1" />
+                          <div
+                            role="cell"
+                            className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50"
+                          >
                             {groupLabel(section.matchesPlayed)}
-                          </td>
-                          <td colSpan={6} className="bg-navy pt-3 pb-1" />
-                        </tr>,
+                          </div>
+                          <div role="cell" className="bg-navy pt-3 pb-1" style={{ gridColumn: 'span 6' }} />
+                        </div>,
                         ...rows,
                       ]
                     })
                   : sectionsFor(teamStandings, sameGamesOnly).flatMap((section) => {
-                      const rows = section.rows.map((s, i) => (
-                        <tr key={s.playerIds.join('|')} className={`${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`}>
-                          <td
-                            className={`sticky left-0 z-10 w-8 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                          >
-                            {i + 1}
-                          </td>
-                          <td
-                            className={`sticky left-8 z-10 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                          >
-                            {teamName(s.playerIds)}
-                          </td>
-                          <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
-                          <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
-                          <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
-                          <td className="py-1 pr-2 text-right">{s.gamesLost}</td>
-                          <td className="py-1 pr-2 text-right">{s.pointsWon}</td>
-                          <td className="py-1 text-right">{s.pointsLost}</td>
-                        </tr>
-                      ))
+                      const rows = section.rows.map((s, i) => {
+                        const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
+                        return (
+                          <div role="row" className="contents" key={s.playerIds.join('|')}>
+                            <div role="cell" className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>
+                              {i + 1}
+                            </div>
+                            <div role="cell" className={`sticky left-8 z-10 whitespace-nowrap ${cell} py-1 pr-2`}>
+                              {teamName(s.playerIds)}
+                            </div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</div>
+                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</div>
+                            <div role="cell" className={`${cell} py-1 text-right`}>{s.pointsLost}</div>
+                          </div>
+                        )
+                      })
                       if (section.matchesPlayed === null) return rows
                       return [
-                        <tr key={`group-${section.matchesPlayed}`}>
-                          {/* Two plain (non-colspan) sticky cells, not one
-                              colspan={8} cell — Chromium doesn't apply
-                              `position: sticky` to table cells that have a
-                              colspan, so a single wide cell here would just
-                              scroll away with the rest of the row instead of
-                              staying pinned like the # / name columns do. */}
-                          <td className="sticky left-0 z-10 w-8 bg-navy pt-3 pb-1" />
-                          <td className="sticky left-8 z-10 bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                        <div role="row" className="contents" key={`group-${section.matchesPlayed}`}>
+                          <div role="cell" className="sticky left-0 z-10 bg-navy pt-3 pb-1" />
+                          <div
+                            role="cell"
+                            className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50"
+                          >
                             {groupLabel(section.matchesPlayed)}
-                          </td>
-                          <td colSpan={6} className="bg-navy pt-3 pb-1" />
-                        </tr>,
+                          </div>
+                          <div role="cell" className="bg-navy pt-3 pb-1" style={{ gridColumn: 'span 6' }} />
+                        </div>,
                         ...rows,
                       ]
                     })}
-              </tbody>
-              </table>
+              </div>
             </div>
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-navy via-navy/70 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-navy/70 to-transparent" />
           </div>
           <p className="text-xs text-cream/50">
             {t(

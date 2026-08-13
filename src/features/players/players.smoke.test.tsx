@@ -102,4 +102,24 @@ describe('Players CRUD (Jogadores screen)', () => {
     expect(screen.queryByLabelText('Jarede')).toBeNull()
     expect(await screen.findByLabelText('Mateus')).toBeTruthy()
   })
+
+  it('rejects a player name longer than 16 characters', async () => {
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Jogadores' }))
+    await screen.findByText('Adicione, edite ou remova jogadores do grupo.')
+
+    const nameInput = screen.getByPlaceholderText('Nome do novo jogador') as HTMLInputElement
+    expect(nameInput.maxLength).toBe(16)
+
+    // fireEvent.change sets .value directly, bypassing the HTML maxlength
+    // clamp (that only applies to real typing/paste) — so this actually
+    // exercises addPlayer()'s own length check, not just the input attribute.
+    const tooLong = 'Um nome bem longo demais aqui'
+    expect(tooLong.length).toBeGreaterThan(16)
+    fireEvent.change(nameInput, { target: { value: tooLong } })
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
+
+    await screen.findByText('O nome pode ter no máximo 16 caracteres.')
+    expect(await db.players.toArray()).toHaveLength(5)
+  })
 })

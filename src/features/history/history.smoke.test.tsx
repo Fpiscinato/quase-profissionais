@@ -194,3 +194,59 @@ describe('History screen — "Somente partidas de torneio" filters the tempo jog
     expect(screen.queryByText('15min')).not.toBeInTheDocument()
   })
 })
+
+describe('History screen — manual origin toggle (Torneio/Praticar badge)', () => {
+  it('flips a tournament between torneio and avulsa when the badge is tapped', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b] = ['Jarede', 'Mateus'].map(byName)
+
+    const tournamentId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: tournamentId,
+      date: '2026-08-13',
+      availablePlayerIds: [a, b],
+      format: 'individual',
+      teamFormationMode: 'balanced',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [{ index: 0, team1: [a], team2: [b], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now(),
+      origin: 'torneio',
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId,
+      roundIndex: 0,
+      team1: [a],
+      team2: [b],
+      serveOrder: [a, b],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+      durationSeconds: 300,
+    })
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Histórico' }))
+    const badge = await screen.findByRole('button', { name: 'Torneio' })
+
+    fireEvent.click(badge)
+    await screen.findByRole('button', { name: 'Praticar' })
+    expect((await db.tournaments.get(tournamentId))!.origin).toBe('avulsa')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Praticar' }))
+    await screen.findByRole('button', { name: 'Torneio' })
+    expect((await db.tournaments.get(tournamentId))!.origin).toBe('torneio')
+
+    // Tapping the badge doesn't also expand/collapse the tournament card.
+    expect(screen.queryByText('Rodada 1')).not.toBeInTheDocument()
+  })
+})

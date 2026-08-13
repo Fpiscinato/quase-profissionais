@@ -229,6 +229,7 @@ export const EN: Record<string, string> = {
   Editar: 'Edit',
   'Já existe um jogador chamado "{name}".': 'A player named "{name}" already exists.',
   'O nome não pode ser vazio.': 'The name cannot be empty.',
+  'O nome pode ter no máximo 16 caracteres.': 'The name can be at most 16 characters long.',
   'Erro ao adicionar jogador.': 'Error adding player.',
   'Erro ao salvar.': 'Error saving.',
 

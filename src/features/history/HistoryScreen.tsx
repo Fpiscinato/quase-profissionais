@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { db, deleteDay, deleteTournament } from '../../db/db'
+import { db, deleteDay, deleteTournament, setTournamentOrigin } from '../../db/db'
 import type { TournamentRow } from '../../db/db'
 import { usePlayers } from '../../db/hooks'
 import { computePlayerPlayTime, computeTeamPlayTime, totalPlaySeconds } from '../../engine/stats'
@@ -34,6 +34,14 @@ export function HistoryScreen() {
     await deleteDay(date)
     setConfirmDeleteDay(null)
     setDeletingDay(false)
+  }
+
+  // The v2.0 migration guesses old tournaments' origin from round count
+  // (1 round = Praticar, more = Torneio) — not airtight, so this lets the
+  // user correct it by hand, and also works for any future misclassification.
+  const handleToggleOrigin = async (tournament: TournamentRow) => {
+    const next = (tournament.origin ?? 'torneio') === 'avulsa' ? 'torneio' : 'avulsa'
+    await setTournamentOrigin(tournament.id, next)
   }
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
@@ -186,25 +194,38 @@ export function HistoryScreen() {
                 .sort((a, b) => a.roundIndex - b.roundIndex)
               const isOpen = expanded.has(tournament.id)
 
+              const isAvulsa = (tournament.origin ?? 'torneio') === 'avulsa'
+
               return (
                 <div key={tournament.id} className={card}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between text-left"
-                    onClick={() => toggle(tournament.id)}
-                  >
-                    <div>
-                      <div className="font-semibold">
-                        {t(tournament.format === 'duplas' ? 'Duplas (Americano)' : 'Individual')}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOrigin(tournament)}
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                        isAvulsa ? 'border-cream/30 text-cream/60' : 'border-lime/60 text-lime'
+                      }`}
+                    >
+                      {isAvulsa ? t('Praticar') : t('Torneio')}
+                    </button>
+                    <button
+                      type="button"
+                      className="flex flex-1 items-center justify-between text-left"
+                      onClick={() => toggle(tournament.id)}
+                    >
+                      <div>
+                        <div className="font-semibold">
+                          {t(tournament.format === 'duplas' ? 'Duplas (Americano)' : 'Individual')}
+                        </div>
+                        <div className="text-xs text-cream/60">
+                          {tournamentMatches.length}/{tournament.rounds.length}{' '}
+                          {t(tournament.rounds.length > 1 ? 'partidas' : 'partida')}{' '}
+                          {t(tournamentMatches.length !== 1 ? 'concluídas' : 'concluída')}
+                        </div>
                       </div>
-                      <div className="text-xs text-cream/60">
-                        {tournamentMatches.length}/{tournament.rounds.length}{' '}
-                        {t(tournament.rounds.length > 1 ? 'partidas' : 'partida')}{' '}
-                        {t(tournamentMatches.length !== 1 ? 'concluídas' : 'concluída')}
-                      </div>
-                    </div>
-                    <span className="text-cream/50">{isOpen ? '▲' : '▼'}</span>
-                  </button>
+                      <span className="text-cream/50">{isOpen ? '▲' : '▼'}</span>
+                    </button>
+                  </div>
 
               {isOpen && (
                 <div className="mt-3 flex flex-col gap-2 border-t border-cream/10 pt-3">

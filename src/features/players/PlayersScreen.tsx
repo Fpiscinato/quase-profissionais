@@ -1,6 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useAllPlayers } from '../../db/hooks'
-import { addPlayer, DuplicatePlayerNameError, removePlayer, updatePlayerName } from '../../db/db'
+import {
+  addPlayer,
+  DuplicatePlayerNameError,
+  MAX_PLAYER_NAME_LENGTH,
+  removePlayer,
+  updatePlayerName,
+} from '../../db/db'
 import type { PlayerRow } from '../../db/db'
 import { card, destructiveButton, primaryButton, secondaryButton, textInput } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
@@ -75,6 +81,7 @@ export function PlayersScreen() {
             type="text"
             className={textInput}
             placeholder={t('Nome do novo jogador')}
+            maxLength={MAX_PLAYER_NAME_LENGTH}
             value={newName}
             onChange={(e) => {
               setNewName(e.target.value)
@@ -100,6 +107,7 @@ export function PlayersScreen() {
                   <input
                     type="text"
                     className={textInput}
+                    maxLength={MAX_PLAYER_NAME_LENGTH}
                     value={editValue}
                     onChange={(e) => {
                       setEditValue(e.target.value)

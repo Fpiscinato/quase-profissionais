@@ -257,6 +257,16 @@ export function normalizeName(name: string): string {
   return name.trim().toLowerCase()
 }
 
+/**
+ * Keeps names short enough to fit the sticky ranking column, team-card
+ * labels, etc. without wrapping. Kept fairly tight (not just "generous")
+ * because a Duplas display combines TWO names ("A & B") — the live match
+ * screen in particular was extensively tuned to never need scrolling on a
+ * small phone, and a long combined pair name could blow that budget even
+ * with the defensive truncation added there.
+ */
+export const MAX_PLAYER_NAME_LENGTH = 16
+
 async function assertNameAvailable(name: string, excludingId?: string): Promise<void> {
   const target = normalizeName(name)
   const existing = await db.players.toArray()
@@ -267,6 +277,9 @@ async function assertNameAvailable(name: string, excludingId?: string): Promise<
 export async function addPlayer(name: string): Promise<PlayerRow> {
   const trimmed = name.trim()
   if (!trimmed) throw new Error('O nome não pode ser vazio.')
+  if (trimmed.length > MAX_PLAYER_NAME_LENGTH) {
+    throw new Error(`O nome pode ter no máximo ${MAX_PLAYER_NAME_LENGTH} caracteres.`)
+  }
   await assertNameAvailable(trimmed)
   const player: PlayerRow = { id: newId(), name: trimmed, active: true }
   await db.players.add(player)
@@ -276,6 +289,9 @@ export async function addPlayer(name: string): Promise<PlayerRow> {
 export async function updatePlayerName(id: PlayerId, name: string): Promise<void> {
   const trimmed = name.trim()
   if (!trimmed) throw new Error('O nome não pode ser vazio.')
+  if (trimmed.length > MAX_PLAYER_NAME_LENGTH) {
+    throw new Error(`O nome pode ter no máximo ${MAX_PLAYER_NAME_LENGTH} caracteres.`)
+  }
   await assertNameAvailable(trimmed, id)
   await db.players.update(id, { name: trimmed })
 }
@@ -390,6 +406,14 @@ export async function finishTournament(tournamentId: string): Promise<void> {
   if (settings.currentTournamentId === tournamentId) {
     await updateSettings({ currentTournamentId: undefined, currentMatchId: undefined })
   }
+}
+
+/** Manual correction for the origin backfill heuristic (or any future misclassification) — lets History re-tag a tournament as Torneio/Praticar by hand. */
+export async function setTournamentOrigin(
+  tournamentId: string,
+  origin: TournamentOrigin,
+): Promise<void> {
+  await db.tournaments.update(tournamentId, { origin })
 }
 
 /** Deletes a tournament and every match that belongs to it. Cannot be undone. */

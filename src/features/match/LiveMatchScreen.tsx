@@ -284,7 +284,10 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       >
         {t(slot.label)}
       </div>
-      <div className={`font-bold text-cream ${isRoomyTablet ? 'text-4xl' : 'text-lg'}`}>
+      {/* truncate (single line + ellipsis), not wrapping: this screen is
+          tuned to never need scrolling on a small phone, and a wrapped
+          2-line Duplas name ("A & B") would grow the row past that budget. */}
+      <div className={`truncate font-bold text-cream ${isRoomyTablet ? 'text-4xl' : 'text-lg'}`}>
         {slot.name}
       </div>
       <SideHistory history={slot.history} />
