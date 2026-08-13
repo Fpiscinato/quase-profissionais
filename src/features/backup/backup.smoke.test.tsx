@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
-import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import App from '../../App'
 import { db, ensurePlayersSeeded } from '../../db/db'
 import type { BackupPayload } from '../../db/backup'
@@ -263,5 +263,48 @@ describe('Backup merge-import — union by UUID, skip duplicates (Phase 4)', () 
     fireEvent.change(input, { target: { files: [badFile] } })
 
     await screen.findByText(/não parece um backup válido/)
+  })
+})
+
+describe('Backup — export sharing', () => {
+  afterEach(() => {
+    // Cleanup of the test-only stubs added below (jsdom has no Web Share API by default).
+    delete (navigator as { share?: unknown }).share
+    delete (navigator as { canShare?: unknown }).canShare
+  })
+
+  it('falls back to a plain download when the Web Share API is unavailable', async () => {
+    await ensurePlayersSeeded()
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Backup' }))
+    await screen.findByText('Exportar')
+
+    // No share-folder hint when the platform can't share files.
+    expect(screen.queryByText(/Salvar no Drive/)).not.toBeInTheDocument()
+
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar dados' }))
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalled())
+    expect(revokeObjectURL).toHaveBeenCalled()
+    createObjectURL.mockRestore()
+    revokeObjectURL.mockRestore()
+  })
+
+  it('shares the backup file when the Web Share API supports files', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    navigator.share = share
+    navigator.canShare = () => true
+
+    await ensurePlayersSeeded()
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Backup' }))
+    await screen.findByText(/Salvar no Drive/)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar dados' }))
+    await waitFor(() => expect(share).toHaveBeenCalled())
+    const call = share.mock.calls[0][0]
+    expect(call.files).toHaveLength(1)
+    expect(call.files[0].name).toMatch(/^quase-profissionais-backup-.*\.json$/)
   })
 })

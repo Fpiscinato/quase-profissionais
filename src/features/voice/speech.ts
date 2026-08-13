@@ -4,6 +4,18 @@ function voiceLangTag(lang: Lang): string {
   return lang === 'en' ? 'en-US' : 'pt-BR'
 }
 
+// Some pt-BR TTS voices read "Time" (equipe) with the English pronunciation
+// of the identically-spelled word "time" (heteronym clash), even with
+// utterance.lang set to pt-BR. Respelling for the audio only — never for
+// what's shown on screen — works around it. Not verified on a real device
+// yet; if it still sounds wrong, this is the constant to tweak.
+const PT_SPEECH_RESPELLINGS: [RegExp, string][] = [[/\bTime\b/g, 'Timi']]
+
+function toSpeechText(lang: Lang, text: string): string {
+  if (lang !== 'pt') return text
+  return PT_SPEECH_RESPELLINGS.reduce((acc, [pattern, replacement]) => acc.replace(pattern, replacement), text)
+}
+
 export function speechSynthesisSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
@@ -27,7 +39,7 @@ export function speak(lang: Lang, text: string, rate = 1): void {
   lastSpoken = { lang, text, rate }
   if (!speechSynthesisSupported()) return
   window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
+  const utterance = new SpeechSynthesisUtterance(toSpeechText(lang, text))
   utterance.lang = voiceLangTag(lang)
   utterance.rate = rate
   window.speechSynthesis.speak(utterance)
@@ -37,7 +49,7 @@ export function speak(lang: Lang, text: string, rate = 1): void {
 export function repeatLastAnnouncement(): void {
   if (!lastSpoken || !speechSynthesisSupported()) return
   window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(lastSpoken.text)
+  const utterance = new SpeechSynthesisUtterance(toSpeechText(lastSpoken.lang, lastSpoken.text))
   utterance.lang = voiceLangTag(lastSpoken.lang)
   utterance.rate = lastSpoken.rate
   window.speechSynthesis.speak(utterance)

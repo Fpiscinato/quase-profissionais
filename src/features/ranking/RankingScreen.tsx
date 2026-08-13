@@ -8,6 +8,7 @@ import type { MatchResult, PlayerId } from '../../engine/types'
 import { toggleButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import { HelpHint } from '../../ui/HelpHint'
+import { modeMatchesPlayed } from './rankingFilter'
 
 function toMatchResult(m: MatchRow): MatchResult {
   return {
@@ -28,6 +29,7 @@ export function RankingScreen() {
   const { t } = useT()
   const [tab, setTab] = useState<Tab>('dia')
   const [mode, setMode] = useState<Mode>('individual')
+  const [sameGamesOnly, setSameGamesOnly] = useState(false)
   const { byId } = usePlayers()
 
   // "Current tournament" = the most recently created one, independent of
@@ -52,13 +54,33 @@ export function RankingScreen() {
   const teamName = (ids: PlayerId[]) =>
     ids.map(name).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' & ')
 
-  const individualStandings = computeStandings(matchResults)
-  const teamStandings = computeTeamStandings(matchResults)
-  const rowCount = mode === 'individual' ? individualStandings.length : teamStandings.length
+  const individualStandingsAll = computeStandings(matchResults)
+  const teamStandingsAll = computeTeamStandings(matchResults)
   const uneven =
     mode === 'individual'
-      ? individualStandings.some((s) => s.matchesPlayed !== individualStandings[0]?.matchesPlayed)
-      : teamStandings.some((s) => s.matchesPlayed !== teamStandings[0]?.matchesPlayed)
+      ? individualStandingsAll.some((s) => s.matchesPlayed !== individualStandingsAll[0]?.matchesPlayed)
+      : teamStandingsAll.some((s) => s.matchesPlayed !== teamStandingsAll[0]?.matchesPlayed)
+
+  const targetMatchesPlayed =
+    sameGamesOnly && uneven
+      ? modeMatchesPlayed(
+          (mode === 'individual' ? individualStandingsAll : teamStandingsAll).map(
+            (s) => s.matchesPlayed,
+          ),
+        )
+      : null
+
+  const individualStandings =
+    targetMatchesPlayed === null
+      ? individualStandingsAll
+      : individualStandingsAll.filter((s) => s.matchesPlayed === targetMatchesPlayed)
+  const teamStandings =
+    targetMatchesPlayed === null
+      ? teamStandingsAll
+      : teamStandingsAll.filter((s) => s.matchesPlayed === targetMatchesPlayed)
+
+  const rowCount = mode === 'individual' ? individualStandings.length : teamStandings.length
+  const totalCount = mode === 'individual' ? individualStandingsAll.length : teamStandingsAll.length
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -97,6 +119,18 @@ export function RankingScreen() {
         </button>
       </div>
 
+      {uneven && (
+        <label className="flex items-center gap-2 text-sm text-cream/80">
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-lime"
+            checked={sameGamesOnly}
+            onChange={() => setSameGamesOnly((v) => !v)}
+          />
+          <span>{t('Comparar só quem jogou o mesmo número de partidas')}</span>
+        </label>
+      )}
+
       {rowCount === 0 ? (
         <p className="text-sm text-cream/70">
           {t(
@@ -107,9 +141,19 @@ export function RankingScreen() {
         </p>
       ) : (
         <>
-          {uneven && (
+          {uneven && !sameGamesOnly && (
             <p className="text-xs text-gold">
               {t('Nem todos jogaram o mesmo número de partidas.')}
+            </p>
+          )}
+          {sameGamesOnly && targetMatchesPlayed !== null && (
+            <p className="text-xs text-gold">
+              {t(
+                mode === 'individual'
+                  ? 'Mostrando {shown} de {total} jogadores, com {n} partidas cada.'
+                  : 'Mostrando {shown} de {total} duplas, com {n} partidas cada.',
+                { shown: rowCount, total: totalCount, n: targetMatchesPlayed },
+              )}
             </p>
           )}
           <div className="overflow-x-auto">

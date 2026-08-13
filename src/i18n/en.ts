@@ -171,8 +171,8 @@ export const EN: Record<string, string> = {
   '"Histórico" guarda todos os torneios e partidas anteriores, com placar, duração e tempo total jogado por jogador e por dupla.':
     '"History" keeps every past tournament and match, with score, duration and total time played per player and per pair.',
   '8. Backup': '8. Backup',
-  'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.':
-    'In "Backup" you export all your data (players, tournaments, matches) to a file, to keep or move to another device. Importing merges that file with what is already saved, never deleting anything without confirmation.',
+  'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. No celular, "Exportar dados" abre o menu de compartilhar — escolha "Salvar no Drive" (ou outra pasta compartilhada) pra que os outros aparelhos consigam importar de lá depois. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.':
+    'In "Backup" you export all your data (players, tournaments, matches) to a file, to keep or move to another device. On a phone, "Exportar dados" opens the share menu — choose "Save to Drive" (or another shared folder) so other devices can import it from there later. Importing merges that file with what is already saved, never deleting anything without confirmation.',
   '9. Modo viva-voz': '9. Hands-free voice mode',
   'No topo da tela, "🎙 Voz" liga os anúncios falados (placar, quem saca, troca de lado), com um botão de velocidade ao lado (padrão 1.5x). "🎤 Comandos" é um toggle separado, desligado por padrão, que liga o reconhecimento de voz pra marcar ponto falando "Ponto Time 1" / "Ponto Time 2" ou repetir o último anúncio dizendo "Repita" — em testes reais isso errou bastante (microfone longe, tela apagando), então fica por sua conta ativar. Só funciona em Android/Chrome.':
     'At the top of the screen, "🎙 Voice" turns on spoken announcements (score, who serves, change of ends), with a speed button next to it (default 1.5x). "🎤 Commands" is a separate toggle, off by default, that turns on speech recognition to score by saying "Point Team 1" / "Point Team 2" or repeat the last announcement by saying "Repeat" — in real testing this missed a lot (mic too far, screen turning off), so it is up to you to turn on. Only works on Android/Chrome.',
@@ -239,6 +239,11 @@ export const EN: Record<string, string> = {
     'No completed matches in the most recent tournament yet.',
   'Nenhuma partida concluída ainda.': 'No completed matches yet.',
   'Nem todos jogaram o mesmo número de partidas.': 'Not everyone has played the same number of matches.',
+  'Comparar só quem jogou o mesmo número de partidas': 'Only compare players with the same number of matches',
+  'Mostrando {shown} de {total} jogadores, com {n} partidas cada.':
+    'Showing {shown} of {total} players, with {n} matches each.',
+  'Mostrando {shown} de {total} duplas, com {n} partidas cada.':
+    'Showing {shown} of {total} pairs, with {n} matches each.',
   Jogador: 'Player',
   Dupla: 'Pair',
   PJ: 'MP',
@@ -274,6 +279,8 @@ export const EN: Record<string, string> = {
   'Baixa um arquivo .json com jogadores, torneios e partidas.':
     'Downloads a .json file with players, tournaments and matches.',
   'Exportar dados': 'Export data',
+  'Dica: escolha "Salvar no Drive" (ou outra pasta compartilhada) pra que os outros aparelhos consigam importar depois.':
+    'Tip: choose "Save to Drive" (or another shared folder) so other devices can import it later.',
   Importar: 'Import',
   'Escolha um arquivo .json exportado (deste ou de outro aparelho).':
     'Choose a .json file that was exported (from this or another device).',
@@ -310,9 +317,10 @@ export const EN: Record<string, string> = {
   'Voz: OFF': 'Voice: OFF',
   '{server} saca da {side}.': '{server} serves from the {side}.',
   'Fim de partida! {winner} venceu, {g1} a {g2}.': 'Match over! {winner} won, {g1} to {g2}.',
-  'Troca de lado! Time 1 na {side1}, Time 2 na {side2}.':
-    'Change of ends! Team 1 on the {side1}, Team 2 on the {side2}.',
-  'Game! Games: Time 1, {g1}. Time 2, {g2}.': 'Game! Games: Team 1, {g1}. Team 2, {g2}.',
+  'Troquem de lado — Time 1 na {side1}, Time 2 na {side2}.':
+    'Change ends — Team 1 on the {side1}, Team 2 on the {side2}.',
+  '{winner} venceu o game!': '{winner} won the game!',
+  'Games: Time 1, {g1}. Time 2, {g2}.': 'Games: Team 1, {g1}. Team 2, {g2}.',
   'Tiebreak. Time 1, {p1}. Time 2, {p2}.': 'Tiebreak. Team 1, {p1}. Team 2, {p2}.',
   'Time 1, {p1}. Time 2, {p2}.': 'Team 1, {p1}. Team 2, {p2}.',
   'Comandos de voz': 'Voice commands',

@@ -156,11 +156,11 @@ function App() {
     <div
       className={`mx-auto min-h-svh ${effectiveLayout === 'tablet' ? 'max-w-[min(95vw,1600px)]' : 'max-w-md'}`}
     >
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-cream/10 bg-navy px-4 py-1.5">
+      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-cream/10 bg-navy px-4 py-1.5">
         {view !== 'home' && (
           <button
             type="button"
-            className="flex min-h-9 items-center gap-2 rounded-full bg-lime pl-1 pr-3 text-sm font-bold text-navy active:opacity-80"
+            className="flex min-h-9 shrink-0 items-center gap-2 rounded-full bg-lime pl-1 pr-3 text-sm font-bold text-navy active:opacity-80"
             onClick={() => setView('home')}
           >
             <img src="/logo.png" alt="" className="h-7 w-7 rounded-full object-cover" />

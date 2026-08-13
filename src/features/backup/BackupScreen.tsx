@@ -6,8 +6,13 @@ import { useT } from '../../i18n/useT'
 
 const RESET_CONFIRM_WORD = 'RESETAR'
 
+function shareSupported(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+}
+
 export function BackupScreen() {
   const { t } = useT()
+  const canShareExport = shareSupported()
   const resetWord = t(RESET_CONFIRM_WORD)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -24,12 +29,29 @@ export function BackupScreen() {
     setError(null)
     try {
       const payload = await exportBackup()
+      const date = new Date().toISOString().slice(0, 10)
+      const filename = `quase-profissionais-backup-${date}.json`
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const file = new File([blob], filename, { type: 'application/json' })
+
+      // Prefer the native share sheet (Salvar no Drive, WhatsApp etc.) so the
+      // file can land straight in a folder other devices can reach — falls
+      // back to a plain download (only reaches this device's Downloads
+      // folder) wherever file sharing isn't supported (desktop, iOS Safari)
+      // or the user cancels the share sheet.
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: filename })
+          return
+        } catch {
+          // Cancelled or failed — fall through to the download below.
+        }
+      }
+
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      const date = new Date().toISOString().slice(0, 10)
       a.href = url
-      a.download = `quase-profissionais-backup-${date}.json`
+      a.download = filename
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -92,6 +114,13 @@ export function BackupScreen() {
         <button type="button" className={primaryButton} disabled={busy} onClick={handleExport}>
           {t('Exportar dados')}
         </button>
+        {canShareExport && (
+          <p className="mt-2 text-xs text-cream/50">
+            {t(
+              'Dica: escolha "Salvar no Drive" (ou outra pasta compartilhada) pra que os outros aparelhos consigam importar depois.',
+            )}
+          </p>
+        )}
       </div>
 
       <div className={card}>

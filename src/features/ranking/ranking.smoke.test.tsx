@@ -163,3 +163,85 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     expect(top[6].textContent).toBe('17') // Points Won
   })
 })
+
+describe('Ranking screen — "mesmo número de jogos" filter', () => {
+  it('hides players who played fewer matches than the majority when checked', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await db.players.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b, c, d, e] = ['Jarede', 'Mateus', 'Mateus Adv', 'Emerson', 'Fernando'].map(byName)
+
+    const tId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: tId,
+      date: '2026-08-10',
+      availablePlayerIds: [a, b, c, d, e],
+      format: 'duplas',
+      teamFormationMode: 'balanced',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [
+        { index: 0, team1: [a, b], team2: [c, d], restingPlayerIds: [e] },
+        { index: 1, team1: [a, c], team2: [b, e], restingPlayerIds: [d] },
+      ],
+      status: 'in_progress',
+      createdAt: Date.now(),
+    })
+    // Round 1: A&B beat C&D — E rests.
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: tId,
+      roundIndex: 0,
+      team1: [a, b],
+      team2: [c, d],
+      serveOrder: [a, c, b, d],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+    })
+    // Round 2: A&C beat B&E — D rests. Final tally: A,B,C played 2 matches
+    // each (A,B in round 1; A,C in round 2; B moves from team1 to team2), D
+    // and E played only 1 each.
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: tId,
+      roundIndex: 1,
+      team1: [a, c],
+      team2: [b, e],
+      serveOrder: [a, b, c, e],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+    })
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    await screen.findByRole('table')
+
+    // Uneven attendance (A,B,C played 2; D,E played 1) — checkbox should show.
+    const checkbox = await screen.findByRole('checkbox', {
+      name: 'Comparar só quem jogou o mesmo número de partidas',
+    })
+    expect((await dataRows()).length).toBe(5)
+
+    fireEvent.click(checkbox)
+    await screen.findByText('Mostrando 3 de 5 jogadores, com 2 partidas cada.')
+    const filteredRows = await dataRows()
+    const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
+    expect(filteredRows.map(nameOf).sort()).toEqual(['Jarede', 'Mateus', 'Mateus Adv'])
+
+    fireEvent.click(checkbox)
+    await waitFor(() => expect((screen.queryAllByRole('row').length) - 1).toBe(5))
+  })
+})

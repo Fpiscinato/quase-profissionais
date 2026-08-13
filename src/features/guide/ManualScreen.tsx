@@ -32,7 +32,7 @@ const SECTIONS = [
   },
   {
     title: '8. Backup',
-    body: 'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.',
+    body: 'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. No celular, "Exportar dados" abre o menu de compartilhar — escolha "Salvar no Drive" (ou outra pasta compartilhada) pra que os outros aparelhos consigam importar de lá depois. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.',
   },
   {
     title: '9. Modo viva-voz',
