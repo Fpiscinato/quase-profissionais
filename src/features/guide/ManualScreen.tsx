@@ -24,7 +24,7 @@ const SECTIONS = [
   },
   {
     title: '6. Ranking',
-    body: '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla.',
+    body: '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. O botão "Compartilhar" gera uma imagem com os dois rankings e o tempo jogado, pronta pra mandar no grupo.',
   },
   {
     title: '7. Histórico',

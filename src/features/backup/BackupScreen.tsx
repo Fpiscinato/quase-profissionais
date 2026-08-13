@@ -3,12 +3,9 @@ import { exportBackup, isBackupPayload, mergeImport, type MergeResult } from '..
 import { fullReset } from '../../db/db'
 import { card, destructiveButton, primaryButton, secondaryButton, textInput } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
+import { shareOrDownloadFile, shareSupported } from '../../lib/shareFile'
 
 const RESET_CONFIRM_WORD = 'RESETAR'
-
-function shareSupported(): boolean {
-  return typeof navigator !== 'undefined' && typeof navigator.share === 'function'
-}
 
 export function BackupScreen() {
   const { t } = useT()
@@ -33,29 +30,7 @@ export function BackupScreen() {
       const filename = `quase-profissionais-backup-${date}.json`
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
       const file = new File([blob], filename, { type: 'application/json' })
-
-      // Prefer the native share sheet (Salvar no Drive, WhatsApp etc.) so the
-      // file can land straight in a folder other devices can reach — falls
-      // back to a plain download (only reaches this device's Downloads
-      // folder) wherever file sharing isn't supported (desktop, iOS Safari)
-      // or the user cancels the share sheet.
-      if (navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: filename })
-          return
-        } catch {
-          // Cancelled or failed — fall through to the download below.
-        }
-      }
-
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
+      await shareOrDownloadFile(file, filename)
     } finally {
       setBusy(false)
     }

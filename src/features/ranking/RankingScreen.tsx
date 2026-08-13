@@ -1,14 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { toBlob } from 'html-to-image'
 import { db } from '../../db/db'
 import type { MatchRow } from '../../db/db'
 import { usePlayers } from '../../db/hooks'
 import { computeStandings, computeTeamStandings } from '../../engine/ranking'
+import { computePlayerPlayTime, computeTeamPlayTime, totalPlaySeconds } from '../../engine/stats'
 import type { MatchResult, PlayerId } from '../../engine/types'
-import { toggleButton } from '../../ui/styles'
+import { formatDate } from '../../lib/format'
+import { shareOrDownloadFile } from '../../lib/shareFile'
+import { secondaryButton, toggleButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import { HelpHint } from '../../ui/HelpHint'
 import { modeMatchesPlayed } from './rankingFilter'
+import { RankingReport, type RankingReportProps } from './RankingReport'
 
 function toMatchResult(m: MatchRow): MatchResult {
   return {
@@ -82,6 +87,62 @@ export function RankingScreen() {
   const rowCount = mode === 'individual' ? individualStandings.length : teamStandings.length
   const totalCount = mode === 'individual' ? individualStandingsAll.length : teamStandingsAll.length
 
+  const [sharing, setSharing] = useState(false)
+  const [reportProps, setReportProps] = useState<RankingReportProps | null>(null)
+  const reportRef = useRef<HTMLDivElement>(null)
+
+  const handleShare = () => {
+    setSharing(true)
+    const completedWithDuration = allCompletedMatches.map((m) => ({
+      ...m,
+      durationSeconds: m.durationSeconds ?? 0,
+    }))
+    setReportProps({
+      scopeLabel:
+        tab === 'dia'
+          ? latestTournament
+            ? `${t('Ranking do dia')} — ${formatDate(latestTournament.date)}`
+            : t('Ranking do dia')
+          : t('Ranking geral'),
+      generatedAtLabel: formatDate(new Date().toISOString().slice(0, 10)),
+      individualStandings: individualStandingsAll,
+      teamStandings: teamStandingsAll,
+      playerTimes: computePlayerPlayTime(completedWithDuration),
+      teamTimes: computeTeamPlayTime(completedWithDuration),
+      totalSeconds: totalPlaySeconds(completedWithDuration),
+      playerName: name,
+      teamName,
+    })
+  }
+
+  // Renders the offscreen RankingReport (see JSX below), waits a frame for
+  // it to paint (fonts/logo image), rasterizes it, then shares/downloads —
+  // and always tears the offscreen node back down afterward.
+  useEffect(() => {
+    if (!reportProps) return
+    let cancelled = false
+    ;(async () => {
+      await new Promise(requestAnimationFrame)
+      try {
+        const node = reportRef.current
+        if (!node || cancelled) return
+        const blob = await toBlob(node, { pixelRatio: 2, backgroundColor: '#152142' })
+        if (!blob || cancelled) return
+        const filename = `quase-profissionais-ranking-${new Date().toISOString().slice(0, 10)}.png`
+        const file = new File([blob], filename, { type: 'image/png' })
+        await shareOrDownloadFile(file, filename)
+      } finally {
+        if (!cancelled) {
+          setReportProps(null)
+          setSharing(false)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [reportProps])
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <h1 className="text-xl font-bold">
@@ -118,6 +179,18 @@ export function RankingScreen() {
           {t('Duplas')}
         </button>
       </div>
+
+      <button type="button" className={secondaryButton} disabled={sharing} onClick={handleShare}>
+        {sharing ? t('Gerando...') : t('Compartilhar')}
+      </button>
+
+      {reportProps && (
+        <div style={{ position: 'fixed', top: 0, left: -10000, zIndex: -1 }} aria-hidden="true">
+          <div ref={reportRef}>
+            <RankingReport {...reportProps} />
+          </div>
+        </div>
+      )}
 
       {uneven && (
         <label className="flex items-center gap-2 text-sm text-cream/80">

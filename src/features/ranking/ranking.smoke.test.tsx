@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent, cleanup, within, waitFor } from '@testing-library/react'
 import App from '../../App'
 import { db, ensurePlayersSeeded } from '../../db/db'
 import { DEFAULT_MATCH_CONFIG } from '../../engine/types'
+
+// html-to-image needs real canvas/SVG rasterization, unavailable in jsdom —
+// mock it so the smoke test can verify RankingScreen's orchestration (report
+// data assembled, file shared) without depending on real image rendering.
+vi.mock('html-to-image', () => ({
+  toBlob: vi.fn().mockResolvedValue(new Blob(['fake-png'], { type: 'image/png' })),
+}))
 
 afterEach(cleanup)
 
@@ -243,5 +250,70 @@ describe('Ranking screen — "mesmo número de jogos" filter', () => {
 
     fireEvent.click(checkbox)
     await waitFor(() => expect((screen.queryAllByRole('row').length) - 1).toBe(5))
+  })
+})
+
+describe('Ranking screen — Compartilhar (image report)', () => {
+  afterEach(() => {
+    delete (navigator as { share?: unknown }).share
+    delete (navigator as { canShare?: unknown }).canShare
+  })
+
+  it('builds a PNG report and shares it via the native share sheet', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await db.players.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b, c, d] = ['Jarede', 'Mateus', 'Mateus Adv', 'Emerson'].map(byName)
+
+    const tId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: tId,
+      date: '2026-08-13',
+      availablePlayerIds: [a, b, c, d],
+      format: 'duplas',
+      teamFormationMode: 'balanced',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [{ index: 0, team1: [a, b], team2: [c, d], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now(),
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: tId,
+      roundIndex: 0,
+      team1: [a, b],
+      team2: [c, d],
+      serveOrder: [a, c, b, d],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+      durationSeconds: 1800,
+    })
+
+    const share = vi.fn().mockResolvedValue(undefined)
+    navigator.share = share
+    navigator.canShare = () => true
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    await screen.findByRole('table')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Compartilhar' }))
+    await waitFor(() => expect(share).toHaveBeenCalled())
+
+    const call = share.mock.calls[0][0]
+    expect(call.files).toHaveLength(1)
+    expect(call.files[0].type).toBe('image/png')
+    expect(call.files[0].name).toMatch(/^quase-profissionais-ranking-.*\.png$/)
+
+    // The offscreen report node is torn down again once sharing finishes.
+    await waitFor(() => expect(screen.queryByText('Gerando...')).not.toBeInTheDocument())
   })
 })
