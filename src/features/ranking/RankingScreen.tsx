@@ -9,7 +9,6 @@ import { computePlayerPlayTime, computeTeamPlayTime, totalPlaySeconds } from '..
 import type { MatchResult, PlayerId } from '../../engine/types'
 import { formatDate } from '../../lib/format'
 import { shareOrDownloadFile } from '../../lib/shareFile'
-import { secondaryButton, toggleButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import { HelpHint } from '../../ui/HelpHint'
 import { groupByMatchesPlayed } from './rankingFilter'
@@ -43,6 +42,24 @@ function sectionsFor<T extends { matchesPlayed: number }>(
   if (!grouped) return [{ matchesPlayed: null, rows: standings }]
   return groupByMatchesPlayed(standings)
 }
+
+// Smaller than the shared toggleButton/secondaryButton (ui/styles.ts) —
+// this screen packs in a lot of controls (tab, mode, filters, share) above
+// a table that itself needs vertical room, so these trade a little tap-
+// target size for fitting more of the table without scrolling the page.
+const compactToggle = (active: boolean) =>
+  `min-h-9 flex-1 rounded-lg px-2 py-1 text-sm font-semibold border-2 transition-colors ${
+    active ? 'border-lime bg-lime/10 text-lime' : 'border-cream/20 text-cream/70'
+  }`
+const compactSecondaryButton =
+  'min-h-9 rounded-lg border border-cream/30 px-3 py-1.5 text-sm font-semibold text-cream active:bg-white/10'
+
+// Alternating row tint so the grid doesn't read as one flat block of color
+// — applied to both the sticky (#/name) and regular cells of a row via the
+// SAME single class (never layered with bg-navy on the same element: two
+// background utilities on one element race on Tailwind's generated rule
+// order, not class order, so only one of the two backgrounds would win).
+const rowBg = (i: number) => (i % 2 === 1 ? 'bg-navy-light/40' : 'bg-navy')
 
 export function RankingScreen() {
   const { t } = useT()
@@ -180,10 +197,10 @@ export function RankingScreen() {
       </h1>
 
       <div className="flex gap-2">
-        <button type="button" onClick={() => setTab('dia')} className={toggleButton(tab === 'dia')}>
+        <button type="button" onClick={() => setTab('dia')} className={compactToggle(tab === 'dia')}>
           {t('Ranking do dia')}
         </button>
-        <button type="button" onClick={() => setTab('geral')} className={toggleButton(tab === 'geral')}>
+        <button type="button" onClick={() => setTab('geral')} className={compactToggle(tab === 'geral')}>
           {t('Ranking geral')}
         </button>
       </div>
@@ -207,14 +224,14 @@ export function RankingScreen() {
         <button
           type="button"
           onClick={() => setMode('individual')}
-          className={toggleButton(mode === 'individual')}
+          className={compactToggle(mode === 'individual')}
         >
           {t('Individual')}
         </button>
         <button
           type="button"
           onClick={() => setMode('duplas')}
-          className={toggleButton(mode === 'duplas')}
+          className={compactToggle(mode === 'duplas')}
         >
           {t('Duplas')}
         </button>
@@ -230,7 +247,7 @@ export function RankingScreen() {
         <span>{t('Somente partidas de torneio')}</span>
       </label>
 
-      <button type="button" className={secondaryButton} disabled={sharing} onClick={handleShare}>
+      <button type="button" className={compactSecondaryButton} disabled={sharing} onClick={handleShare}>
         {sharing ? t('Gerando...') : t('Compartilhar')}
       </button>
 
@@ -263,8 +280,14 @@ export function RankingScreen() {
               {t('Nem todos jogaram o mesmo número de partidas.')}
             </p>
           )}
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
+          {/* The fade on the right edge is a constant hint that the grid
+              scrolls horizontally — on a phone the scrollbar itself is
+              usually invisible (iOS/Android hide it by default), and with
+              every column filled in the same navy the grid gave no visual
+              cue that PtV/PtP were off-screen until you scrolled by accident. */}
+          <div className="relative">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="text-left text-cream/60">
                   <th className="sticky left-0 z-10 w-8 bg-navy py-1 pr-2">#</th>
@@ -283,14 +306,14 @@ export function RankingScreen() {
                 {mode === 'individual'
                   ? sectionsFor(individualStandings, sameGamesOnly).flatMap((section) => {
                       const rows = section.rows.map((s, i) => (
-                        <tr key={s.playerId} className={i === 0 ? 'font-bold text-gold' : ''}>
+                        <tr key={s.playerId} className={`${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`}>
                           <td
-                            className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                            className={`sticky left-0 z-10 w-8 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
                           >
                             {i + 1}
                           </td>
                           <td
-                            className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                            className={`sticky left-8 z-10 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
                           >
                             {name(s.playerId)}
                           </td>
@@ -322,14 +345,14 @@ export function RankingScreen() {
                     })
                   : sectionsFor(teamStandings, sameGamesOnly).flatMap((section) => {
                       const rows = section.rows.map((s, i) => (
-                        <tr key={s.playerIds.join('|')} className={i === 0 ? 'font-bold text-gold' : ''}>
+                        <tr key={s.playerIds.join('|')} className={`${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`}>
                           <td
-                            className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                            className={`sticky left-0 z-10 w-8 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
                           >
                             {i + 1}
                           </td>
                           <td
-                            className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                            className={`sticky left-8 z-10 ${rowBg(i)} py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
                           >
                             {teamName(s.playerIds)}
                           </td>
@@ -360,7 +383,9 @@ export function RankingScreen() {
                       ]
                     })}
               </tbody>
-            </table>
+              </table>
+            </div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-navy via-navy/70 to-transparent" />
           </div>
           <p className="text-xs text-cream/50">
             {t(
