@@ -12,7 +12,7 @@ import { shareOrDownloadFile } from '../../lib/shareFile'
 import { secondaryButton, toggleButton } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import { HelpHint } from '../../ui/HelpHint'
-import { modeMatchesPlayed } from './rankingFilter'
+import { groupByMatchesPlayed } from './rankingFilter'
 import { RankingReport, type RankingReportProps } from './RankingReport'
 
 function toMatchResult(m: MatchRow): MatchResult {
@@ -30,28 +30,56 @@ function toMatchResult(m: MatchRow): MatchResult {
 type Tab = 'dia' | 'geral'
 type Mode = 'individual' | 'duplas'
 
+/**
+ * When `grouped` is false, everything renders as a single section (no
+ * header row) — same flat list as before the "mesmo número de partidas"
+ * feature existed. When true, splits via groupByMatchesPlayed so nobody is
+ * hidden, just organized into fair, separately-numbered comparison groups.
+ */
+function sectionsFor<T extends { matchesPlayed: number }>(
+  standings: T[],
+  grouped: boolean,
+): { matchesPlayed: number | null; rows: T[] }[] {
+  if (!grouped) return [{ matchesPlayed: null, rows: standings }]
+  return groupByMatchesPlayed(standings)
+}
+
 export function RankingScreen() {
   const { t } = useT()
   const [tab, setTab] = useState<Tab>('dia')
   const [mode, setMode] = useState<Mode>('individual')
   const [sameGamesOnly, setSameGamesOnly] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const { byId } = usePlayers()
 
-  // "Current tournament" = the most recently created one, independent of
-  // wizard/session state, so the ranking still works after navigating away.
-  const latestTournament = useLiveQuery(
-    () => db.tournaments.orderBy('createdAt').reverse().first(),
-    [],
-  )
+  const tournaments = useLiveQuery(() => db.tournaments.toArray(), [], [])
   const allCompletedMatches = useLiveQuery(
     () => db.matches.where('status').equals('completed').toArray(),
     [],
     [],
   )
 
+  const tournamentDateById = new Map(tournaments.map((tour) => [tour.id, tour.date]))
+
+  // Distinct dates that actually have a completed match, most recent first —
+  // "Ranking do dia" used to mean "the most recently created tournament",
+  // which silently missed earlier same-day matches (e.g. several separate
+  // Partidas avulsas) and kept showing yesterday's data forever once no new
+  // tournament had been created yet today. Scoping by date instead (same
+  // field HistoryScreen already groups by) fixes both: it sums every match
+  // from a given day, and defaults to the most recent day actually played.
+  const availableDates = Array.from(
+    new Set(
+      allCompletedMatches
+        .map((m) => tournamentDateById.get(m.tournamentId))
+        .filter((d): d is string => !!d),
+    ),
+  ).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
+  const effectiveDate = selectedDate ?? availableDates[0] ?? null
+
   const matchesForTab =
     tab === 'dia'
-      ? allCompletedMatches.filter((m) => m.tournamentId === latestTournament?.id)
+      ? allCompletedMatches.filter((m) => tournamentDateById.get(m.tournamentId) === effectiveDate)
       : allCompletedMatches
   const matchResults = matchesForTab.map(toMatchResult)
 
@@ -59,33 +87,14 @@ export function RankingScreen() {
   const teamName = (ids: PlayerId[]) =>
     ids.map(name).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' & ')
 
-  const individualStandingsAll = computeStandings(matchResults)
-  const teamStandingsAll = computeTeamStandings(matchResults)
+  const individualStandings = computeStandings(matchResults)
+  const teamStandings = computeTeamStandings(matchResults)
   const uneven =
     mode === 'individual'
-      ? individualStandingsAll.some((s) => s.matchesPlayed !== individualStandingsAll[0]?.matchesPlayed)
-      : teamStandingsAll.some((s) => s.matchesPlayed !== teamStandingsAll[0]?.matchesPlayed)
-
-  const targetMatchesPlayed =
-    sameGamesOnly && uneven
-      ? modeMatchesPlayed(
-          (mode === 'individual' ? individualStandingsAll : teamStandingsAll).map(
-            (s) => s.matchesPlayed,
-          ),
-        )
-      : null
-
-  const individualStandings =
-    targetMatchesPlayed === null
-      ? individualStandingsAll
-      : individualStandingsAll.filter((s) => s.matchesPlayed === targetMatchesPlayed)
-  const teamStandings =
-    targetMatchesPlayed === null
-      ? teamStandingsAll
-      : teamStandingsAll.filter((s) => s.matchesPlayed === targetMatchesPlayed)
+      ? individualStandings.some((s) => s.matchesPlayed !== individualStandings[0]?.matchesPlayed)
+      : teamStandings.some((s) => s.matchesPlayed !== teamStandings[0]?.matchesPlayed)
 
   const rowCount = mode === 'individual' ? individualStandings.length : teamStandings.length
-  const totalCount = mode === 'individual' ? individualStandingsAll.length : teamStandingsAll.length
 
   const [sharing, setSharing] = useState(false)
   const [reportProps, setReportProps] = useState<RankingReportProps | null>(null)
@@ -100,13 +109,14 @@ export function RankingScreen() {
     setReportProps({
       scopeLabel:
         tab === 'dia'
-          ? latestTournament
-            ? `${t('Ranking do dia')} — ${formatDate(latestTournament.date)}`
+          ? effectiveDate
+            ? `${t('Ranking do dia')} — ${formatDate(effectiveDate)}`
             : t('Ranking do dia')
           : t('Ranking geral'),
       generatedAtLabel: formatDate(new Date().toISOString().slice(0, 10)),
-      individualStandings: individualStandingsAll,
-      teamStandings: teamStandingsAll,
+      individualStandings,
+      teamStandings,
+      groupByMatches: sameGamesOnly,
       playerTimes: computePlayerPlayTime(completedWithDuration),
       teamTimes: computeTeamPlayTime(completedWithDuration),
       totalSeconds: totalPlaySeconds(completedWithDuration),
@@ -143,6 +153,9 @@ export function RankingScreen() {
     }
   }, [reportProps])
 
+  const groupLabel = (matchesPlayed: number) =>
+    `${matchesPlayed} ${t(matchesPlayed > 1 ? 'partidas' : 'partida')}`
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <h1 className="text-xl font-bold">
@@ -162,6 +175,21 @@ export function RankingScreen() {
           {t('Ranking geral')}
         </button>
       </div>
+
+      {tab === 'dia' && availableDates.length > 1 && (
+        <select
+          aria-label={t('Ranking do dia')}
+          value={effectiveDate ?? ''}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="min-h-9 self-start rounded-lg border border-cream/20 bg-navy px-2 text-sm text-cream"
+        >
+          {availableDates.map((d) => (
+            <option key={d} value={d}>
+              {formatDate(d)}
+            </option>
+          ))}
+        </select>
+      )}
 
       <div className="flex gap-2">
         <button
@@ -200,33 +228,17 @@ export function RankingScreen() {
             checked={sameGamesOnly}
             onChange={() => setSameGamesOnly((v) => !v)}
           />
-          <span>{t('Comparar só quem jogou o mesmo número de partidas')}</span>
+          <span>{t('Agrupar por número de partidas jogadas')}</span>
         </label>
       )}
 
       {rowCount === 0 ? (
-        <p className="text-sm text-cream/70">
-          {t(
-            tab === 'dia'
-              ? 'Nenhuma partida concluída no torneio mais recente ainda.'
-              : 'Nenhuma partida concluída ainda.',
-          )}
-        </p>
+        <p className="text-sm text-cream/70">{t('Nenhuma partida concluída ainda.')}</p>
       ) : (
         <>
           {uneven && !sameGamesOnly && (
             <p className="text-xs text-gold">
               {t('Nem todos jogaram o mesmo número de partidas.')}
-            </p>
-          )}
-          {sameGamesOnly && targetMatchesPlayed !== null && (
-            <p className="text-xs text-gold">
-              {t(
-                mode === 'individual'
-                  ? 'Mostrando {shown} de {total} jogadores, com {n} partidas cada.'
-                  : 'Mostrando {shown} de {total} duplas, com {n} partidas cada.',
-                { shown: rowCount, total: totalCount, n: targetMatchesPlayed },
-              )}
             </p>
           )}
           <div className="overflow-x-auto">
@@ -247,46 +259,68 @@ export function RankingScreen() {
               </thead>
               <tbody>
                 {mode === 'individual'
-                  ? individualStandings.map((s, i) => (
-                      <tr key={s.playerId} className={i === 0 ? 'font-bold text-gold' : ''}>
-                        <td
-                          className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                        >
-                          {i + 1}
-                        </td>
-                        <td
-                          className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                        >
-                          {name(s.playerId)}
-                        </td>
-                        <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
-                        <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
-                        <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
-                        <td className="py-1 pr-2 text-right">{s.gamesLost}</td>
-                        <td className="py-1 pr-2 text-right">{s.pointsWon}</td>
-                        <td className="py-1 text-right">{s.pointsLost}</td>
-                      </tr>
-                    ))
-                  : teamStandings.map((s, i) => (
-                      <tr key={s.playerIds.join('|')} className={i === 0 ? 'font-bold text-gold' : ''}>
-                        <td
-                          className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                        >
-                          {i + 1}
-                        </td>
-                        <td
-                          className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
-                        >
-                          {teamName(s.playerIds)}
-                        </td>
-                        <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
-                        <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
-                        <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
-                        <td className="py-1 pr-2 text-right">{s.gamesLost}</td>
-                        <td className="py-1 pr-2 text-right">{s.pointsWon}</td>
-                        <td className="py-1 text-right">{s.pointsLost}</td>
-                      </tr>
-                    ))}
+                  ? sectionsFor(individualStandings, sameGamesOnly).flatMap((section) => {
+                      const rows = section.rows.map((s, i) => (
+                        <tr key={s.playerId} className={i === 0 ? 'font-bold text-gold' : ''}>
+                          <td
+                            className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                          >
+                            {i + 1}
+                          </td>
+                          <td
+                            className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                          >
+                            {name(s.playerId)}
+                          </td>
+                          <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
+                          <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
+                          <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
+                          <td className="py-1 pr-2 text-right">{s.gamesLost}</td>
+                          <td className="py-1 pr-2 text-right">{s.pointsWon}</td>
+                          <td className="py-1 text-right">{s.pointsLost}</td>
+                        </tr>
+                      ))
+                      if (section.matchesPlayed === null) return rows
+                      return [
+                        <tr key={`group-${section.matchesPlayed}`}>
+                          <td colSpan={8} className="bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                            {groupLabel(section.matchesPlayed)}
+                          </td>
+                        </tr>,
+                        ...rows,
+                      ]
+                    })
+                  : sectionsFor(teamStandings, sameGamesOnly).flatMap((section) => {
+                      const rows = section.rows.map((s, i) => (
+                        <tr key={s.playerIds.join('|')} className={i === 0 ? 'font-bold text-gold' : ''}>
+                          <td
+                            className={`sticky left-0 z-10 w-8 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                          >
+                            {i + 1}
+                          </td>
+                          <td
+                            className={`sticky left-8 z-10 bg-navy py-1 pr-2 ${i === 0 ? 'font-bold text-gold' : ''}`}
+                          >
+                            {teamName(s.playerIds)}
+                          </td>
+                          <td className="py-1 pr-2 text-right">{s.matchesPlayed}</td>
+                          <td className="py-1 pr-2 text-right">{s.matchesWon}</td>
+                          <td className="py-1 pr-2 text-right">{s.gamesWon}</td>
+                          <td className="py-1 pr-2 text-right">{s.gamesLost}</td>
+                          <td className="py-1 pr-2 text-right">{s.pointsWon}</td>
+                          <td className="py-1 text-right">{s.pointsLost}</td>
+                        </tr>
+                      ))
+                      if (section.matchesPlayed === null) return rows
+                      return [
+                        <tr key={`group-${section.matchesPlayed}`}>
+                          <td colSpan={8} className="bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                            {groupLabel(section.matchesPlayed)}
+                          </td>
+                        </tr>,
+                        ...rows,
+                      ]
+                    })}
               </tbody>
             </table>
           </div>

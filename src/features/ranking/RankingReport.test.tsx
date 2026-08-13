@@ -25,6 +25,7 @@ const baseProps: RankingReportProps = {
       pointsLost: 8,
     },
   ],
+  groupByMatches: false,
   playerTimes: [{ playerId: 'p1', totalSeconds: 3600, matchesPlayed: 2 }],
   teamTimes: [{ playerIds: ['p1', 'p3'], totalSeconds: 1800, matchesPlayed: 1 }],
   totalSeconds: 5400,
@@ -47,5 +48,19 @@ describe('RankingReport (pure presentational component)', () => {
   it('shows a placeholder when a table has no rows yet', () => {
     render(<RankingReport {...baseProps} teamStandings={[]} />)
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
+  })
+
+  it('groups rows by matchesPlayed with a header per group when groupByMatches is on', () => {
+    const props: RankingReportProps = {
+      ...baseProps,
+      groupByMatches: true,
+      individualStandings: [
+        { playerId: 'p1', matchesPlayed: 2, matchesWon: 2, gamesWon: 8, gamesLost: 3, pointsWon: 33, pointsLost: 20 },
+        { playerId: 'p2', matchesPlayed: 1, matchesWon: 0, gamesWon: 3, gamesLost: 8, pointsWon: 20, pointsLost: 33 },
+      ],
+    }
+    render(<RankingReport {...props} />)
+    expect(screen.getAllByText('2 partidas').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1 partida').length).toBeGreaterThan(0)
   })
 })

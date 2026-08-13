@@ -1,20 +1,31 @@
 import { describe, expect, it } from 'vitest'
-import { modeMatchesPlayed } from './rankingFilter'
+import { groupByMatchesPlayed } from './rankingFilter'
 
-describe('modeMatchesPlayed', () => {
-  it('returns null for an empty list', () => {
-    expect(modeMatchesPlayed([])).toBeNull()
+interface Row {
+  id: string
+  matchesPlayed: number
+}
+
+describe('groupByMatchesPlayed', () => {
+  it('returns no groups for an empty list', () => {
+    expect(groupByMatchesPlayed<Row>([])).toEqual([])
   })
 
-  it('picks the value that appears most often', () => {
-    expect(modeMatchesPlayed([5, 5, 5, 4, 4])).toBe(5)
+  it('keeps a single group when everyone played the same number of matches', () => {
+    const rows: Row[] = [{ id: 'a', matchesPlayed: 3 }, { id: 'b', matchesPlayed: 3 }]
+    expect(groupByMatchesPlayed(rows)).toEqual([{ matchesPlayed: 3, rows }])
   })
 
-  it('breaks a frequency tie toward the higher count', () => {
-    expect(modeMatchesPlayed([4, 4, 5, 5])).toBe(5)
-  })
-
-  it('returns the only value when everyone matches', () => {
-    expect(modeMatchesPlayed([3, 3, 3])).toBe(3)
+  it('splits into groups ordered from most matches played to fewest, preserving row order within each group', () => {
+    const a = { id: 'a', matchesPlayed: 2 }
+    const b = { id: 'b', matchesPlayed: 3 }
+    const c = { id: 'c', matchesPlayed: 2 }
+    const d = { id: 'd', matchesPlayed: 3 }
+    // Input already sorted by ranking (e.g. GV desc) — the grouping must not reorder within a group.
+    const groups = groupByMatchesPlayed([b, d, a, c])
+    expect(groups).toEqual([
+      { matchesPlayed: 3, rows: [b, d] },
+      { matchesPlayed: 2, rows: [a, c] },
+    ])
   })
 })

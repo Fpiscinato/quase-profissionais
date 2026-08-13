@@ -171,8 +171,74 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
   })
 })
 
-describe('Ranking screen — "mesmo número de jogos" filter', () => {
-  it('hides players who played fewer matches than the majority when checked', async () => {
+describe('Ranking screen — "do dia" scoped by date, with a day selector', () => {
+  it('defaults to the most recent date played and lets you switch to an earlier one', async () => {
+    await seedTwoTournaments()
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    await screen.findByRole('table')
+
+    // Two distinct dates (2026-07-01 and 2026-08-04) -> selector shows up,
+    // defaulting to the most recent (matches the old "latest tournament" result).
+    const select = await screen.findByRole('combobox', { name: 'Ranking do dia' })
+    expect((select as HTMLSelectElement).value).toBe('2026-08-04')
+    let rows = await dataRows()
+    const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
+    expect([nameOf(rows[0]), nameOf(rows[1])].sort()).toEqual(['Emerson', 'Mateus'])
+
+    // Switching to the earlier date re-scopes the ranking to that day's match only.
+    fireEvent.change(select, { target: { value: '2026-07-01' } })
+    rows = await dataRows()
+    expect(rows.map(nameOf)).toEqual(['Jarede', 'Mateus', 'Mateus Adv', 'Emerson'])
+    const top = within(rows[0]).getAllByRole('cell')
+    expect(top[4].textContent).toBe('4') // Games Won, from the 2026-07-01 match
+  })
+
+  it('hides the selector when there is only one date with matches', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await db.players.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b, c, d] = ['Jarede', 'Mateus', 'Mateus Adv', 'Emerson'].map(byName)
+    const tId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: tId,
+      date: '2026-08-13',
+      availablePlayerIds: [a, b, c, d],
+      format: 'duplas',
+      teamFormationMode: 'balanced',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [{ index: 0, team1: [a, b], team2: [c, d], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now(),
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: tId,
+      roundIndex: 0,
+      team1: [a, b],
+      team2: [c, d],
+      serveOrder: [a, c, b, d],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+    })
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    await screen.findByRole('table')
+    expect(screen.queryByRole('combobox', { name: 'Ranking do dia' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Ranking screen — "mesmo número de jogos" grouping', () => {
+  it('groups players by matches played instead of hiding anyone, numbering restarting per group', async () => {
     await db.matches.clear()
     await db.tournaments.clear()
     await db.players.clear()
@@ -238,15 +304,24 @@ describe('Ranking screen — "mesmo número de jogos" filter', () => {
 
     // Uneven attendance (A,B,C played 2; D,E played 1) — checkbox should show.
     const checkbox = await screen.findByRole('checkbox', {
-      name: 'Comparar só quem jogou o mesmo número de partidas',
+      name: 'Agrupar por número de partidas jogadas',
     })
     expect((await dataRows()).length).toBe(5)
 
     fireEvent.click(checkbox)
-    await screen.findByText('Mostrando 3 de 5 jogadores, com 2 partidas cada.')
-    const filteredRows = await dataRows()
+    // Nobody disappears — still 5 data rows, plus 2 group-header rows (5, 2 partidas).
+    await screen.findByText('2 partidas')
+    await screen.findByText('1 partida')
+    const rowsAfterGrouping = within(screen.getByRole('table')).getAllByRole('row').slice(1)
+    expect(rowsAfterGrouping.length).toBe(7) // 2 header rows + 5 data rows
+
+    const dataRowsGrouped = rowsAfterGrouping.filter((r) => within(r).getAllByRole('cell').length > 1)
     const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
-    expect(filteredRows.map(nameOf).sort()).toEqual(['Jarede', 'Mateus', 'Mateus Adv'])
+    const posOf = (row: HTMLElement) => within(row).getAllByRole('cell')[0].textContent
+    expect(dataRowsGrouped.map(nameOf).sort()).toEqual(['Emerson', 'Fernando', 'Jarede', 'Mateus', 'Mateus Adv'])
+    // First row of the "2 partidas" group and first row of the "1 partida"
+    // group both restart numbering at #1 — no continuous position across groups.
+    expect(dataRowsGrouped.filter((r) => posOf(r) === '1').length).toBe(2)
 
     fireEvent.click(checkbox)
     await waitFor(() => expect((screen.queryAllByRole('row').length) - 1).toBe(5))

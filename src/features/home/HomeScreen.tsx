@@ -1,4 +1,5 @@
 import { useT } from '../../i18n/useT'
+import { APP_VERSION } from '../../version'
 
 export type View =
   | 'home'
@@ -46,6 +47,7 @@ export function HomeScreen({ onNavigate }: Props) {
           <h1 className="text-2xl font-bold">{t('Os Quase Profissionais')}</h1>
           <p className="text-sm text-cream/70">{t('Atletas de fim de semana. Vai quem aguentar.')}</p>
         </div>
+        <span className="font-mono text-[10px] text-cream/30">v{APP_VERSION}</span>
       </div>
 
       <button
@@ -76,7 +78,7 @@ export function HomeScreen({ onNavigate }: Props) {
             type="button"
             aria-label={t(item.label)}
             onClick={() => onNavigate(item.view)}
-            className="flex min-h-24 flex-col items-start justify-center gap-1 rounded-xl bg-navy-light p-3 text-left active:opacity-80"
+            className="flex min-h-20 flex-col items-start justify-center gap-1 rounded-xl bg-navy-light p-2.5 text-left active:opacity-80"
           >
             <span className="font-semibold">{t(item.label)}</span>
             <span className="text-xs text-cream/60">{t(item.hint)}</span>

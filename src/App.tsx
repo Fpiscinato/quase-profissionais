@@ -16,7 +16,6 @@ import { resolveEffectiveLayout, TABLET_MIN_WIDTH_QUERY } from './features/match
 import { useMatchMedia } from './lib/useMatchMedia'
 import { useT } from './i18n/useT'
 import type { Lang } from './i18n/i18n'
-import { APP_VERSION } from './version'
 
 // Cycled through by tapping the speed button — covers "a bit faster" up to
 // noticeably quick without needing a slider for such a small control.
@@ -45,13 +44,13 @@ function VoiceToggle() {
   const commandsOn = settings?.voiceCommandsEnabled ?? false
   const rate = settings?.voiceRate ?? 1.5
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
       <button
         type="button"
         aria-pressed={voiceOn}
         aria-label={t('Modo viva-voz')}
         onClick={() => updateSettings({ voiceMode: !voiceOn })}
-        className={`flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
+        className={`flex min-h-7 items-center gap-1 rounded-md border px-1.5 text-xs font-bold ${
           voiceOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
         }`}
       >
@@ -69,7 +68,7 @@ function VoiceToggle() {
             const current = await getSettings()
             await updateSettings({ voiceRate: nextVoiceRate(current.voiceRate ?? 1.5) })
           }}
-          className="flex min-h-8 items-center rounded-md border border-cream/20 px-2 text-xs font-bold text-cream/50"
+          className="flex min-h-7 items-center rounded-md border border-cream/20 px-1.5 text-xs font-bold text-cream/50"
         >
           {rate}x
         </button>
@@ -80,7 +79,7 @@ function VoiceToggle() {
           aria-pressed={commandsOn}
           aria-label={t('Comandos de voz')}
           onClick={() => updateSettings({ voiceCommandsEnabled: !commandsOn })}
-          className={`flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
+          className={`flex min-h-7 items-center gap-1 rounded-md border px-1.5 text-xs font-bold ${
             commandsOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
           }`}
         >
@@ -98,7 +97,7 @@ function LangToggle() {
       type="button"
       aria-pressed={lang === value}
       onClick={() => setLang(value)}
-      className={`min-h-8 rounded-md px-2 text-xs font-bold ${
+      className={`min-h-7 rounded-md px-2 text-xs font-bold ${
         lang === value ? 'bg-lime text-navy' : 'text-cream/50'
       }`}
     >
@@ -106,16 +105,54 @@ function LangToggle() {
     </button>
   )
   return (
-    <div className="ml-auto flex flex-col items-end gap-1">
-      <div className="flex flex-wrap items-center justify-end gap-1">
-        <VoiceToggle />
-        <div className="flex gap-1 rounded-lg border border-cream/20 p-0.5">
-          {option('pt', 'PT')}
-          {option('en', 'EN')}
-        </div>
-      </div>
-      <span className="font-mono text-[10px] text-cream/30">v{APP_VERSION}</span>
+    <div className="flex gap-1 rounded-lg border border-cream/20 p-0.5">
+      {option('pt', 'PT')}
+      {option('en', 'EN')}
     </div>
+  )
+}
+
+/**
+ * The header used to lay Voz/Comandos/PT-EN out inline, which made the
+ * header's own height change (and everything below it jump) whenever a
+ * toggle appeared/disappeared — most noticeably turning Voz on while on a
+ * narrow phone. Collapsing everything behind one fixed-size "Opções" button
+ * that opens an absolutely-positioned panel (doesn't push layout, just
+ * overlays) fixes that at the root: the header's box never changes size
+ * regardless of what's open inside the panel.
+ */
+function HeaderOptions() {
+  const { t } = useT()
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className="relative z-30 ml-auto">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={t('Opções')}
+          onClick={() => setOpen((o) => !o)}
+          className="flex min-h-9 items-center gap-1 rounded-full border border-cream/20 px-3 text-sm font-bold text-cream/80 active:opacity-80"
+        >
+          <span aria-hidden="true">⚙</span> {t('Opções')}
+        </button>
+        {open && (
+          <div className="absolute right-0 top-full z-30 mt-2 flex w-max flex-col gap-2 rounded-xl border border-cream/10 bg-navy-light p-3 shadow-lg">
+            <VoiceToggle />
+            <LangToggle />
+          </div>
+        )}
+      </div>
+      {/* Sibling, not a child of the z-30 wrapper above — nesting it there
+          put it in the same stacking context as the button, so its z-10
+          (meant only to sit above ordinary page content) ended up painting
+          OVER the button locally and swallowing the click that should close
+          the panel. As a sibling of a lower ambient z-index, it stays below
+          the wrapper everywhere while still catching outside clicks. */}
+      {open && (
+        <div className="fixed inset-0 z-10" aria-hidden="true" onClick={() => setOpen(false)} />
+      )}
+    </>
   )
 }
 
@@ -156,7 +193,7 @@ function App() {
     <div
       className={`mx-auto min-h-svh ${effectiveLayout === 'tablet' ? 'max-w-[min(95vw,1600px)]' : 'max-w-md'}`}
     >
-      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-cream/10 bg-navy px-4 py-1.5">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-cream/10 bg-navy px-4 py-1.5">
         {view !== 'home' && (
           <button
             type="button"
@@ -167,7 +204,7 @@ function App() {
             {t('‹ Início')}
           </button>
         )}
-        <LangToggle />
+        <HeaderOptions />
       </header>
       {view === 'home' && <HomeScreen onNavigate={setView} />}
       {view === 'torneio' && <TournamentWizard onExit={() => setView('home')} />}

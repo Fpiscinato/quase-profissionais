@@ -4,12 +4,15 @@ import { formatHoursMinutes } from '../../lib/format'
 import { card } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import { APP_VERSION } from '../../version'
+import { groupByMatchesPlayed } from './rankingFilter'
 
 export interface RankingReportProps {
   scopeLabel: string
   generatedAtLabel: string
   individualStandings: PlayerStanding[]
   teamStandings: TeamStanding[]
+  /** Mirrors the "Agrupar por número de partidas jogadas" checkbox state on RankingScreen at the moment Compartilhar was tapped. */
+  groupByMatches: boolean
   playerTimes: PlayerPlayTime[]
   teamTimes: TeamPlayTime[]
   totalSeconds: number
@@ -45,8 +48,10 @@ export function RankingReport(props: RankingReportProps) {
       <RankingTable
         title={t('Individual')}
         head={['#', t('Jogador'), t('PJ'), t('PV'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
-        rows={props.individualStandings.map((s, i) => [
-          String(i + 1),
+        standings={props.individualStandings}
+        groupByMatches={props.groupByMatches}
+        rowKey={(s) => s.playerId}
+        rowValues={(s) => [
           props.playerName(s.playerId),
           String(s.matchesPlayed),
           String(s.matchesWon),
@@ -54,14 +59,16 @@ export function RankingReport(props: RankingReportProps) {
           String(s.gamesLost),
           String(s.pointsWon),
           String(s.pointsLost),
-        ])}
+        ]}
       />
 
       <RankingTable
         title={t('Duplas')}
         head={['#', t('Dupla'), t('PJ'), t('PV'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
-        rows={props.teamStandings.map((s, i) => [
-          String(i + 1),
+        standings={props.teamStandings}
+        groupByMatches={props.groupByMatches}
+        rowKey={(s) => s.playerIds.join('|')}
+        rowValues={(s) => [
           props.teamName(s.playerIds),
           String(s.matchesPlayed),
           String(s.matchesWon),
@@ -69,7 +76,7 @@ export function RankingReport(props: RankingReportProps) {
           String(s.gamesLost),
           String(s.pointsWon),
           String(s.pointsLost),
-        ])}
+        ]}
       />
 
       <div className={card}>
@@ -118,35 +125,66 @@ export function RankingReport(props: RankingReportProps) {
   )
 }
 
-function RankingTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
+interface RankingTableProps<T extends { matchesPlayed: number }> {
+  title: string
+  head: string[]
+  standings: T[]
+  groupByMatches: boolean
+  rowKey: (s: T) => string
+  rowValues: (s: T) => string[]
+}
+
+function RankingTable<T extends { matchesPlayed: number }>({
+  title,
+  head,
+  standings,
+  groupByMatches,
+  rowKey,
+  rowValues,
+}: RankingTableProps<T>) {
+  const { t } = useT()
+  const sections = groupByMatches
+    ? groupByMatchesPlayed(standings)
+    : [{ matchesPlayed: null as number | null, rows: standings }]
+
   return (
     <div>
       <h2 className="mb-2 text-lg font-semibold">{title}</h2>
-      {rows.length === 0 ? (
+      {standings.length === 0 ? (
         <p className="text-sm text-cream/50">—</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr>
-              {head.map((h, i) => (
-                <th key={h} className={i >= 2 ? headCellRight : headCell}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={row[1]} className={i === 0 ? 'font-bold text-gold' : ''}>
-                {row.map((value, j) => (
-                  <td key={j} className={j >= 2 ? cellRight : cell}>
-                    {value}
-                  </td>
+        sections.map((section) => (
+          <div key={section.matchesPlayed ?? 'all'} className={section.matchesPlayed !== null ? 'mt-4' : ''}>
+            {section.matchesPlayed !== null && (
+              <div className="mb-1 text-xs font-semibold text-cream/50">
+                {section.matchesPlayed} {t(section.matchesPlayed > 1 ? 'partidas' : 'partida')}
+              </div>
+            )}
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  {head.map((h, i) => (
+                    <th key={h} className={i >= 2 ? headCellRight : headCell}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {section.rows.map((s, i) => (
+                  <tr key={rowKey(s)} className={i === 0 ? 'font-bold text-gold' : ''}>
+                    <td className={cell}>{i + 1}</td>
+                    {rowValues(s).map((value, j) => (
+                      <td key={j} className={j >= 1 ? cellRight : cell}>
+                        {value}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        ))
       )}
     </div>
   )

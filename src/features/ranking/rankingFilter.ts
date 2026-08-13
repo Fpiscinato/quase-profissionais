@@ -1,20 +1,27 @@
+export interface StandingsGroup<T> {
+  matchesPlayed: number
+  rows: T[]
+}
+
 /**
- * Picks the matchesPlayed value to compare when "mesmo número de jogos" is
- * checked: the most common count (ties broken toward the higher count, which
- * represents whoever completed the most rounds) rather than an arbitrary
- * min/max — someone who left early shouldn't set the bar for everyone else.
+ * Splits standings into one group per distinct matchesPlayed count, ordered
+ * from most matches played to fewest — used by the "mesmo número de
+ * partidas" checkbox (Ranking screen + shareable report) so players who
+ * attended less aren't hidden, just compared only within their own group
+ * (each group keeps the input's relative order, i.e. still sorted by
+ * GV/PtV/PV — see engine/ranking.ts — so ranking within a group stays
+ * correct without re-sorting here).
  */
-export function modeMatchesPlayed(counts: number[]): number | null {
-  if (counts.length === 0) return null
-  const freq = new Map<number, number>()
-  for (const c of counts) freq.set(c, (freq.get(c) ?? 0) + 1)
-  let best: number | null = null
-  let bestFreq = 0
-  for (const [value, f] of freq) {
-    if (f > bestFreq || (f === bestFreq && best !== null && value > best)) {
-      best = value
-      bestFreq = f
-    }
+export function groupByMatchesPlayed<T extends { matchesPlayed: number }>(
+  standings: T[],
+): StandingsGroup<T>[] {
+  const groups = new Map<number, T[]>()
+  for (const s of standings) {
+    const rows = groups.get(s.matchesPlayed) ?? []
+    rows.push(s)
+    groups.set(s.matchesPlayed, rows)
   }
-  return best
+  return Array.from(groups.entries())
+    .sort((a, b) => b[0] - a[0])
+    .map(([matchesPlayed, rows]) => ({ matchesPlayed, rows }))
 }

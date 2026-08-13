@@ -305,6 +305,6 @@ describe('Backup — export sharing', () => {
     await waitFor(() => expect(share).toHaveBeenCalled())
     const call = share.mock.calls[0][0]
     expect(call.files).toHaveLength(1)
-    expect(call.files[0].name).toMatch(/^quase-profissionais-backup-.*\.json$/)
+    expect(call.files[0].name).toMatch(/^qp-backup-\d{4}-\d{2}-\d{2}-\d{4}\.json$/)
   })
 })

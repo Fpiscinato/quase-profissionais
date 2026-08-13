@@ -26,8 +26,13 @@ export function BackupScreen() {
     setError(null)
     try {
       const payload = await exportBackup()
-      const date = new Date().toISOString().slice(0, 10)
-      const filename = `quase-profissionais-backup-${date}.json`
+      const now = new Date()
+      const date = now.toISOString().slice(0, 10)
+      const hhmm = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+      // Short prefix + time (not just date): exporting from 2-3 devices on
+      // separate courts the same day used to produce identical filenames,
+      // risking one overwriting another once dropped in a shared folder.
+      const filename = `qp-backup-${date}-${hhmm}.json`
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
       const file = new File([blob], filename, { type: 'application/json' })
       await shareOrDownloadFile(file, filename)
