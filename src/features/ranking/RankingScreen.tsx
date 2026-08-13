@@ -88,7 +88,11 @@ export function RankingScreen() {
     ids.map(name).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' & ')
 
   const individualStandings = computeStandings(matchResults)
-  const teamStandings = computeTeamStandings(matchResults)
+  // Individual-format matches produce 1-player "teams" (computeTeamStandings
+  // credits any team, singles included) — filtered out here so "Duplas"
+  // only ever shows real pairs, matching the note below the table and the
+  // same filter HistoryScreen.tsx already applies to its "Por dupla" stats.
+  const teamStandings = computeTeamStandings(matchResults).filter((s) => s.playerIds.length === 2)
   const uneven =
     mode === 'individual'
       ? individualStandings.some((s) => s.matchesPlayed !== individualStandings[0]?.matchesPlayed)
@@ -118,7 +122,7 @@ export function RankingScreen() {
       teamStandings,
       groupByMatches: sameGamesOnly,
       playerTimes: computePlayerPlayTime(completedWithDuration),
-      teamTimes: computeTeamPlayTime(completedWithDuration),
+      teamTimes: computeTeamPlayTime(completedWithDuration).filter((t) => t.playerIds.length === 2),
       totalSeconds: totalPlaySeconds(completedWithDuration),
       playerName: name,
       teamName,

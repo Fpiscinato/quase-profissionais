@@ -169,6 +169,56 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     expect(top[4].textContent).toBe('4') // Games Won
     expect(top[6].textContent).toBe('17') // Points Won
   })
+
+  it('"Duplas" mode never shows a solo player from an Individual-format match', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await db.players.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b, c] = ['Jarede', 'Mateus', 'Mateus Adv'].map(byName)
+
+    // A real pair (Jarede & Mateus) plus a singles match (Jarede vs Mateus Adv).
+    const tId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: tId,
+      date: '2026-08-13',
+      availablePlayerIds: [a, b, c],
+      format: 'duplas',
+      teamFormationMode: 'manual',
+      options: DEFAULT_MATCH_CONFIG,
+      rounds: [{ index: 0, team1: [a, b], team2: [c], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now(),
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId: tId,
+      roundIndex: 0,
+      team1: [a, b],
+      team2: [c], // singles side — a 1-player "team"
+      serveOrder: [a, c, b],
+      pointLog: [],
+      games1: 4,
+      games2: 1,
+      points1: 16,
+      points2: 8,
+      winnerTeam: 'team1',
+      status: 'completed',
+    })
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Duplas' }))
+    await screen.findByRole('table')
+
+    const rows = await dataRows()
+    const pairOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
+    expect(rows.map(pairOf)).toEqual(['Jarede & Mateus'])
+    expect(screen.queryByText('Mateus Adv')).not.toBeInTheDocument()
+  })
 })
 
 describe('Ranking screen — "do dia" scoped by date, with a day selector', () => {
