@@ -235,6 +235,8 @@ export const EN: Record<string, string> = {
   // RankingScreen
   'Ranking do dia': "Today's ranking",
   'Ranking geral': 'Overall ranking',
+  'Do dia': 'Today',
+  Geral: 'Overall',
   'Nenhuma partida concluída ainda.': 'No completed matches yet.',
   'Nem todos jogaram o mesmo número de partidas.': 'Not everyone has played the same number of matches.',
   'Agrupar por número de partidas jogadas': 'Group by number of matches played',

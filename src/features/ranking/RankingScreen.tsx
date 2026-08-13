@@ -51,8 +51,18 @@ const compactToggle = (active: boolean) =>
   `min-h-9 flex-1 rounded-lg px-2 py-1 text-sm font-semibold border-2 transition-colors ${
     active ? 'border-lime bg-lime/10 text-lime' : 'border-cream/20 text-cream/70'
   }`
-const compactSecondaryButton =
-  'min-h-9 rounded-lg border border-cream/30 px-3 py-1.5 text-sm font-semibold text-cream active:bg-white/10'
+
+// Standard "share" glyph (box with an arrow pointing up and out) — reads
+// as a share action at a glance without needing a label, so the button
+// next to "Ranking" can stay small.
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 16V4M12 4L7 9M12 4l5 5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 // Alternating row tint so the grid doesn't read as one flat block of color
 // — applied to both the sticky (#/name) and regular cells of a row via the
@@ -187,38 +197,48 @@ export function RankingScreen() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-bold">
-        {t('Ranking')}
-        <HelpHint
-          text={t(
-            'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
-          )}
-        />
-      </h1>
-
-      <div className="flex gap-2">
-        <button type="button" onClick={() => setTab('dia')} className={compactToggle(tab === 'dia')}>
-          {t('Ranking do dia')}
-        </button>
-        <button type="button" onClick={() => setTab('geral')} className={compactToggle(tab === 'geral')}>
-          {t('Ranking geral')}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">
+          {t('Ranking')}
+          <HelpHint
+            text={t(
+              'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
+            )}
+          />
+        </h1>
+        <button
+          type="button"
+          aria-label={t('Compartilhar')}
+          disabled={sharing}
+          onClick={handleShare}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-cream/30 text-cream disabled:opacity-40 active:bg-white/10"
+        >
+          <ShareIcon />
         </button>
       </div>
 
-      {tab === 'dia' && availableDates.length > 1 && (
-        <select
-          aria-label={t('Ranking do dia')}
-          value={effectiveDate ?? ''}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="min-h-9 self-start rounded-lg border border-cream/20 bg-navy px-2 text-sm text-cream"
-        >
-          {availableDates.map((d) => (
-            <option key={d} value={d}>
-              {formatDate(d)}
-            </option>
-          ))}
-        </select>
-      )}
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => setTab('dia')} className={compactToggle(tab === 'dia')}>
+          {t('Do dia')}
+        </button>
+        <button type="button" onClick={() => setTab('geral')} className={compactToggle(tab === 'geral')}>
+          {t('Geral')}
+        </button>
+        {tab === 'dia' && availableDates.length > 1 && (
+          <select
+            aria-label={t('Ranking do dia')}
+            value={effectiveDate ?? ''}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="min-h-9 shrink-0 rounded-lg border border-cream/20 bg-navy px-2 text-sm text-cream"
+          >
+            {availableDates.map((d) => (
+              <option key={d} value={d}>
+                {formatDate(d)}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <button
@@ -246,10 +266,6 @@ export function RankingScreen() {
         />
         <span>{t('Somente partidas de torneio')}</span>
       </label>
-
-      <button type="button" className={compactSecondaryButton} disabled={sharing} onClick={handleShare}>
-        {sharing ? t('Gerando...') : t('Compartilhar')}
-      </button>
 
       {reportProps && (
         <div style={{ position: 'fixed', top: 0, left: -10000, zIndex: -1 }} aria-hidden="true">

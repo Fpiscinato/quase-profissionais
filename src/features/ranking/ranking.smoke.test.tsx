@@ -108,7 +108,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     await seedTwoTournaments()
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
-    await screen.findByText('Ranking do dia')
+    await screen.findByRole('button', { name: 'Do dia' })
     await screen.findByRole('table')
 
     // Mateus & Emerson (team2 of the T2-only match) both won 4 games / 17
@@ -128,7 +128,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     await seedTwoTournaments()
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Geral' }))
     await screen.findByRole('table')
 
     const rows = await dataRows()
@@ -148,7 +148,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     await seedTwoTournaments()
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Geral' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Duplas' }))
     await screen.findByRole('table')
 
@@ -210,7 +210,7 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
 
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Geral' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Duplas' }))
     await screen.findByRole('table')
 
@@ -291,7 +291,7 @@ describe('Ranking screen — "Somente partidas de torneio"', () => {
 
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Geral' }))
     await screen.findByRole('table')
 
     // Both matches count by default (checkbox off) — Jarede played 2.
@@ -442,7 +442,7 @@ describe('Ranking screen — "mesmo número de jogos" grouping', () => {
 
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ranking' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Ranking geral' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Geral' }))
     await screen.findByRole('table')
 
     // Uneven attendance (A,B,C played 2; D,E played 1) — checkbox should show.

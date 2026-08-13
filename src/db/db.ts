@@ -107,6 +107,32 @@ db.version(1).stores({
   appSettings: 'id',
 })
 
+// v2.0 added TournamentRow.origin ('torneio' | 'avulsa') to distinguish real
+// tournaments from Praticar (quick) matches. Existing rows predate the
+// field — backfill using the one reliable structural signal available:
+// Praticar always creates exactly 1 round (see QuickMatchScreen.tsx), while
+// a real multi-player Torneio's balanced rotation across rounds is the
+// whole point of that flow. Not airtight (e.g. a 2-player Individual
+// tournament is also 1 round), but the user explicitly asked to just
+// assume it for existing data rather than requiring manual re-tagging.
+db.version(2)
+  .stores({
+    players: 'id',
+    tournaments: 'id, status, createdAt',
+    matches: 'id, tournamentId, status',
+    appSettings: 'id',
+  })
+  .upgrade(async (tx) => {
+    await tx
+      .table('tournaments')
+      .toCollection()
+      .modify((tournament: TournamentRow) => {
+        if (tournament.origin === undefined) {
+          tournament.origin = tournament.rounds.length === 1 ? 'avulsa' : 'torneio'
+        }
+      })
+  })
+
 export { db }
 
 function newId(): string {
