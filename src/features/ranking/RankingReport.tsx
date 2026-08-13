@@ -153,38 +153,45 @@ function RankingTable<T extends { matchesPlayed: number }>({
       {standings.length === 0 ? (
         <p className="text-sm text-cream/50">—</p>
       ) : (
-        sections.map((section) => (
-          <div key={section.matchesPlayed ?? 'all'} className={section.matchesPlayed !== null ? 'mt-4' : ''}>
-            {section.matchesPlayed !== null && (
-              <div className="mb-1 text-xs font-semibold text-cream/50">
-                {section.matchesPlayed} {t(section.matchesPlayed > 1 ? 'partidas' : 'partida')}
-              </div>
-            )}
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  {head.map((h, i) => (
-                    <th key={h} className={i >= 2 ? headCellRight : headCell}>
-                      {h}
-                    </th>
+        // One single <table> for the whole section, even when grouped —
+        // group headers are colSpan rows inside the same tbody instead of
+        // separate <table> elements. Separate tables each auto-size their
+        // own columns independently (names differ in length per group),
+        // which threw the numeric columns out of alignment between groups.
+        <table className="w-full text-sm">
+          <thead>
+            <tr>
+              {head.map((h, i) => (
+                <th key={h} className={i >= 2 ? headCellRight : headCell}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sections.flatMap((section) => {
+              const rows = section.rows.map((s, i) => (
+                <tr key={rowKey(s)} className={i === 0 ? 'font-bold text-gold' : ''}>
+                  <td className={cell}>{i + 1}</td>
+                  {rowValues(s).map((value, j) => (
+                    <td key={j} className={j >= 1 ? cellRight : cell}>
+                      {value}
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody>
-                {section.rows.map((s, i) => (
-                  <tr key={rowKey(s)} className={i === 0 ? 'font-bold text-gold' : ''}>
-                    <td className={cell}>{i + 1}</td>
-                    {rowValues(s).map((value, j) => (
-                      <td key={j} className={j >= 1 ? cellRight : cell}>
-                        {value}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))
+              ))
+              if (section.matchesPlayed === null) return rows
+              return [
+                <tr key={`group-${section.matchesPlayed}`}>
+                  <td colSpan={head.length} className="pt-3 pb-1 text-xs font-semibold text-cream/50">
+                    {section.matchesPlayed} {t(section.matchesPlayed > 1 ? 'partidas' : 'partida')}
+                  </td>
+                </tr>,
+                ...rows,
+              ]
+            })}
+          </tbody>
+        </table>
       )}
     </div>
   )

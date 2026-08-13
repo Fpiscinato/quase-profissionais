@@ -16,6 +16,7 @@ import { resolveEffectiveLayout, TABLET_MIN_WIDTH_QUERY } from './features/match
 import { useMatchMedia } from './lib/useMatchMedia'
 import { useT } from './i18n/useT'
 import type { Lang } from './i18n/i18n'
+import { APP_VERSION } from './version'
 
 // Cycled through by tapping the speed button — covers "a bit faster" up to
 // noticeably quick without needing a slider for such a small control.
@@ -126,7 +127,8 @@ function HeaderOptions() {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <div className="relative z-30 ml-auto">
+      <div className="relative z-30 ml-auto flex items-center gap-2">
+        <span className="font-mono text-[10px] text-cream/30">v{APP_VERSION}</span>
         <button
           type="button"
           aria-expanded={open}
