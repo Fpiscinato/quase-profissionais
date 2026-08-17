@@ -299,118 +299,106 @@ export function RankingScreen() {
               {t('Nem todos jogaram o mesmo número de partidas.')}
             </p>
           )}
-          {/* The fade on the right edge is a constant hint that the grid
+          {/* The fade on the right edge is a constant hint that the table
               scrolls horizontally — on a phone the scrollbar itself is
               usually invisible (iOS/Android hide it by default), and with
               every column filled in the same navy the grid gave no visual
               cue that PtV/PtP were off-screen until you scrolled by accident.
 
-              This is a CSS Grid, not an HTML <table> — `position: sticky` on
-              real <td>/<th> elements is notoriously unreliable during an
-              active scroll gesture on mobile browsers (the frozen columns
-              can visibly slide/overlap the scrolling ones mid-scroll even
-              though the settled end state looks fine — a real bug report,
-              not just a static rendering issue). Sticky works reliably on
-              plain grid/flex items, so `role="table"/"row"/"cell"` recreates
-              table semantics (for a11y and the existing role-based tests)
-              on top of div/grid layout instead. Each "row" wrapper uses
-              `display: contents` so its cells flow directly into the parent
-              grid's columns/rows — but that also means the wrapper itself
-              paints nothing, so zebra/gold styling has to live on every
-              individual cell rather than once on the row. */}
+              This used to be built from `display: contents` div "rows" over
+              CSS Grid (to dodge a Chromium bug where `colspan` breaks sticky
+              on real <td>s — worked around below by splitting each group
+              header into two non-colspan sticky cells + a colspan filler).
+              But `display: contents` has its own real bug in WebKit: a
+              `position: sticky` descendant of a `display: contents` box can
+              resolve the wrong containing block, so instead of sticking to
+              this scroll container it can appear pinned to the viewport —
+              exactly the "primeira linha congelada" report. A plain <table>
+              has no such issue (sticky <td>/<th> is the standard, reliable
+              way to freeze table columns), so this reverts to one. */}
           <div className="relative">
             <div className="overflow-x-auto">
-              <div
-                role="table"
-                className="grid min-w-[480px] grid-cols-[2rem_minmax(100px,max-content)_repeat(6,minmax(2.5rem,max-content))] text-sm"
-              >
-                <div role="row" className="contents">
-                  <div role="columnheader" className="sticky left-0 z-10 bg-navy py-1 pr-2 text-left text-cream/60">
-                    #
-                  </div>
-                  <div role="columnheader" className="sticky left-8 z-10 bg-navy py-1 pr-2 text-left text-cream/60">
-                    {t(mode === 'individual' ? 'Jogador' : 'Dupla')}
-                  </div>
-                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('PJ')}</div>
-                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('PV')}</div>
-                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('GV')}</div>
-                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('GP')}</div>
-                  <div role="columnheader" className="py-1 pr-2 text-right text-cream/60">{t('PtV')}</div>
-                  <div role="columnheader" className="py-1 text-right text-cream/60">{t('PtP')}</div>
-                </div>
-
-                {mode === 'individual'
-                  ? sectionsFor(individualStandings, sameGamesOnly).flatMap((section) => {
-                      const rows = section.rows.map((s, i) => {
-                        const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
-                        return (
-                          <div role="row" className="contents" key={s.playerId}>
-                            <div role="cell" className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>
-                              {i + 1}
-                            </div>
-                            <div role="cell" className={`sticky left-8 z-10 whitespace-nowrap ${cell} py-1 pr-2`}>
-                              {name(s.playerId)}
-                            </div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</div>
-                            <div role="cell" className={`${cell} py-1 text-right`}>{s.pointsLost}</div>
-                          </div>
-                        )
+              <table className="min-w-[480px] border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 z-10 bg-navy py-1 pr-2 text-left font-normal text-cream/60">
+                      #
+                    </th>
+                    <th className="sticky left-8 z-10 bg-navy py-1 pr-2 text-left font-normal text-cream/60">
+                      {t(mode === 'individual' ? 'Jogador' : 'Dupla')}
+                    </th>
+                    <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PJ')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PV')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('GV')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('GP')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PtV')}</th>
+                    <th className="py-1 text-right font-normal text-cream/60">{t('PtP')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mode === 'individual'
+                    ? sectionsFor(individualStandings, sameGamesOnly).flatMap((section) => {
+                        const rows = section.rows.map((s, i) => {
+                          const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
+                          return (
+                            <tr key={s.playerId}>
+                              <td className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>{i + 1}</td>
+                              <td className={`sticky left-8 z-10 whitespace-nowrap ${cell} py-1 pr-2`}>
+                                {name(s.playerId)}
+                              </td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</td>
+                              <td className={`${cell} py-1 text-right`}>{s.pointsLost}</td>
+                            </tr>
+                          )
+                        })
+                        if (section.matchesPlayed === null) return rows
+                        return [
+                          <tr key={`group-${section.matchesPlayed}`}>
+                            <td className="sticky left-0 z-10 bg-navy pt-3 pb-1" />
+                            <td className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                              {groupLabel(section.matchesPlayed)}
+                            </td>
+                            <td className="bg-navy pt-3 pb-1" colSpan={6} />
+                          </tr>,
+                          ...rows,
+                        ]
                       })
-                      if (section.matchesPlayed === null) return rows
-                      return [
-                        <div role="row" className="contents" key={`group-${section.matchesPlayed}`}>
-                          <div role="cell" className="sticky left-0 z-10 bg-navy pt-3 pb-1" />
-                          <div
-                            role="cell"
-                            className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50"
-                          >
-                            {groupLabel(section.matchesPlayed)}
-                          </div>
-                          <div role="cell" className="bg-navy pt-3 pb-1" style={{ gridColumn: 'span 6' }} />
-                        </div>,
-                        ...rows,
-                      ]
-                    })
-                  : sectionsFor(teamStandings, sameGamesOnly).flatMap((section) => {
-                      const rows = section.rows.map((s, i) => {
-                        const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
-                        return (
-                          <div role="row" className="contents" key={s.playerIds.join('|')}>
-                            <div role="cell" className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>
-                              {i + 1}
-                            </div>
-                            <div role="cell" className={`sticky left-8 z-10 whitespace-nowrap ${cell} py-1 pr-2`}>
-                              {teamName(s.playerIds)}
-                            </div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</div>
-                            <div role="cell" className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</div>
-                            <div role="cell" className={`${cell} py-1 text-right`}>{s.pointsLost}</div>
-                          </div>
-                        )
-                      })
-                      if (section.matchesPlayed === null) return rows
-                      return [
-                        <div role="row" className="contents" key={`group-${section.matchesPlayed}`}>
-                          <div role="cell" className="sticky left-0 z-10 bg-navy pt-3 pb-1" />
-                          <div
-                            role="cell"
-                            className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50"
-                          >
-                            {groupLabel(section.matchesPlayed)}
-                          </div>
-                          <div role="cell" className="bg-navy pt-3 pb-1" style={{ gridColumn: 'span 6' }} />
-                        </div>,
-                        ...rows,
-                      ]
-                    })}
-              </div>
+                    : sectionsFor(teamStandings, sameGamesOnly).flatMap((section) => {
+                        const rows = section.rows.map((s, i) => {
+                          const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
+                          return (
+                            <tr key={s.playerIds.join('|')}>
+                              <td className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>{i + 1}</td>
+                              <td className={`sticky left-8 z-10 whitespace-nowrap ${cell} py-1 pr-2`}>
+                                {teamName(s.playerIds)}
+                              </td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</td>
+                              <td className={`${cell} py-1 text-right`}>{s.pointsLost}</td>
+                            </tr>
+                          )
+                        })
+                        if (section.matchesPlayed === null) return rows
+                        return [
+                          <tr key={`group-${section.matchesPlayed}`}>
+                            <td className="sticky left-0 z-10 bg-navy pt-3 pb-1" />
+                            <td className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
+                              {groupLabel(section.matchesPlayed)}
+                            </td>
+                            <td className="bg-navy pt-3 pb-1" colSpan={6} />
+                          </tr>,
+                          ...rows,
+                        ]
+                      })}
+                </tbody>
+              </table>
             </div>
             <div className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-navy/70 to-transparent" />
           </div>

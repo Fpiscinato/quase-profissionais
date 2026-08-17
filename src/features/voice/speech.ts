@@ -25,6 +25,29 @@ export function speechSynthesisSupported(): boolean {
 // caller needing to track its own history.
 let lastSpoken: { lang: Lang; text: string; rate: number } | null = null
 
+// iOS Safari only allows a speak() call to produce sound if it (or an
+// earlier speak() this same page load) ran synchronously inside a real user
+// gesture handler — a call from a later effect/timer/async callback is
+// silently dropped until that's happened once. Once primed, later async
+// speak() calls keep working for the rest of this page load (this is the
+// standard cross-browser TTS library workaround, not a guess). `voiceMode`
+// is a persisted setting though, so on a fresh page load where it's already
+// ON (the common case for a PWA that gets fully reloaded each time it's
+// opened) nobody necessarily taps the "Voz" button this session — see
+// App.tsx's document-wide first-tap listener, which calls primeSpeechEngine
+// to cover that case silently, without waiting for that specific button.
+let primed = false
+
+export function primeSpeechEngine(lang: Lang): void {
+  if (primed || !speechSynthesisSupported()) return
+  primed = true
+  const utterance = new SpeechSynthesisUtterance(' ')
+  utterance.lang = voiceLangTag(lang)
+  utterance.volume = 0
+  utterance.rate = 10
+  window.speechSynthesis.speak(utterance)
+}
+
 /**
  * Speaks text aloud through whatever audio output is active (a paired
  * Bluetooth speaker included — this is just the device's normal audio
@@ -37,6 +60,7 @@ let lastSpoken: { lang: Lang; text: string; rate: number } | null = null
 export function speak(lang: Lang, text: string, rate = 1): void {
   if (!text) return
   lastSpoken = { lang, text, rate }
+  primed = true
   if (!speechSynthesisSupported()) return
   window.speechSynthesis.cancel()
   const utterance = new SpeechSynthesisUtterance(toSpeechText(lang, text))

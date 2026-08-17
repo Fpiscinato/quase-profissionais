@@ -319,6 +319,7 @@ export const EN: Record<string, string> = {
   'Velocidade da voz': 'Voice speed',
   'Voz: ON': 'Voice: ON',
   'Voz: OFF': 'Voice: OFF',
+  'Voz ativada.': 'Voice on.',
   '{server} saca da {side}.': '{server} serves from the {side}.',
   'Fim de partida! {winner} venceu, {g1} a {g2}.': 'Match over! {winner} won, {g1} to {g2}.',
   'Troquem de lado — Time 1 na {side1}, Time 2 na {side2}.':

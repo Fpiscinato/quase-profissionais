@@ -12,6 +12,7 @@ import { BackupScreen } from './features/backup/BackupScreen'
 import { HomeScreen, type View } from './features/home/HomeScreen'
 import { KeyBindingsScreen } from './features/keys/KeyBindingsScreen'
 import { voiceCommandsSupported } from './features/voice/useVoiceCommands'
+import { primeSpeechEngine, speak } from './features/voice/speech'
 import { resolveEffectiveLayout, TABLET_MIN_WIDTH_QUERY } from './features/match/layoutMode'
 import { useMatchMedia } from './lib/useMatchMedia'
 import { useT } from './i18n/useT'
@@ -37,9 +38,18 @@ function nextVoiceRate(current: number): number {
  * testing found speech recognition unreliable while speaking worked well —
  * it defaults off so nobody gets surprised by a mic listening they didn't
  * ask for.
+ *
+ * iOS Safari only allows `speechSynthesis.speak()` to actually produce
+ * sound the first time it's called directly inside a real user gesture
+ * (tap/click) — a call from a later effect/async callback (which is how
+ * useVoiceAnnouncer normally speaks, mid-match) is silently swallowed until
+ * that "unlock" has happened once per page load. Speaking a short
+ * confirmation right in this onClick both unlocks it and doubles as
+ * audible proof the device's TTS actually works, instead of only finding
+ * out mid-match that it's silent.
  */
 function VoiceToggle() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const settings = useSettings()
   const voiceOn = settings?.voiceMode ?? false
   const commandsOn = settings?.voiceCommandsEnabled ?? false
@@ -50,7 +60,10 @@ function VoiceToggle() {
         type="button"
         aria-pressed={voiceOn}
         aria-label={t('Modo viva-voz')}
-        onClick={() => updateSettings({ voiceMode: !voiceOn })}
+        onClick={() => {
+          if (!voiceOn) speak(lang, t('Voz ativada.'), rate)
+          updateSettings({ voiceMode: !voiceOn })
+        }}
         className={`flex min-h-7 items-center gap-1 rounded-md border px-1.5 text-xs font-bold ${
           voiceOn ? 'border-lime bg-lime text-navy' : 'border-cream/20 text-cream/50'
         }`}
@@ -161,10 +174,24 @@ function HeaderOptions() {
 function App() {
   const [view, setView] = useState<View>('home')
   const [ready, setReady] = useState(false)
-  const { t } = useT()
+  const { t, lang } = useT()
   const settings = useSettings()
   const isWideViewport = useMatchMedia(TABLET_MIN_WIDTH_QUERY)
   const effectiveLayout = resolveEffectiveLayout(settings?.layoutMode ?? 'auto', isWideViewport)
+
+  // Voz is a persisted device setting — if it's already ON from a previous
+  // session (the common case: this PWA fully reloads each time it's
+  // reopened on iOS), nobody necessarily taps the "Voz" button this load, so
+  // that button's own unlock (see VoiceToggle) never runs. This covers that
+  // case: the first tap anywhere in the app this session primes speech too,
+  // silently, so the live-match announcer isn't the one finding out it's
+  // muted on iOS.
+  useEffect(() => {
+    if (!settings?.voiceMode) return
+    const unlock = () => primeSpeechEngine(lang)
+    document.addEventListener('click', unlock, { once: true })
+    return () => document.removeEventListener('click', unlock)
+  }, [settings?.voiceMode, lang])
 
   useEffect(() => {
     let cancelled = false
