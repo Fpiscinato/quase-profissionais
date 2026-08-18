@@ -41,17 +41,29 @@ function sideLetter(t: Translator, side: CourtSide): string {
   return t(side)[0]
 }
 
-/** Small "D - E - D" trail below a team's card, one letter per side the team has occupied so far. */
+/** Caps how many D/E letters actually render (see SideHistory) — a long tiebreak swaps ends every
+ * few points, so the full trail can run past what a team card's width can hold on a phone. */
+const MAX_VISIBLE_SIDE_HISTORY = 5
+
+/**
+ * Small "D - E - D" trail below a team's card, one letter per side the team
+ * has occupied so far. Only the most recent MAX_VISIBLE_SIDE_HISTORY entries
+ * are shown (a "…" marks that older ones were trimmed) — the full history is
+ * still exposed via aria-label for screen readers/tests.
+ */
 function SideHistory({ history }: { history: CourtSide[] }) {
   const { t } = useT()
+  const visible = history.slice(-MAX_VISIBLE_SIDE_HISTORY)
+  const truncated = visible.length < history.length
   return (
     <div
       className="mt-1 flex items-center justify-center gap-1 text-xs font-bold tabular-nums"
       aria-label={`${t('Histórico de lados:')} ${history.map((s) => t(s)).join(', ')}`}
     >
-      {history.map((side, i) => (
+      {truncated && <span className="text-cream/30">…</span>}
+      {visible.map((side, i) => (
         <span key={i} className="flex items-center gap-1">
-          {i > 0 && <span className="text-cream/30">-</span>}
+          {(i > 0 || truncated) && <span className="text-cream/30">-</span>}
           <span className={side === 'Direita' ? 'text-lime' : 'text-gold'}>
             {sideLetter(t, side)}
           </span>

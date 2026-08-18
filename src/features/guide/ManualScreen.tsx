@@ -4,7 +4,7 @@ import { useT } from '../../i18n/useT'
 const SECTIONS = [
   {
     title: '1. Cadastre os jogadores',
-    body: 'Em "Jogadores", adicione o grupo (nome e pronto). Dá pra editar ou excluir depois — quem já tem partida registrada é arquivado, não some do histórico.',
+    body: 'Em "Jogadores", adicione o grupo (nome e pronto). Dá pra editar ou excluir depois — quem já tem partida registrada é arquivado, não some do histórico. Cadastrou o mesmo jogador duas vezes por engano (nomes diferentes)? A seção "Mesclar jogadores duplicados", mais abaixo na mesma tela, junta os dois num só sem perder o histórico de nenhum dos dois.',
   },
   {
     title: '2. Comece um torneio',
@@ -16,19 +16,19 @@ const SECTIONS = [
   },
   {
     title: '4. Jogue as rodadas',
-    body: 'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro e o lado inicial da quadra, depois "Iniciar partida" pra abrir a tela ao vivo.',
+    body: 'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro e o lado inicial da quadra, depois "Iniciar partida" pra abrir a tela ao vivo. Se já sabe que vai começar na hora, use direto o botão "Confirmar e iniciar partida" — ele pula a volta pra lista de rodadas e já abre o jogo ao vivo.',
   },
   {
     title: '5. Tela ao vivo',
-    body: 'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.',
+    body: 'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. No topo, ao lado do cronômetro, o placar "Games: X de Y" e duas fileiras de caixinhas (uma por time, na cor de cada um) mostram quantos games cada time já ganhou e quantos faltam pra fechar o set. O histórico de lado da quadra (as letras D/E embaixo do nome do time) mostra só as últimas 5 trocas, pra não estourar a tela em sets que vão pro tiebreak longo. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.',
   },
   {
     title: '6. Ranking',
-    body: '"Ranking" mostra a classificação do torneio do dia e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings e o tempo jogado, pronta pra mandar no grupo.',
+    body: '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.',
   },
   {
     title: '7. Histórico',
-    body: '"Histórico" guarda todos os torneios e partidas anteriores, com placar, duração e tempo total jogado por jogador e por dupla — o mesmo checkbox "Somente partidas de torneio" também funciona aqui, só pro card de tempo jogado.',
+    body: '"Histórico" guarda todos os torneios e partidas anteriores, agrupados por dia — cada dia mostra quantas partidas teve e o tempo total jogado naquele dia, além do placar, duração e tempo total jogado por jogador e por dupla no card do topo. O mesmo checkbox "Somente partidas de torneio" também funciona aqui.',
   },
   {
     title: '8. Backup',

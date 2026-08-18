@@ -292,6 +292,49 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     ).toBeInTheDocument()
   })
 
+  it('caps the visible court-side trail at the last 5 changes on a long tiebreak, keeping the full trail in aria-label', async () => {
+    await seedOneRoundMatch()
+    await openLiveMatch()
+
+    const winGame = async (side: 'team1' | 'team2') => {
+      for (let i = 0; i < 4; i++) await (side === 'team1' ? ponto1() : ponto2())
+    }
+
+    // Alternate winners to 4-4 without deciding the set -> ceil(8/2) = 4 swaps -> 5-entry trail (not truncated yet).
+    await winGame('team1')
+    await winGame('team2')
+    await winGame('team1')
+    await winGame('team2')
+    await winGame('team1')
+    await winGame('team2')
+    await winGame('team1')
+    await winGame('team2')
+    await expectText('Games: 4 – 4')
+    await expectText('Tiebreak')
+
+    const team1Card = screen.getByText('Time 1').closest('div')!.parentElement!
+    const sideHistoryOf = (teamCard: HTMLElement) =>
+      within(teamCard).getByLabelText(/^Histórico de lados:/)
+
+    const before = sideHistoryOf(team1Card)
+    expect(before.getAttribute('aria-label')!.split(', ')).toHaveLength(5)
+    expect(before.querySelectorAll('.text-lime, .text-gold')).toHaveLength(5)
+    expect(before.textContent).not.toContain('…')
+
+    // 6 tiebreak points -> one more swap (floor(6/6)=1) -> 6-entry trail -> now must truncate to the last 5.
+    for (let i = 0; i < 6; i++) await ponto2()
+    await expectText('6 – 0') // tiebreak score, waits for the re-render the swap count depends on
+
+    const after = sideHistoryOf(team1Card)
+    const fullSides = after.getAttribute('aria-label')!.replace('Histórico de lados: ', '').split(', ')
+    expect(fullSides).toHaveLength(6)
+    expect(after.textContent).toContain('…')
+    const visibleLetters = Array.from(after.querySelectorAll('.text-lime, .text-gold')).map(
+      (el) => el.textContent,
+    )
+    expect(visibleLetters).toEqual(fullSides.slice(-5).map((s) => s[0]))
+  })
+
   it('shows a fixed-size, per-team games progress row that fills as games are won, including the +1 tiebreak box', async () => {
     await seedOneRoundMatch()
     await openLiveMatch()
