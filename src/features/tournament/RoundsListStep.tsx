@@ -40,6 +40,7 @@ export function RoundsListStep({ tournamentId, onOpenMatch, onExit }: Props) {
         round={round}
         byId={byId}
         onDone={() => setConfiguringRound(null)}
+        onDoneAndStart={(matchId) => onOpenMatch(matchId)}
         onBack={() => setConfiguringRound(null)}
       />
     )

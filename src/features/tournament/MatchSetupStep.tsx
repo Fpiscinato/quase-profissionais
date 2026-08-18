@@ -13,6 +13,7 @@ interface Props {
   round: RoundRecord
   byId: Map<PlayerId, PlayerRow>
   onDone: () => void
+  onDoneAndStart: (matchId: string) => void
   onBack: () => void
 }
 
@@ -25,7 +26,7 @@ function randomServeOrder(team1: Team, team2: Team): PlayerId[] {
   return buildServeOrder(first, second)
 }
 
-export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Props) {
+export function MatchSetupStep({ tournamentId, round, byId, onDone, onDoneAndStart, onBack }: Props) {
   const { t } = useT()
   const [mode, setMode] = useState<OrderMode>('random')
   const [randomOrder, setRandomOrder] = useState<PlayerId[]>(() =>
@@ -58,10 +59,10 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
   const serveOrder = mode === 'random' ? randomOrder : manualOrder
   const canConfirm = serveOrder.length === totalSlots && !saving
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (startNow: boolean) => {
     if (!canConfirm) return
     setSaving(true)
-    await createMatchForRound({
+    const match = await createMatchForRound({
       tournamentId,
       roundIndex: round.index,
       team1: round.team1,
@@ -69,7 +70,8 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
       serveOrder,
       team1InitialSide,
     })
-    onDone()
+    if (startNow) onDoneAndStart(match.id)
+    else onDone()
   }
 
   return (
@@ -205,17 +207,27 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onBack }: Pr
         </div>
       </div>
 
-      <div className="mt-2 flex gap-2">
-        <button type="button" className={secondaryButton} onClick={onBack}>
-          {t('Voltar')}
-        </button>
+      <div className="mt-2 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button type="button" className={secondaryButton} onClick={onBack}>
+            {t('Voltar')}
+          </button>
+          <button
+            type="button"
+            className={`${secondaryButton} flex-1`}
+            disabled={!canConfirm}
+            onClick={() => handleConfirm(false)}
+          >
+            {saving ? t('Salvando...') : t('Confirmar partida')}
+          </button>
+        </div>
         <button
           type="button"
-          className={`${primaryButton} flex-1`}
+          className={primaryButton}
           disabled={!canConfirm}
-          onClick={handleConfirm}
+          onClick={() => handleConfirm(true)}
         >
-          {saving ? t('Salvando...') : t('Confirmar partida')}
+          {saving ? t('Salvando...') : t('Confirmar e iniciar partida')}
         </button>
       </div>
     </div>

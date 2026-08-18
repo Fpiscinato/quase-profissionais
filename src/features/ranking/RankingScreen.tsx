@@ -144,7 +144,10 @@ export function RankingScreen() {
 
   const handleShare = () => {
     setSharing(true)
-    const completedWithDuration = allCompletedMatches.map((m) => ({
+    // Uses matchesForTab (not allCompletedMatches) so the shared image's
+    // time stats match whatever scope is on screen — sharing while on "Do
+    // dia" must show only that day's hours, not the whole history's.
+    const completedWithDuration = matchesForTab.map((m) => ({
       ...m,
       durationSeconds: m.durationSeconds ?? 0,
     }))
@@ -162,6 +165,7 @@ export function RankingScreen() {
       playerTimes: computePlayerPlayTime(completedWithDuration),
       teamTimes: computeTeamPlayTime(completedWithDuration).filter((t) => t.playerIds.length === 2),
       totalSeconds: totalPlaySeconds(completedWithDuration),
+      matchCount: completedWithDuration.length,
       playerName: name,
       teamName,
     })

@@ -292,6 +292,54 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows a fixed-size, per-team games progress row that fills as games are won, including the +1 tiebreak box', async () => {
+    await seedOneRoundMatch()
+    await openLiveMatch()
+
+    // Default config: gamesToWinSet 4 -> 5 boxes per row (covers the +1 tiebreak game).
+    const filledCount = (testId: string) =>
+      screen.getByTestId(testId).querySelectorAll('.bg-lime, .bg-cream').length
+    const totalBoxCount = (testId: string) => screen.getByTestId(testId).children.length
+
+    expect(totalBoxCount('games-progress-team1')).toBe(5)
+    expect(totalBoxCount('games-progress-team2')).toBe(5)
+    expect(filledCount('games-progress-team1')).toBe(0)
+    expect(filledCount('games-progress-team2')).toBe(0)
+
+    await ponto1()
+    await ponto1()
+    await ponto1()
+    await ponto1() // team1 wins game 1 -> Games: 0 de 4 becomes 1 filled box for team1
+    await expectText('Games: 1 de 4')
+    expect(filledCount('games-progress-team1')).toBe(1)
+    expect(filledCount('games-progress-team2')).toBe(0)
+
+    const winGame = async (side: 'team1' | 'team2') => {
+      for (let i = 0; i < 4; i++) await (side === 'team1' ? ponto1() : ponto2())
+    }
+    await winGame('team2') // 1-1
+    await winGame('team1') // 2-1
+    await winGame('team2') // 2-2
+    await winGame('team1') // 3-2
+    await winGame('team2') // 3-3
+    await winGame('team1') // 4-3
+    await winGame('team2') // 4-4 -> tiebreak
+
+    await expectText('Games: 4 de 4')
+    expect(filledCount('games-progress-team1')).toBe(4)
+    expect(filledCount('games-progress-team2')).toBe(4)
+    // Still exactly 5 boxes per row at 4-4 — the row never grows mid-match.
+    expect(totalBoxCount('games-progress-team1')).toBe(5)
+    expect(totalBoxCount('games-progress-team2')).toBe(5)
+
+    // Team2 wins the tiebreak -> credited a 5th ("+1") box, filling its row.
+    for (let i = 0; i < 7; i++) await ponto2()
+    await expectText('Set encerrado')
+    await expectText('Games: 5 de 4')
+    expect(filledCount('games-progress-team1')).toBe(4)
+    expect(filledCount('games-progress-team2')).toBe(5)
+  })
+
   it('cancels an in-progress match: points played are discarded, the round goes back to Pendente', async () => {
     const { tournament, match } = await seedOneRoundMatch()
     await openLiveMatch()

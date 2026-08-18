@@ -146,10 +146,22 @@ export function HistoryScreen() {
       </div>
 
       <div className="flex flex-col gap-4">
-        {dayGroups.map((group) => (
+        {dayGroups.map((group) => {
+          const dayTournamentIds = new Set(group.tournaments.map((tour) => tour.id))
+          const dayMatches = completedMatches.filter((m) => dayTournamentIds.has(m.tournamentId))
+
+          return (
           <div key={group.date} className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-cream/80">{formatDate(group.date)}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-cream/80">{formatDate(group.date)}</h2>
+                {dayMatches.length > 0 && (
+                  <span className="text-xs text-cream/60">
+                    {dayMatches.length} {t(dayMatches.length > 1 ? 'partidas' : 'partida')} ·{' '}
+                    {formatHoursMinutes(totalPlaySeconds(dayMatches))}
+                  </span>
+                )}
+              </div>
               {confirmDeleteDay !== group.date && (
                 <button
                   type="button"
@@ -292,7 +304,7 @@ export function HistoryScreen() {
               )
             })}
           </div>
-        ))}
+        )})}
       </div>
     </div>
   )

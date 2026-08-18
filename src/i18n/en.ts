@@ -92,6 +92,7 @@ export const EN: Record<string, string> = {
   'Time 1 na direita': 'Team 1 on the right',
   'Salvando...': 'Saving...',
   'Confirmar partida': 'Confirm match',
+  'Confirmar e iniciar partida': 'Confirm and start match',
 
   // RoundsListStep
   'Carregando torneio...': 'Loading tournament...',
@@ -196,6 +197,7 @@ export const EN: Record<string, string> = {
   'Carregando partida...': 'Loading match...',
   Ponto: 'Point',
   'Games:': 'Games:',
+  'Games: {x} de {y}': 'Games: {x} of {y}',
   'Saca agora:': 'Serving now:',
   'Resultado final': 'Final result',
   'Pontos:': 'Points:',
@@ -232,6 +234,21 @@ export const EN: Record<string, string> = {
   'O nome pode ter no máximo 16 caracteres.': 'The name can be at most 16 characters long.',
   'Erro ao adicionar jogador.': 'Error adding player.',
   'Erro ao salvar.': 'Error saving.',
+  'Mesclar jogadores duplicados': 'Merge duplicate players',
+  'Dois cadastros da mesma pessoa (ex.: nome digitado diferente)? Mescle em um só — o histórico e o ranking passam a contar tudo junto.':
+    'Two records for the same person (e.g. name typed differently)? Merge them into one — history and ranking will count everything together.',
+  Manter: 'Keep',
+  'Mesclar e remover': 'Merge and remove',
+  'Selecione...': 'Select...',
+  Mesclar: 'Merge',
+  'Confirmar mesclagem': 'Confirm merge',
+  '⚠ Mesclar "{mergeName}" em "{keepName}"? O histórico de "{mergeName}" passa a contar como "{keepName}" e o cadastro de "{mergeName}" é removido. Essa ação não pode ser desfeita.':
+    '⚠ Merge "{mergeName}" into "{keepName}"? "{mergeName}"\'s history will now count as "{keepName}", and the "{mergeName}" record will be removed. This cannot be undone.',
+  'Selecione dois jogadores diferentes para mesclar.': 'Select two different players to merge.',
+  'Jogador não encontrado.': 'Player not found.',
+  'Esses jogadores já se enfrentaram em uma partida um contra o outro — não é possível mesclar automaticamente.':
+    'These players have already faced each other in a match — cannot merge automatically.',
+  'Erro ao mesclar jogadores.': 'Error merging players.',
 
   // RankingScreen
   'Ranking do dia': "Today's ranking",
@@ -258,6 +275,10 @@ export const EN: Record<string, string> = {
   'Duplas: só conta quem jogou junto na mesma dupla.': 'Pairs: only counts those who played together as the same pair.',
   'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.':
     'Ranked by Games Won (GW) — whoever won the most games overall. Ties are broken by Points Won (PW), and if still tied, by Matches Won (MW). The criteria are the same for the Individual and Pair rankings; the only difference is who gets credited: Individual credits each player separately, Pair only counts it when the two played together as that exact pair.',
+
+  // RankingReport (shared image)
+  'Tempo jogado': 'Time played',
+  'Média por partida': 'Average per match',
 
   // HistoryScreen
   'Nenhum torneio registrado ainda.': 'No tournament recorded yet.',

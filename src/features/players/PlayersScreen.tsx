@@ -4,6 +4,7 @@ import {
   addPlayer,
   DuplicatePlayerNameError,
   MAX_PLAYER_NAME_LENGTH,
+  mergePlayers,
   removePlayer,
   updatePlayerName,
 } from '../../db/db'
@@ -24,6 +25,12 @@ export function PlayersScreen() {
   const [editError, setEditError] = useState<string | null>(null)
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
+  const [mergeKeepId, setMergeKeepId] = useState('')
+  const [mergeMergeId, setMergeMergeId] = useState('')
+  const [confirmingMerge, setConfirmingMerge] = useState(false)
+  const [mergeError, setMergeError] = useState<string | null>(null)
+  const [mergeBusy, setMergeBusy] = useState(false)
 
   const translateError = (err: unknown, fallback: string): string => {
     if (err instanceof DuplicatePlayerNameError) {
@@ -68,6 +75,25 @@ export function PlayersScreen() {
     setConfirmDeleteId(null)
   }
 
+  const handleMerge = async () => {
+    setMergeBusy(true)
+    try {
+      await mergePlayers(mergeKeepId, mergeMergeId)
+      setMergeKeepId('')
+      setMergeMergeId('')
+      setConfirmingMerge(false)
+      setMergeError(null)
+    } catch (err) {
+      setMergeError(translateError(err, 'Erro ao mesclar jogadores.'))
+      setConfirmingMerge(false)
+    } finally {
+      setMergeBusy(false)
+    }
+  }
+
+  const mergeKeepName = players.find((p) => p.id === mergeKeepId)?.name ?? ''
+  const mergeMergeName = players.find((p) => p.id === mergeMergeId)?.name ?? ''
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
@@ -95,7 +121,7 @@ export function PlayersScreen() {
         {addError && <p className="text-sm text-destructive">{addError}</p>}
       </form>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" data-testid="players-list">
         {players.map((player) => {
           const isEditing = editingId === player.id
           const isConfirmingDelete = confirmDeleteId === player.id
@@ -194,6 +220,100 @@ export function PlayersScreen() {
           )
         })}
       </div>
+
+      {players.length >= 2 && (
+        <div className={card}>
+          <h2 className="mb-1 font-semibold">{t('Mesclar jogadores duplicados')}</h2>
+          <p className="mb-3 text-sm text-cream/70">
+            {t(
+              'Dois cadastros da mesma pessoa (ex.: nome digitado diferente)? Mescle em um só — o histórico e o ranking passam a contar tudo junto.',
+            )}
+          </p>
+          <div className="flex flex-col gap-2">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-cream/70">{t('Manter')}</span>
+              <select
+                className={textInput}
+                value={mergeKeepId}
+                onChange={(e) => {
+                  setMergeKeepId(e.target.value)
+                  setMergeError(null)
+                }}
+              >
+                <option value="">{t('Selecione...')}</option>
+                {players
+                  .filter((p) => p.id !== mergeMergeId)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                      {!p.active ? ` (${t('Arquivado')})` : ''}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-cream/70">{t('Mesclar e remover')}</span>
+              <select
+                className={textInput}
+                value={mergeMergeId}
+                onChange={(e) => {
+                  setMergeMergeId(e.target.value)
+                  setMergeError(null)
+                }}
+              >
+                <option value="">{t('Selecione...')}</option>
+                {players
+                  .filter((p) => p.id !== mergeKeepId)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                      {!p.active ? ` (${t('Arquivado')})` : ''}
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            {mergeError && <p className="text-sm text-destructive">{mergeError}</p>}
+
+            {confirmingMerge ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-destructive">
+                  {t(
+                    '⚠ Mesclar "{mergeName}" em "{keepName}"? O histórico de "{mergeName}" passa a contar como "{keepName}" e o cadastro de "{mergeName}" é removido. Essa ação não pode ser desfeita.',
+                    { mergeName: mergeMergeName, keepName: mergeKeepName },
+                  )}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={secondaryButton}
+                    onClick={() => setConfirmingMerge(false)}
+                  >
+                    {t('Cancelar')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${destructiveButton} flex-1`}
+                    disabled={mergeBusy}
+                    onClick={handleMerge}
+                  >
+                    {t('Confirmar mesclagem')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={primaryButton}
+                disabled={!mergeKeepId || !mergeMergeId}
+                onClick={() => setConfirmingMerge(true)}
+              >
+                {t('Mesclar')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

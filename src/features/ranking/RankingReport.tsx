@@ -1,6 +1,6 @@
 import type { PlayerPlayTime, TeamPlayTime } from '../../engine/stats'
 import type { PlayerId, PlayerStanding, TeamStanding } from '../../engine/types'
-import { formatHoursMinutes } from '../../lib/format'
+import { formatDuration, formatHoursMinutes } from '../../lib/format'
 import { card } from '../../ui/styles'
 import { useT } from '../../i18n/useT'
 import { APP_VERSION } from '../../version'
@@ -16,6 +16,8 @@ export interface RankingReportProps {
   playerTimes: PlayerPlayTime[]
   teamTimes: TeamPlayTime[]
   totalSeconds: number
+  /** Number of matches behind totalSeconds — same scope (dia/geral) as everything else in the report — used for the "média por partida" line. */
+  matchCount: number
   playerName: (id: PlayerId) => string
   teamName: (ids: PlayerId[]) => string
 }
@@ -80,8 +82,15 @@ export function RankingReport(props: RankingReportProps) {
       />
 
       <div className={card}>
-        <h2 className="mb-2 text-lg font-semibold">{t('Tempo jogado (todos os torneios)')}</h2>
-        <p className="mb-3 text-2xl font-bold text-lime">{formatHoursMinutes(props.totalSeconds)}</p>
+        <h2 className="mb-2 text-lg font-semibold">
+          {t('Tempo jogado')} — {props.scopeLabel}
+        </h2>
+        <p className="mb-1 text-2xl font-bold text-lime">{formatHoursMinutes(props.totalSeconds)}</p>
+        {props.matchCount > 0 && (
+          <p className="mb-3 text-sm text-cream/60">
+            {t('Média por partida')}: {formatDuration(props.totalSeconds / props.matchCount)}
+          </p>
+        )}
 
         {props.playerTimes.length > 0 && (
           <>
@@ -117,6 +126,14 @@ export function RankingReport(props: RankingReportProps) {
           </>
         )}
       </div>
+
+      <p className="text-xs text-cream/50">
+        {t(
+          'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+        )}
+        {' · '}
+        {t('Duplas: só conta quem jogou junto na mesma dupla.')}
+      </p>
 
       <div className="text-center text-xs text-cream/40">
         {t('Gerado por Os Quase Profissionais')} · v{APP_VERSION} · {props.generatedAtLabel}

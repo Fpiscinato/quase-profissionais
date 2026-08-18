@@ -316,6 +316,62 @@ export async function removePlayer(id: PlayerId): Promise<'archived' | 'deleted'
   return 'deleted'
 }
 
+/**
+ * Merges two player records that turned out to be the same real person
+ * (e.g. added twice under slightly different names, like "Mateus Adv" vs
+ * "MateusAdventista") into one. Every match/tournament reference to
+ * `mergeId` is repointed to `keepId` — so history/ranking count all of that
+ * person's games as a single player — and the now-redundant `mergeId` row
+ * is deleted outright (never archived: it has no history of its own left
+ * once the merge is done). Cannot be undone.
+ */
+export async function mergePlayers(keepId: PlayerId, mergeId: PlayerId): Promise<void> {
+  if (keepId === mergeId) throw new Error('Selecione dois jogadores diferentes para mesclar.')
+
+  await db.transaction('rw', db.players, db.tournaments, db.matches, async () => {
+    const keep = await db.players.get(keepId)
+    const merge = await db.players.get(mergeId)
+    if (!keep || !merge) throw new Error('Jogador não encontrado.')
+
+    // If they ever faced each other, remapping would put the same id on
+    // both sides of that match (a player "against himself") — a real data
+    // integrity problem, not a normal duplicate-registration case. Refuse
+    // rather than silently corrupting that match.
+    const allMatches = await db.matches.toArray()
+    const facedEachOther = allMatches.some(
+      (m) =>
+        (m.team1.includes(keepId) && m.team2.includes(mergeId)) ||
+        (m.team1.includes(mergeId) && m.team2.includes(keepId)),
+    )
+    if (facedEachOther) {
+      throw new Error(
+        'Esses jogadores já se enfrentaram em uma partida um contra o outro — não é possível mesclar automaticamente.',
+      )
+    }
+
+    const remap = (ids: PlayerId[]) =>
+      Array.from(new Set(ids.map((id) => (id === mergeId ? keepId : id))))
+
+    await db.matches.toCollection().modify((m: MatchRow) => {
+      m.team1 = remap(m.team1)
+      m.team2 = remap(m.team2)
+      m.serveOrder = remap(m.serveOrder)
+    })
+
+    await db.tournaments.toCollection().modify((tour: TournamentRow) => {
+      tour.availablePlayerIds = remap(tour.availablePlayerIds)
+      tour.rounds = tour.rounds.map((r) => ({
+        ...r,
+        team1: remap(r.team1),
+        team2: remap(r.team2),
+        restingPlayerIds: remap(r.restingPlayerIds),
+      }))
+    })
+
+    await db.players.delete(mergeId)
+  })
+}
+
 function tallyPoints(pointLog: PointLog): { points1: number; points2: number } {
   let points1 = 0
   let points2 = 0

@@ -15,8 +15,9 @@ describe('Players CRUD (Jogadores screen)', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Jogadores' }))
     await screen.findByText('Adicione, edite ou remova jogadores do grupo.')
 
+    const playersList = await screen.findByTestId('players-list')
     for (const n of DEFAULT_PLAYER_NAMES) {
-      await screen.findByText(n)
+      await within(playersList).findByText(n)
     }
 
     const nameInput = screen.getByPlaceholderText('Nome do novo jogador')
@@ -24,7 +25,7 @@ describe('Players CRUD (Jogadores screen)', () => {
     // Add a new player.
     fireEvent.change(nameInput, { target: { value: 'Teste' } })
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
-    await screen.findByText('Teste')
+    await within(playersList).findByText('Teste')
     expect(await db.players.toArray()).toHaveLength(6)
 
     // Duplicate name (case-insensitive, extra whitespace) is blocked — no 7th player created.
@@ -40,8 +41,8 @@ describe('Players CRUD (Jogadores screen)', () => {
     const editInput = within(testeRow).getByDisplayValue('Teste')
     fireEvent.change(editInput, { target: { value: 'Testando' } })
     fireEvent.click(within(testeRow).getByRole('button', { name: 'Salvar' }))
-    await screen.findByText('Testando')
-    expect(screen.queryByText('Teste')).toBeNull()
+    await within(playersList).findByText('Testando')
+    expect(within(playersList).queryByText('Teste')).toBeNull()
 
     // Renaming to an existing name is blocked (case-insensitive) and the name is unchanged.
     fireEvent.click(within(testeRow).getByRole('button', { name: 'Editar' }))
@@ -121,5 +122,71 @@ describe('Players CRUD (Jogadores screen)', () => {
 
     await screen.findByText('O nome pode ter no máximo 16 caracteres.')
     expect(await db.players.toArray()).toHaveLength(5)
+  })
+
+  it('merges two duplicate players and repoints their match history', async () => {
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Jogadores' }))
+    await screen.findByText('Adicione, edite ou remova jogadores do grupo.')
+
+    const [jarede, mateus] = await db.players.toArray()
+    await db.matches.add({
+      id: 'seed-match-merge',
+      tournamentId: 'seed-tournament-merge',
+      roundIndex: 0,
+      team1: [jarede.id, mateus.id],
+      team2: ['some-other-player-id'],
+      serveOrder: [jarede.id, 'some-other-player-id', mateus.id],
+      pointLog: [],
+      games1: 0,
+      games2: 0,
+      points1: 0,
+      points2: 0,
+      status: 'scheduled',
+    })
+
+    fireEvent.change(screen.getByLabelText('Manter'), { target: { value: jarede.id } })
+    fireEvent.change(screen.getByLabelText('Mesclar e remover'), { target: { value: mateus.id } })
+    fireEvent.click(screen.getByRole('button', { name: 'Mesclar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar mesclagem' }))
+
+    await waitFor(async () => expect(await db.players.get(mateus.id)).toBeUndefined())
+    expect(await db.players.get(jarede.id)).toBeDefined()
+    const match = await db.matches.get('seed-match-merge')
+    expect(match!.team1).toEqual([jarede.id])
+    expect(match!.serveOrder).toEqual([jarede.id, 'some-other-player-id'])
+  })
+
+  it('refuses to merge two players who already faced each other', async () => {
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Jogadores' }))
+    await screen.findByText('Adicione, edite ou remova jogadores do grupo.')
+
+    const [jarede, mateus] = await db.players.toArray()
+    await db.matches.add({
+      id: 'seed-match-oppose',
+      tournamentId: 'seed-tournament-oppose',
+      roundIndex: 0,
+      team1: [jarede.id],
+      team2: [mateus.id],
+      serveOrder: [jarede.id, mateus.id],
+      pointLog: [],
+      games1: 0,
+      games2: 0,
+      points1: 0,
+      points2: 0,
+      status: 'scheduled',
+    })
+
+    fireEvent.change(screen.getByLabelText('Manter'), { target: { value: jarede.id } })
+    fireEvent.change(screen.getByLabelText('Mesclar e remover'), { target: { value: mateus.id } })
+    fireEvent.click(screen.getByRole('button', { name: 'Mesclar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar mesclagem' }))
+
+    await screen.findByText(
+      'Esses jogadores já se enfrentaram em uma partida um contra o outro — não é possível mesclar automaticamente.',
+    )
+    expect(await db.players.get(mateus.id)).toBeDefined()
+    expect(await db.players.get(jarede.id)).toBeDefined()
   })
 })

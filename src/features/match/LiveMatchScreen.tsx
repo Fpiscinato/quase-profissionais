@@ -396,6 +396,37 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     </div>
   )
 
+  // Each team can win at most gamesToWinSet+1 games (the "+1" only happens
+  // when the winner takes it via a tiebreak from a gamesToWinSet-gamesToWinSet
+  // tie) — so a fixed row of that many boxes per team always has enough room,
+  // never needs to grow mid-match, and directly shows what was configured.
+  const gamesTarget = config.gamesToWinSet
+  const boxCount = gamesTarget + 1
+  const games1Filled = state.isMatchOver ? (state.finalGames1 ?? state.games1) : state.games1
+  const games2Filled = state.isMatchOver ? (state.finalGames2 ?? state.games2) : state.games2
+  const gamesLeadCount = Math.max(games1Filled, games2Filled)
+
+  const gamesRow = (testId: string, filled: number, filledClass: string, emptyClass: string) => (
+    <div data-testid={testId} className="flex flex-1 gap-1">
+      {Array.from({ length: boxCount }, (_, i) => (
+        <div
+          key={i}
+          className={`h-2.5 flex-1 rounded-sm border ${i < filled ? filledClass : emptyClass}`}
+        />
+      ))}
+    </div>
+  )
+
+  // Team 1 = lime, Team 2 = cream — same convention as team1Slot/team2Slot's
+  // card colors below, so the row above lines up with the card it belongs to
+  // without needing a "T1"/"T2" label in each box.
+  const gamesProgressBlock = (
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-1">
+      {gamesRow('games-progress-team1', games1Filled, 'border-lime bg-lime', 'border-lime/25')}
+      {gamesRow('games-progress-team2', games2Filled, 'border-cream bg-cream', 'border-cream/25')}
+    </div>
+  )
+
   const layoutToggle = (
     <button
       type="button"
@@ -409,13 +440,23 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
 
   return (
     <div className="flex flex-col gap-1 p-3">
-      <div className="flex items-center gap-2 text-sm text-cream/60">
-        <span className="tabular-nums">{formatDuration(elapsedSeconds)}</span>
-        <span>
-          {t('Rodada')} {match.roundIndex + 1}
-        </span>
+      {/* Grid (not a plain flex row with an absolutely-centered label) so the
+          "Games: X de Y" label gets its own middle column that can never
+          overlap the timer/rodada text or the layout toggle, however long
+          each side's content gets on a narrow phone. */}
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-sm text-cream/60">
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums">{formatDuration(elapsedSeconds)}</span>
+          <span>
+            {t('Rodada')} {match.roundIndex + 1}
+          </span>
+        </div>
+        <div className="truncate text-center font-semibold text-cream/80">
+          {t('Games: {x} de {y}', { x: gamesLeadCount, y: gamesTarget })}
+        </div>
         {layoutToggle}
       </div>
+      {gamesProgressBlock}
 
       {isTablet ? (
         <div className="grid grid-cols-[1fr_1.4fr_1fr] items-stretch gap-3">

@@ -29,6 +29,7 @@ const baseProps: RankingReportProps = {
   playerTimes: [{ playerId: 'p1', totalSeconds: 3600, matchesPlayed: 2 }],
   teamTimes: [{ playerIds: ['p1', 'p3'], totalSeconds: 1800, matchesPlayed: 1 }],
   totalSeconds: 5400,
+  matchCount: 2,
   playerName: (id) => ({ p1: 'Jarede', p2: 'Mateus', p3: 'Emerson' })[id] ?? '?',
   teamName: (ids) => ids.map((id) => ({ p1: 'Jarede', p2: 'Mateus', p3: 'Emerson' })[id] ?? '?').join(' & '),
 }
