@@ -11,6 +11,11 @@ import { HelpHint } from '../../ui/HelpHint'
 import { useT } from '../../i18n/useT'
 
 const GAMES_TO_WIN_OPTIONS = [2, 3, 4, 5, 6] as const
+const SETS_TO_WIN_OPTIONS: { value: 1 | 2 | 3; label: string }[] = [
+  { value: 1, label: '1 set' },
+  { value: 2, label: 'Melhor de 3' },
+  { value: 3, label: 'Melhor de 5 (Grand Slam)' },
+]
 
 interface Props {
   availablePlayerIds: PlayerId[]
@@ -25,6 +30,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   const [format, setFormat] = useState<TournamentFormat>(canDoDoubles ? 'duplas' : 'individual')
   const [mode, setMode] = useState<TeamFormationMode>('balanced')
   const [gamesToWinSet, setGamesToWinSet] = useState(DEFAULT_MATCH_CONFIG.gamesToWinSet)
+  const [setsToWinMatch, setSetsToWinMatch] = useState(DEFAULT_MATCH_CONFIG.setsToWinMatch)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [manualRounds, setManualRounds] = useState<ScheduledMatch[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -55,7 +61,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         team2: r.team2,
         restingPlayerIds: r.restingPlayerIds,
       })),
-      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet },
+      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet, setsToWinMatch },
       origin: 'torneio',
     })
     onCreated(tournament.id)
@@ -164,6 +170,29 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             'No tênis oficial o set vai até 6 games (com 2 de vantagem) — vale pra Duplas e Individual. Aqui você pode encurtar pra jogos mais rápidos.',
           )}
         </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          {t('Sets para vencer a partida')}
+          <HelpHint
+            text={t(
+              'Melhor de 3 ou de 5: quem fizer mais sets primeiro vence. Se empatar no set decisivo (1-1 ou 2-2), ele vira um super-tiebreak até 10 pontos em vez de um set cheio, pra não alongar demais.',
+            )}
+          />
+        </span>
+        <div className="flex gap-2">
+          {SETS_TO_WIN_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSetsToWinMatch(opt.value)}
+              className={toggleButton(setsToWinMatch === opt.value)}
+            >
+              {t(opt.label)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {format === 'individual' && (

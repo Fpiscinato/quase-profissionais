@@ -11,7 +11,10 @@ export function computeServeInfo(state: MatchState, serveOrder: PlayerId[]): Ser
   if (state.isMatchOver) return null
 
   if (state.isTiebreak) {
-    const gamesCompletedBeforeTiebreak = state.games1 + state.games2
+    // Cumulative across the whole match (not just the current set) — serve
+    // rotation continues seamlessly across set boundaries, per the official
+    // rules (see MatchState.totalGamesCompleted).
+    const gamesCompletedBeforeTiebreak = state.totalGamesCompleted
     const pointNumber = state.tiebreak.points1 + state.tiebreak.points2 + 1
     return {
       serverId: tiebreakServer(serveOrder, gamesCompletedBeforeTiebreak, pointNumber),
@@ -19,7 +22,7 @@ export function computeServeInfo(state: MatchState, serveOrder: PlayerId[]): Ser
     }
   }
 
-  const gameIndex = state.games1 + state.games2
+  const gameIndex = state.totalGamesCompleted
   return {
     serverId: nextServer(serveOrder, gameIndex),
     side: serveSide(state.currentGame.points1 + state.currentGame.points2),

@@ -105,15 +105,55 @@ export function useVoiceAnnouncer(opts: UseVoiceAnnouncerOptions): void {
     if (state.isMatchOver) {
       const winnerName: string =
         state.winner === ('team1' satisfies TeamSide) ? opts.team1Name : opts.team2Name
-      speak(
-        lang,
-        t('Fim de partida! {winner} venceu, {g1} a {g2}.', {
-          winner: winnerName,
-          g1: state.finalGames1 ?? state.games1,
-          g2: state.finalGames2 ?? state.games2,
-        }),
-        rate,
-      )
+      // "Sets: X a Y" only when the match actually went beyond a single set —
+      // saying "Sets: 1 a 0" after every ordinary single-set match would be
+      // pure noise for the common case.
+      const text =
+        state.completedSets.length > 1
+          ? t('Fim de partida! {winner} venceu. Sets: {s1} a {s2}.', {
+              winner: winnerName,
+              s1: state.sets1,
+              s2: state.sets2,
+            })
+          : t('Fim de partida! {winner} venceu, {g1} a {g2}.', {
+              winner: winnerName,
+              g1: state.finalGames1 ?? state.games1,
+              g2: state.finalGames2 ?? state.games2,
+            })
+      speak(lang, text, rate)
+      return
+    }
+
+    // A set just ended but the match continues (best-of-3/5) — announce the
+    // set result and sets tally, distinct from the 'game'/'tiebreak' reading
+    // below, then keep going (may also be entering the deciding super-tiebreak).
+    if (opts.alerts.includes('set-over')) {
+      const justFinishedSet = state.completedSets[state.completedSets.length - 1]
+      const setOverParts: string[] = []
+      if (justFinishedSet) {
+        const setWinnerName = justFinishedSet.winner === 'team1' ? opts.team1Name : opts.team2Name
+        setOverParts.push(
+          t('Fim do set! {winner} venceu, {g1} a {g2}. Sets: {s1} a {s2}.', {
+            winner: setWinnerName,
+            g1: justFinishedSet.games1,
+            g2: justFinishedSet.games2,
+            s1: state.sets1,
+            s2: state.sets2,
+          }),
+        )
+      }
+      if (opts.alerts.includes('tiebreak')) {
+        setOverParts.push(t('Super tiebreak decisivo!'))
+      }
+      if (opts.serveInfo) {
+        setOverParts.push(
+          t('{server} saca da {side}.', {
+            server: opts.serverName,
+            side: sideWord(opts.serveInfo.side),
+          }),
+        )
+      }
+      speak(lang, setOverParts.join(' '), rate)
       return
     }
 

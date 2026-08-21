@@ -119,9 +119,9 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     expect([nameOf(rows[2]), nameOf(rows[3])].sort()).toEqual(['Jarede', 'Mateus Adv'])
 
     const topCells = within(rows[0]).getAllByRole('cell')
-    expect(topCells[4].textContent).toBe('4') // Games Won
-    expect(topCells[5].textContent).toBe('2') // Games Lost
-    expect(topCells[6].textContent).toBe('17') // Points Won
+    expect(topCells[6].textContent).toBe('4') // Games Won
+    expect(topCells[7].textContent).toBe('2') // Games Lost
+    expect(topCells[8].textContent).toBe('17') // Points Won
   })
 
   it('"geral" sums every tournament — Games Won ordering with no ties', async () => {
@@ -139,9 +139,9 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
     const mateus = within(rows[0]).getAllByRole('cell')
     expect(mateus[2].textContent).toBe('2') // Matches Played
     expect(mateus[3].textContent).toBe('2') // Matches Won (won both)
-    expect(mateus[4].textContent).toBe('8') // Games Won: 4 (T1) + 4 (T2)
-    expect(mateus[5].textContent).toBe('3') // Games Lost: 1 (T1) + 2 (T2)
-    expect(mateus[6].textContent).toBe('33') // Points Won: 16 (T1) + 17 (T2)
+    expect(mateus[6].textContent).toBe('8') // Games Won: 4 (T1) + 4 (T2)
+    expect(mateus[7].textContent).toBe('3') // Games Lost: 1 (T1) + 2 (T2)
+    expect(mateus[8].textContent).toBe('33') // Points Won: 16 (T1) + 17 (T2)
   })
 
   it('"Duplas" mode ranks by exact pairing instead of by individual player', async () => {
@@ -166,8 +166,8 @@ describe('Ranking screen — "do dia" vs "geral", wired to Dexie (Section 6)', (
 
     const top = within(rows[0]).getAllByRole('cell')
     expect(top[2].textContent).toBe('1') // Matches Played together
-    expect(top[4].textContent).toBe('4') // Games Won
-    expect(top[6].textContent).toBe('17') // Points Won
+    expect(top[6].textContent).toBe('4') // Games Won
+    expect(top[8].textContent).toBe('17') // Points Won
   })
 
   it('"Duplas" mode never shows a solo player from an Individual-format match', async () => {
@@ -334,7 +334,7 @@ describe('Ranking screen — "do dia" scoped by date, with a day selector', () =
     rows = await dataRows()
     expect(rows.map(nameOf)).toEqual(['Jarede', 'Mateus', 'Mateus Adv', 'Emerson'])
     const top = within(rows[0]).getAllByRole('cell')
-    expect(top[4].textContent).toBe('4') // Games Won, from the 2026-07-01 match
+    expect(top[6].textContent).toBe('4') // Games Won, from the 2026-07-01 match
   })
 
   it('hides the selector when there is only one date with matches', async () => {
@@ -458,9 +458,9 @@ describe('Ranking screen — "mesmo número de jogos" grouping', () => {
     const rowsAfterGrouping = within(screen.getByRole('table')).getAllByRole('row').slice(1)
     expect(rowsAfterGrouping.length).toBe(7) // 2 header rows + 5 data rows
 
-    // Data rows have all 8 columns; group-header rows have only 3 <td>s
+    // Data rows have all 10 columns; group-header rows have only 3 <td>s
     // (empty sticky #, the label, and a colspan filler — see RankingScreen.tsx).
-    const dataRowsGrouped = rowsAfterGrouping.filter((r) => within(r).getAllByRole('cell').length === 8)
+    const dataRowsGrouped = rowsAfterGrouping.filter((r) => within(r).getAllByRole('cell').length === 10)
     const nameOf = (row: HTMLElement) => within(row).getAllByRole('cell')[1].textContent
     const posOf = (row: HTMLElement) => within(row).getAllByRole('cell')[0].textContent
     expect(dataRowsGrouped.map(nameOf).sort()).toEqual(['Emerson', 'Fernando', 'Jarede', 'Mateus', 'Mateus Adv'])

@@ -1,4 +1,12 @@
-import type { GameScore, MatchConfig, MatchState, PointLog, TeamSide, TiebreakScore } from './types'
+import type {
+  GameScore,
+  MatchConfig,
+  MatchState,
+  PointLog,
+  SetResult,
+  TeamSide,
+  TiebreakScore,
+} from './types'
 
 function winnerOf(a: number, b: number): TeamSide {
   return a > b ? 'team1' : 'team2'
@@ -88,6 +96,15 @@ export function isSetOver(
 /**
  * Replays the full point log and derives the current match state. Called on
  * every render/tap so the UI never keeps score in its own state.
+ *
+ * The point log is one flat, continuous list for the whole match (every set).
+ * A normal set is played out as games (isGameOver/isSetOver, unchanged). The
+ * deciding set of a best-of-3/5 match (both sides one set away from winning)
+ * is instead a single super-tiebreak — no games at all, straight to
+ * config.superTiebreakPoints, win by 2 — which always ends the match.
+ * totalGamesCompleted is cumulative across every set (never resets), since
+ * change-of-ends and serve rotation continue seamlessly across set
+ * boundaries under the official rules — see courtSide.ts/serveInfo.ts.
  */
 export function computeMatchState(pointLog: PointLog, config: MatchConfig): MatchState {
   let games1 = 0
@@ -100,21 +117,62 @@ export function computeMatchState(pointLog: PointLog, config: MatchConfig): Matc
   let winner: TeamSide | undefined
   let finalGames1: number | undefined
   let finalGames2: number | undefined
+  const completedSets: SetResult[] = []
+  let sets1 = 0
+  let sets2 = 0
+  // Set once the match ends via the deciding super-tiebreak — recomputing
+  // isDecidingSet() at the very end wouldn't work for this case, since
+  // finishSet() already bumped sets1/sets2 past the "one set away" condition
+  // by then. Captured at the moment it actually happens instead, so the
+  // frozen score shown behind matchOverCard is the real final tiebreak
+  // score (e.g. 10-2), not a stale, pre-decider 0-0.
+  let matchEndedViaSuperTiebreak = false
+
+  const setsToWinMatch = config.setsToWinMatch
+  const isDecidingSet = () =>
+    setsToWinMatch > 1 && sets1 === setsToWinMatch - 1 && sets2 === setsToWinMatch - 1
+
+  const finishSet = (setWinner: TeamSide, setGames1: number, setGames2: number, superTiebreak: boolean) => {
+    completedSets.push({ games1: setGames1, games2: setGames2, winner: setWinner, superTiebreak })
+    if (setWinner === 'team1') sets1++
+    else sets2++
+    if (sets1 === setsToWinMatch || sets2 === setsToWinMatch) {
+      isMatchOver = true
+      winner = setWinner
+      finalGames1 = setGames1
+      finalGames2 = setGames2
+    } else {
+      games1 = 0
+      games2 = 0
+      currentGame = { points1: 0, points2: 0 }
+      tiebreak = { points1: 0, points2: 0 }
+      tbActive = false
+    }
+  }
 
   for (const point of pointLog) {
     if (isMatchOver) break
+
+    if (isDecidingSet()) {
+      // Deciding set of a best-of-3/5: no games, straight super-tiebreak.
+      if (point === 'team1') tiebreak.points1++
+      else tiebreak.points2++
+      const tb = isTiebreakOver(tiebreak, config.superTiebreakPoints)
+      if (tb.over && tb.winner) {
+        finishSet(tb.winner, tiebreak.points1, tiebreak.points2, true)
+        matchEndedViaSuperTiebreak = isMatchOver
+      }
+      continue
+    }
 
     if (tbActive) {
       if (point === 'team1') tiebreak.points1++
       else tiebreak.points2++
 
       const setResult = isSetOver(games1, games2, tiebreak, config)
-      if (setResult.over) {
-        isMatchOver = true
-        winner = setResult.winner
-        finalGames1 = setResult.finalGames1
-        finalGames2 = setResult.finalGames2
+      if (setResult.over && setResult.winner) {
         totalGamesCompleted++
+        finishSet(setResult.winner, setResult.finalGames1!, setResult.finalGames2!, false)
       }
       continue
     }
@@ -133,11 +191,8 @@ export function computeMatchState(pointLog: PointLog, config: MatchConfig): Matc
         tbActive = true
       } else {
         const setResult = isSetOver(games1, games2, tiebreak, config)
-        if (setResult.over) {
-          isMatchOver = true
-          winner = setResult.winner
-          finalGames1 = setResult.finalGames1
-          finalGames2 = setResult.finalGames2
+        if (setResult.over && setResult.winner) {
+          finishSet(setResult.winner, setResult.finalGames1!, setResult.finalGames2!, false)
         }
       }
     }
@@ -147,8 +202,12 @@ export function computeMatchState(pointLog: PointLog, config: MatchConfig): Matc
     games1,
     games2,
     currentGame,
-    isTiebreak: tbActive,
+    isTiebreak: tbActive || matchEndedViaSuperTiebreak || (!isMatchOver && isDecidingSet()),
     tiebreak,
+    isDecidingSuperTiebreak: matchEndedViaSuperTiebreak || (!isMatchOver && isDecidingSet()),
+    completedSets,
+    sets1,
+    sets2,
     isMatchOver,
     winner,
     finalGames1,

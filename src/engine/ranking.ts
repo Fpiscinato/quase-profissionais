@@ -9,6 +9,8 @@ function emptyStanding(playerId: PlayerId): PlayerStanding {
     gamesLost: 0,
     pointsWon: 0,
     pointsLost: 0,
+    setsWon: 0,
+    setsLost: 0,
   }
 }
 
@@ -27,6 +29,8 @@ export function computeStandings(matches: MatchResult[]): PlayerStanding[] {
     gamesLost: number,
     pointsWon: number,
     pointsLost: number,
+    setsWon: number,
+    setsLost: number,
     won: boolean,
   ) => {
     for (const playerId of playerIds) {
@@ -37,6 +41,8 @@ export function computeStandings(matches: MatchResult[]): PlayerStanding[] {
       entry.gamesLost += gamesLost
       entry.pointsWon += pointsWon
       entry.pointsLost += pointsLost
+      entry.setsWon += setsWon
+      entry.setsLost += setsLost
       standings.set(playerId, entry)
     }
   }
@@ -48,6 +54,8 @@ export function computeStandings(matches: MatchResult[]): PlayerStanding[] {
       match.games2,
       match.points1,
       match.points2,
+      match.sets1,
+      match.sets2,
       match.winnerTeam === 'team1',
     )
     credit(
@@ -56,6 +64,8 @@ export function computeStandings(matches: MatchResult[]): PlayerStanding[] {
       match.games1,
       match.points2,
       match.points1,
+      match.sets2,
+      match.sets1,
       match.winnerTeam === 'team2',
     )
   }
@@ -80,6 +90,8 @@ function emptyTeamStanding(playerIds: PlayerId[]): TeamStanding {
     gamesLost: 0,
     pointsWon: 0,
     pointsLost: 0,
+    setsWon: 0,
+    setsLost: 0,
   }
 }
 
@@ -99,6 +111,8 @@ export function computeTeamStandings(matches: MatchResult[]): TeamStanding[] {
     gamesLost: number,
     pointsWon: number,
     pointsLost: number,
+    setsWon: number,
+    setsLost: number,
     won: boolean,
   ) => {
     const key = teamKey(playerIds)
@@ -109,6 +123,8 @@ export function computeTeamStandings(matches: MatchResult[]): TeamStanding[] {
     entry.gamesLost += gamesLost
     entry.pointsWon += pointsWon
     entry.pointsLost += pointsLost
+    entry.setsWon += setsWon
+    entry.setsLost += setsLost
     standings.set(key, entry)
   }
 
@@ -119,6 +135,8 @@ export function computeTeamStandings(matches: MatchResult[]): TeamStanding[] {
       match.games2,
       match.points1,
       match.points2,
+      match.sets1,
+      match.sets2,
       match.winnerTeam === 'team1',
     )
     credit(
@@ -127,6 +145,8 @@ export function computeTeamStandings(matches: MatchResult[]): TeamStanding[] {
       match.games1,
       match.points2,
       match.points1,
+      match.sets2,
+      match.sets1,
       match.winnerTeam === 'team2',
     )
   }

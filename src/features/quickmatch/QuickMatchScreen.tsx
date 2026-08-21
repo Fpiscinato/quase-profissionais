@@ -8,6 +8,11 @@ import { HelpHint } from '../../ui/HelpHint'
 import { useT } from '../../i18n/useT'
 
 const GAMES_TO_WIN_OPTIONS = [2, 3, 4, 5, 6] as const
+const SETS_TO_WIN_OPTIONS: { value: 1 | 2 | 3; label: string }[] = [
+  { value: 1, label: '1 set' },
+  { value: 2, label: 'Melhor de 3' },
+  { value: 3, label: 'Melhor de 5 (Grand Slam)' },
+]
 
 interface Props {
   onCreated: (tournamentId: string) => void
@@ -30,6 +35,7 @@ export function QuickMatchScreen({ onCreated, onBack }: Props) {
   const [team1, setTeam1] = useState<PlayerId[]>([])
   const [team2, setTeam2] = useState<PlayerId[]>([])
   const [gamesToWinSet, setGamesToWinSet] = useState(DEFAULT_MATCH_CONFIG.gamesToWinSet)
+  const [setsToWinMatch, setSetsToWinMatch] = useState(DEFAULT_MATCH_CONFIG.setsToWinMatch)
   const [saving, setSaving] = useState(false)
 
   const maxPerTeam = format === 'duplas' ? 2 : 1
@@ -72,7 +78,7 @@ export function QuickMatchScreen({ onCreated, onBack }: Props) {
       format,
       teamFormationMode: 'manual',
       rounds: [{ team1, team2, restingPlayerIds: [] }],
-      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet },
+      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet, setsToWinMatch },
       origin: 'avulsa',
     })
     onCreated(tournament.id)
@@ -172,6 +178,29 @@ export function QuickMatchScreen({ onCreated, onBack }: Props) {
             'No tênis oficial o set vai até 6 games (com 2 de vantagem) — vale pra Duplas e Individual. Aqui você pode encurtar pra jogos mais rápidos.',
           )}
         </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          {t('Sets para vencer a partida')}
+          <HelpHint
+            text={t(
+              'Melhor de 3 ou de 5: quem fizer mais sets primeiro vence. Se empatar no set decisivo (1-1 ou 2-2), ele vira um super-tiebreak até 10 pontos em vez de um set cheio, pra não alongar demais.',
+            )}
+          />
+        </span>
+        <div className="flex gap-2">
+          {SETS_TO_WIN_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSetsToWinMatch(opt.value)}
+              className={toggleButton(setsToWinMatch === opt.value)}
+            >
+              {t(opt.label)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {team1.length === maxPerTeam && team2.length === maxPerTeam && (

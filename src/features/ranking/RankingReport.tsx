@@ -49,7 +49,7 @@ export function RankingReport(props: RankingReportProps) {
 
       <RankingTable
         title={t('Individual')}
-        head={['#', t('Jogador'), t('PJ'), t('PV'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
+        head={['#', t('Jogador'), t('PJ'), t('PV'), t('SV'), t('SP'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
         standings={props.individualStandings}
         groupByMatches={props.groupByMatches}
         rowKey={(s) => s.playerId}
@@ -57,6 +57,8 @@ export function RankingReport(props: RankingReportProps) {
           props.playerName(s.playerId),
           String(s.matchesPlayed),
           String(s.matchesWon),
+          String(s.setsWon),
+          String(s.setsLost),
           String(s.gamesWon),
           String(s.gamesLost),
           String(s.pointsWon),
@@ -66,7 +68,7 @@ export function RankingReport(props: RankingReportProps) {
 
       <RankingTable
         title={t('Duplas')}
-        head={['#', t('Dupla'), t('PJ'), t('PV'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
+        head={['#', t('Dupla'), t('PJ'), t('PV'), t('SV'), t('SP'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
         standings={props.teamStandings}
         groupByMatches={props.groupByMatches}
         rowKey={(s) => s.playerIds.join('|')}
@@ -74,6 +76,8 @@ export function RankingReport(props: RankingReportProps) {
           props.teamName(s.playerIds),
           String(s.matchesPlayed),
           String(s.matchesWon),
+          String(s.setsWon),
+          String(s.setsLost),
           String(s.gamesWon),
           String(s.gamesLost),
           String(s.pointsWon),
@@ -129,7 +133,7 @@ export function RankingReport(props: RankingReportProps) {
 
       <p className="text-xs text-cream/50">
         {t(
-          'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+          'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
         )}
         {' · '}
         {t('Duplas: só conta quem jogou junto na mesma dupla.')}

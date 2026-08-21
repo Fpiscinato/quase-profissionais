@@ -249,4 +249,58 @@ describe('History screen — manual origin toggle (Torneio/Praticar badge)', () 
     // Tapping the badge doesn't also expand/collapse the tournament card.
     expect(screen.queryByText('Rodada 1')).not.toBeInTheDocument()
   })
+
+  it('shows a per-set placar for a best-of-3/5 match, and just the total for a single-set one', async () => {
+    await db.matches.clear()
+    await db.tournaments.clear()
+    await ensurePlayersSeeded()
+    const players = await db.players.toArray()
+    const byName = (n: string) => players.find((p) => p.name === n)!.id
+    const [a, b] = ['Jarede', 'Mateus'].map(byName)
+
+    const tournamentId = crypto.randomUUID()
+    await db.tournaments.add({
+      id: tournamentId,
+      date: '2026-08-10',
+      availablePlayerIds: [a, b],
+      format: 'individual',
+      teamFormationMode: 'balanced',
+      options: { ...DEFAULT_MATCH_CONFIG, setsToWinMatch: 2 },
+      rounds: [{ index: 0, team1: [a], team2: [b], restingPlayerIds: [] }],
+      status: 'in_progress',
+      createdAt: Date.now(),
+      origin: 'torneio',
+    })
+    await db.matches.add({
+      id: crypto.randomUUID(),
+      tournamentId,
+      roundIndex: 0,
+      team1: [a],
+      team2: [b],
+      serveOrder: [a, b],
+      pointLog: [],
+      sets: [
+        { games1: 4, games2: 0, winner: 'team1', superTiebreak: false },
+        { games1: 1, games2: 4, winner: 'team2', superTiebreak: false },
+        { games1: 10, games2: 2, winner: 'team1', superTiebreak: true },
+      ],
+      sets1: 2,
+      sets2: 1,
+      games1: 15,
+      games2: 6,
+      points1: 60,
+      points2: 40,
+      winnerTeam: 'team1',
+      status: 'completed',
+      durationSeconds: 900,
+    })
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Histórico' }))
+    fireEvent.click((await screen.findByText('Individual')).closest('button')!)
+
+    await screen.findByText('Rodada 1')
+    expect(screen.getByText(/2 × 1/)).toBeInTheDocument() // sets tally, not games
+    expect(screen.getByText(/4-0, 1-4, 10-2\*/)).toBeInTheDocument()
+  })
 })

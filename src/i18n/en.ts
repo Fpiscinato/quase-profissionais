@@ -61,6 +61,12 @@ export const EN: Record<string, string> = {
     'In official tennis the set goes up to 6 games (winning by 2) — the same for Doubles and Singles. Here you can shorten it for faster matches.',
   'No Individual todo mundo joga contra todo mundo uma vez — não há escolha de duplas.':
     'In Singles everyone plays everyone once — there is no pairing to choose.',
+  'Sets para vencer a partida': 'Sets to win the match',
+  '1 set': 'Best of 1',
+  'Melhor de 3': 'Best of 3',
+  'Melhor de 5 (Grand Slam)': 'Best of 5 (Grand Slam)',
+  'Melhor de 3 ou de 5: quem fizer mais sets primeiro vence. Se empatar no set decisivo (1-1 ou 2-2), ele vira um super-tiebreak até 10 pontos em vez de um set cheio, pra não alongar demais.':
+    'Best of 3 or 5: whoever wins the most sets first takes the match. If it ties at the deciding set (1-1 or 2-2), that set becomes a super-tiebreak up to 10 points instead of a full set, so it does not drag on.',
   'Sortear novamente': 'Redraw',
   'Confirmar e criar torneio': 'Confirm and create tournament',
   'Criando...': 'Creating...',
@@ -93,6 +99,12 @@ export const EN: Record<string, string> = {
   'Salvando...': 'Saving...',
   'Confirmar partida': 'Confirm match',
   'Confirmar e iniciar partida': 'Confirm and start match',
+  'Jogador com o controle remoto': 'Player holding the remote control',
+  'Se alguém vai marcar os pontos pelo controle físico, escolha quem é aqui — o time dele fica sempre fixado como Time 1 ou Time 2, trocando os times automaticamente se precisar, pra os botões do controle nunca mudarem de lugar de uma rodada pra outra. Fica lembrado no aparelho pras próximas partidas.':
+    "If someone is going to score points with the physical remote, pick who here — their team always stays fixed as Team 1 or Team 2, swapping teams automatically when needed, so the remote's buttons never move from one round to the next. Remembered on this device for future matches.",
+  Nenhum: 'None',
+  'Time dele: Time 1': 'Their team: Team 1',
+  'Time dele: Time 2': 'Their team: Team 2',
 
   // RoundsListStep
   'Carregando torneio...': 'Loading tournament...',
@@ -154,23 +166,23 @@ export const EN: Record<string, string> = {
   'Em "Jogadores", adicione o grupo (nome e pronto). Dá pra editar ou excluir depois — quem já tem partida registrada é arquivado, não some do histórico. Cadastrou o mesmo jogador duas vezes por engano (nomes diferentes)? A seção "Mesclar jogadores duplicados", mais abaixo na mesma tela, junta os dois num só sem perder o histórico de nenhum dos dois.':
     'In "Players", add your group (just a name). You can edit or remove them later — anyone with a recorded match gets archived instead, so history keeps working. Registered the same player twice by mistake (different names)? The "Merge duplicate players" section further down that same screen joins them into one without losing either one\'s history.',
   '2. Comece um torneio': '2. Start a tournament',
-  'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe) e quantos games decidem o set. Toque em "Confirmar e criar torneio".':
-    'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose) and how many games decide the set. Tap "Confirm and create tournament".',
+  'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Toque em "Confirmar e criar torneio".':
+    'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose), how many games decide the set, and how many sets decide the match (1 set, best of 3, or best of 5 — at the deciding set of a best-of-3/5, a tie becomes a super-tiebreak up to 10 points instead of another full set). Tap "Confirm and create tournament".',
   '3. Ou pratique (sem torneio)': '3. Or practice (no tournament)',
-  'Em "Praticar" você escolhe o formato, os jogadores dos dois times e quantos games decidem o set, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.':
-    'In "Practice" you pick the format, the players on each side, and how many games decide the set, skipping availability and rotation entirely — straight to setup and play. It counts toward ranking and history like any other match, but you can exclude these matches with the "Tournament matches only" checkbox on Ranking and History, if you want to keep practice separate from real matches.',
+  'Em "Praticar" você escolhe o formato, os jogadores dos dois times, quantos games decidem o set e quantos sets decidem a partida, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.':
+    'In "Practice" you pick the format, the players on each side, how many games decide the set, and how many sets decide the match, skipping availability and rotation entirely — straight to setup and play. It counts toward ranking and history like any other match, but you can exclude these matches with the "Tournament matches only" checkbox on Ranking and History, if you want to keep practice separate from real matches.',
   '4. Jogue as rodadas': '4. Play the rounds',
-  'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro e o lado inicial da quadra, depois "Iniciar partida" pra abrir a tela ao vivo. Se já sabe que vai começar na hora, use direto o botão "Confirmar e iniciar partida" — ele pula a volta pra lista de rodadas e já abre o jogo ao vivo.':
-    'The "Rounds" screen lists the day\'s matchups. Tap "Set up match" to set who serves first and the starting side of the court, then "Start match" to open the live screen. If you already know you\'re starting right away, use the "Confirm and start match" button instead — it skips the trip back to the rounds list and opens the live game directly.',
+  'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro, o lado inicial da quadra e, se alguém for marcar os pontos pelo controle remoto físico, quem é essa pessoa e se o time dela fica sempre como Time 1 ou Time 2 (o app troca os times automaticamente pra isso — fica lembrado no aparelho pras próximas partidas). Depois é só "Iniciar partida" pra abrir a tela ao vivo. Se já sabe que vai começar na hora, use direto o botão "Confirmar e iniciar partida" — ele pula a volta pra lista de rodadas e já abre o jogo ao vivo.':
+    'The "Rounds" screen lists the day\'s matchups. Tap "Set up match" to set who serves first, the starting side of the court, and — if someone is going to score with the physical remote control — who that is and whether their team always stays Team 1 or Team 2 (the app swaps teams automatically for this — remembered on the device for future matches). Then just "Start match" to open the live screen. If you already know you\'re starting right away, use the "Confirm and start match" button instead — it skips the trip back to the rounds list and opens the live game directly.',
   '5. Tela ao vivo': '5. Live screen',
-  'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. No topo, ao lado do cronômetro, o placar "Games: X de Y" e duas fileiras de caixinhas (uma por time, na cor de cada um) mostram quantos games cada time já ganhou e quantos faltam pra fechar o set. O histórico de lado da quadra (as letras D/E embaixo do nome do time) mostra só as últimas 5 trocas, pra não estourar a tela em sets que vão pro tiebreak longo. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.':
-    'The big buttons add a point for each team. The screen shows who is serving, from which side, and alerts you when to change ends or when the set closes. At the top, next to the timer, the "Games: X of Y" label and two rows of boxes (one per team, in each team\'s color) show how many games each team has won and how many are left to close the set. The court-side history (the D/E letters under the team name) only shows the last 5 changes, so it doesn\'t overflow the screen on sets that go to a long tiebreak. Mistapped? "Undo" steps back one point. At the end, "Save match" records the result.',
+  'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. No topo, ao lado do cronômetro, o placar "Games: X de Y" e duas fileiras de caixinhas (uma por time, na cor de cada um) mostram quantos games cada time já ganhou e quantos faltam pra fechar o set. O histórico de lado da quadra (as letras D/E embaixo do nome do time) mostra só as últimas 5 trocas, pra não estourar a tela em sets que vão pro tiebreak longo. Numa partida melhor-de-3/5, uma segunda fileira azul mostra os sets ganhos por cada time, e um aviso "Set encerrado" aparece entre um set e outro; o set decisivo (empate 1-1 ou 2-2) vira um super-tiebreak até 10 pontos. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.':
+    'The big buttons add a point for each team. The screen shows who is serving, from which side, and alerts you when to change ends or when the set closes. At the top, next to the timer, the "Games: X of Y" label and two rows of boxes (one per team, in each team\'s color) show how many games each team has won and how many are left to close the set. The court-side history (the D/E letters under the team name) only shows the last 5 changes, so it doesn\'t overflow the screen on sets that go to a long tiebreak. In a best-of-3/5 match, a second blue row shows sets won by each team, and a "Set over" banner appears between sets; the deciding set (a 1-1 or 2-2 tie) becomes a super-tiebreak up to 10 points. Mistapped? "Undo" steps back one point. At the end, "Save match" records the result.',
   '6. Ranking': '6. Ranking',
-  '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.':
-    '"Ranking" shows the day\'s standings (with a picker to choose another date) and the overall ranking (every tournament ever played), both individual and by pair. Check "Tournament matches only" to leave out matches made in "Practice". The "Compartilhar" button generates an image with both rankings, a legend explaining each column, and the time played — always matching whichever scope (day or overall) is selected on screen.',
+  '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla — as colunas SV/SP mostram sets vencidos/perdidos ao lado de games e pontos. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.':
+    '"Ranking" shows the day\'s standings (with a picker to choose another date) and the overall ranking (every tournament ever played), both individual and by pair — the SV/SP columns show sets won/lost alongside games and points. Check "Tournament matches only" to leave out matches made in "Practice". The "Compartilhar" button generates an image with both rankings, a legend explaining each column, and the time played — always matching whichever scope (day or overall) is selected on screen.',
   '7. Histórico': '7. History',
-  '"Histórico" guarda todos os torneios e partidas anteriores, agrupados por dia — cada dia mostra quantas partidas teve e o tempo total jogado naquele dia, além do placar, duração e tempo total jogado por jogador e por dupla no card do topo. O mesmo checkbox "Somente partidas de torneio" também funciona aqui.':
-    '"History" keeps every past tournament and match, grouped by day — each day shows how many matches it had and the total time played that day, plus score, duration and total time played per player and per pair in the card at the top. The same "Tournament matches only" checkbox also works here.',
+  '"Histórico" guarda todos os torneios e partidas anteriores, agrupados por dia — cada dia mostra quantas partidas teve e o tempo total jogado naquele dia, além do placar, duração e tempo total jogado por jogador e por dupla no card do topo. Numa partida melhor-de-3/5, o placar de cada partida mostra os sets (com o resultado de cada um) além do total de games. O mesmo checkbox "Somente partidas de torneio" também funciona aqui.':
+    '"History" keeps every past tournament and match, grouped by day — each day shows how many matches it had and the total time played that day, plus score, duration and total time played per player and per pair in the card at the top. In a best-of-3/5 match, each match\'s placar shows the sets (with each one\'s result) alongside the total games. The same "Tournament matches only" checkbox also works here.',
   '8. Backup': '8. Backup',
   'Em "Backup" você exporta todos os dados (jogadores, torneios, partidas) num arquivo, pra guardar ou levar pra outro aparelho. No celular, "Exportar dados" abre o menu de compartilhar — escolha "Salvar no Drive" (ou outra pasta compartilhada) pra que os outros aparelhos consigam importar de lá depois. Importar mescla esse arquivo com o que já está salvo, sem apagar nada sem confirmar.':
     'In "Backup" you export all your data (players, tournaments, matches) to a file, to keep or move to another device. On a phone, "Exportar dados" opens the share menu — choose "Save to Drive" (or another shared folder) so other devices can import it from there later. Importing merges that file with what is already saved, never deleting anything without confirmation.',
@@ -178,8 +190,8 @@ export const EN: Record<string, string> = {
   'No topo da tela, "🎙 Voz" liga os anúncios falados (placar, quem saca, troca de lado), com um botão de velocidade ao lado (padrão 1.5x). "🎤 Comandos" é um toggle separado, desligado por padrão, que liga o reconhecimento de voz pra marcar ponto falando "Ponto Time 1" / "Ponto Time 2" ou repetir o último anúncio dizendo "Repita" — em testes reais isso errou bastante (microfone longe, tela apagando), então fica por sua conta ativar. Só funciona em Android/Chrome.':
     'At the top of the screen, "🎙 Voice" turns on spoken announcements (score, who serves, change of ends), with a speed button next to it (default 1.5x). "🎤 Commands" is a separate toggle, off by default, that turns on speech recognition to score by saying "Point Team 1" / "Point Team 2" or repeat the last announcement by saying "Repeat" — in real testing this missed a lot (mic too far, screen turning off), so it is up to you to turn on. Only works on Android/Chrome.',
   '10. Controle remoto': '10. Remote control',
-  'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado.':
-    'In "Remote control" you map a physical remote\'s buttons (e.g. a USB presentation "clicker") to Point Team 1, Point Team 2, Repeat announcement, Undo and Save match. Tap "Set", press the remote\'s button, done — works with any device that emulates a keyboard, not just one specific model. The live screen listens for these buttons the whole time, even with Hands-free voice mode off.',
+  'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado. Se quem aperta o controle se confunde com a troca de times a cada rodada, use "Jogador com o controle remoto" em "Configurar partida" pra fixar o time dele sempre no mesmo botão.':
+    'In "Remote control" you map a physical remote\'s buttons (e.g. a USB presentation "clicker") to Point Team 1, Point Team 2, Repeat announcement, Undo and Save match. Tap "Set", press the remote\'s button, done — works with any device that emulates a keyboard, not just one specific model. The live screen listens for these buttons the whole time, even with Hands-free voice mode off. If whoever holds the remote gets confused by teams swapping each round, use "Player holding the remote control" in "Set up match" to fix their team to the same button every time.',
   '11. Layout tablet': '11. Tablet layout',
   'A tela ao vivo tem um botão "📐" (perto do cronômetro) que alterna entre Automático, Tablet e Smartphone. Automático detecta o tamanho da tela sozinho; Tablet espalha os times e o placar lado a lado, útil numa tela maior; Smartphone mantém o layout empilhado de sempre.':
     'The live screen has a "📐" button (near the timer) that cycles through Automatic, Tablet and Smartphone. Automatic detects the screen size on its own; Tablet spreads the teams and score side by side, useful on a bigger screen; Smartphone keeps the usual stacked layout.',
@@ -198,6 +210,10 @@ export const EN: Record<string, string> = {
   Ponto: 'Point',
   'Games:': 'Games:',
   'Games: {x} de {y}': 'Games: {x} of {y}',
+  'Sets:': 'Sets:',
+  'Sets: {x} de {y}': 'Sets: {x} of {y}',
+  '* super tiebreak': '* super tiebreak',
+  'Super tiebreak (set decisivo)': 'Super tiebreak (deciding set)',
   'Saca agora:': 'Serving now:',
   'Resultado final': 'Final result',
   'Pontos:': 'Points:',
@@ -266,15 +282,17 @@ export const EN: Record<string, string> = {
   Dupla: 'Pair',
   PJ: 'MP',
   PV: 'MW',
+  SV: 'SW',
+  SP: 'SL',
   GV: 'GW',
   GP: 'GL',
   PtV: 'PW',
   PtP: 'PL',
-  'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos':
-    'Sorted by GW, tiebroken by PW and then MW. MP matches played · MW matches won · GW games won · GL games lost · PW points won · PL points lost',
+  'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos':
+    'Sorted by GW, tiebroken by PW and then MW. MP matches played · MW matches won · SW sets won · SL sets lost · GW games won · GL games lost · PW points won · PL points lost',
   'Duplas: só conta quem jogou junto na mesma dupla.': 'Pairs: only counts those who played together as the same pair.',
-  'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.':
-    'Ranked by Games Won (GW) — whoever won the most games overall. Ties are broken by Points Won (PW), and if still tied, by Matches Won (MW). The criteria are the same for the Individual and Pair rankings; the only difference is who gets credited: Individual credits each player separately, Pair only counts it when the two played together as that exact pair.',
+  'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). SV/SP (sets vencidos/perdidos) aparecem na tabela, de partidas melhor-de-3/5, mas não entram no critério de desempate. O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.':
+    'Ranked by Games Won (GW) — whoever won the most games overall. Ties are broken by Points Won (PW), and if still tied, by Matches Won (MW). SV/SP (sets won/lost) show in the table, from best-of-3/5 matches, but do not factor into the tiebreak criteria. The criteria are the same for the Individual and Pair rankings; the only difference is who gets credited: Individual credits each player separately, Pair only counts it when the two played together as that exact pair.',
 
   // RankingReport (shared image)
   'Tempo jogado': 'Time played',
@@ -343,6 +361,10 @@ export const EN: Record<string, string> = {
   'Voz ativada.': 'Voice on.',
   '{server} saca da {side}.': '{server} serves from the {side}.',
   'Fim de partida! {winner} venceu, {g1} a {g2}.': 'Match over! {winner} won, {g1} to {g2}.',
+  'Fim de partida! {winner} venceu. Sets: {s1} a {s2}.': 'Match over! {winner} won. Sets: {s1} to {s2}.',
+  'Fim do set! {winner} venceu, {g1} a {g2}. Sets: {s1} a {s2}.':
+    'Set over! {winner} won, {g1} to {g2}. Sets: {s1} to {s2}.',
+  'Super tiebreak decisivo!': 'Deciding super tiebreak!',
   'Troquem de lado — Time 1 na {side1}, Time 2 na {side2}.':
     'Change ends — Team 1 on the {side1}, Team 2 on the {side2}.',
   '{winner} venceu o game!': '{winner} won the game!',

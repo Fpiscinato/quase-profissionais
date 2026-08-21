@@ -244,26 +244,42 @@ export function HistoryScreen() {
                   {tournamentMatches.length === 0 && (
                     <p className="text-sm text-cream/60">{t('Nenhuma partida concluída.')}</p>
                   )}
-                  {tournamentMatches.map((match) => (
-                    <div key={match.id} className="rounded-lg bg-navy px-3 py-2 text-sm">
-                      <div className="text-xs text-cream/60">
-                        {t('Rodada')} {match.roundIndex + 1}
+                  {tournamentMatches.map((match) => {
+                    // Matches recorded before multi-set support (or a
+                    // single-set match, still the default) have at most 1
+                    // set — the per-set line only adds anything for a real
+                    // best-of-3/5 match, otherwise it'd just repeat the
+                    // games placard right above it.
+                    const isMultiSetMatch = (match.sets?.length ?? 0) > 1
+                    const setsLine = (match.sets ?? [])
+                      .map((s) => `${s.games1}-${s.games2}${s.superTiebreak ? '*' : ''}`)
+                      .join(', ')
+                    return (
+                      <div key={match.id} className="rounded-lg bg-navy px-3 py-2 text-sm">
+                        <div className="text-xs text-cream/60">
+                          {t('Rodada')} {match.roundIndex + 1}
+                        </div>
+                        <div>
+                          <span className={match.winnerTeam === 'team1' ? 'font-bold text-lime' : ''}>
+                            {teamName(match.team1)}
+                          </span>{' '}
+                          {isMultiSetMatch ? `${match.sets1} × ${match.sets2}` : `${match.games1} × ${match.games2}`}{' '}
+                          <span className={match.winnerTeam === 'team2' ? 'font-bold text-lime' : ''}>
+                            {teamName(match.team2)}
+                          </span>
+                        </div>
+                        {isMultiSetMatch && (
+                          <div className="text-xs text-sky">
+                            {t('Sets:')} {setsLine} · {t('Games:')} {match.games1}-{match.games2}
+                          </div>
+                        )}
+                        <div className="text-xs text-cream/60">
+                          {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
+                          {formatDuration(match.durationSeconds ?? 0)}
+                        </div>
                       </div>
-                      <div>
-                        <span className={match.winnerTeam === 'team1' ? 'font-bold text-lime' : ''}>
-                          {teamName(match.team1)}
-                        </span>{' '}
-                        {match.games1} × {match.games2}{' '}
-                        <span className={match.winnerTeam === 'team2' ? 'font-bold text-lime' : ''}>
-                          {teamName(match.team2)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-cream/60">
-                        {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
-                        {formatDuration(match.durationSeconds ?? 0)}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
 
                   {confirmDeleteId === tournament.id ? (
                     <div className="flex flex-col gap-2 border-t border-cream/10 pt-2">

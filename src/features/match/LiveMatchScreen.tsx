@@ -4,6 +4,7 @@ import {
   cancelMatch,
   db,
   recordPoint,
+  resolveMatchConfig,
   saveMatch,
   startMatch,
   undoLastPoint,
@@ -113,7 +114,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
 
   // Derived values are computed defensively (before the loading guard below)
   // so every hook in this component stays unconditional, per rules of hooks.
-  const config = tournament?.options
+  const config = tournament?.options && resolveMatchConfig(tournament.options)
   const state = match && config ? computeMatchState(match.pointLog, config) : undefined
   const alerts = state && config ? computeAlerts(state, config.deuceMode) : []
   const serveInfo = state && match ? computeServeInfo(state, match.serveOrder) : null
@@ -348,7 +349,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
           <div
             className={`font-semibold uppercase tracking-wide text-lime ${isRoomyTablet ? 'text-lg' : 'text-sm'}`}
           >
-            {t('Tiebreak')}
+            {state.isDecidingSuperTiebreak ? t('Super tiebreak (set decisivo)') : t('Tiebreak')}
           </div>
           <div className={`font-black tabular-nums ${isRoomyTablet ? 'text-7xl' : 'text-6xl'}`}>
             {leftTiebreakPoints} – {rightTiebreakPoints}
@@ -361,11 +362,16 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
           {pointLabel(rightGamePoints, leftGamePoints, config.deuceMode)}
         </div>
       )}
-      <div
-        className={`font-semibold text-cream/80 tabular-nums ${isRoomyTablet ? 'mt-4 text-3xl' : 'mt-1 text-xl'}`}
-      >
-        {t('Games:')} {leftGames} – {rightGames}
-      </div>
+      {/* A deciding super-tiebreak has no games of its own — games1/games2
+          stay at 0-0 for its whole duration, so showing "Games: 0 – 0" here
+          would just be confusing clutter. */}
+      {!state.isDecidingSuperTiebreak && (
+        <div
+          className={`font-semibold text-cream/80 tabular-nums ${isRoomyTablet ? 'mt-4 text-3xl' : 'mt-1 text-xl'}`}
+        >
+          {t('Games:')} {leftGames} – {rightGames}
+        </div>
+      )}
     </div>
   )
 
@@ -383,14 +389,33 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     </div>
   )
 
+  // Best-of-3/5: show the placar per set (a super-tiebreak decider is marked
+  // with an asterisk since its numbers are tiebreak points, not games) plus
+  // the sets tally, instead of just the last set's games — for a single-set
+  // match (completedSets.length === 1, the default) this is skipped and the
+  // card looks exactly like it did before multi-set support existed.
+  const isMultiSetMatch = state.completedSets.length > 1
+  const hadSuperTiebreak = state.completedSets.some((s) => s.superTiebreak)
+  const setsLine = state.completedSets
+    .map((s) => `${s.games1}-${s.games2}${s.superTiebreak ? '*' : ''}`)
+    .join(', ')
+
   const matchOverCard = (
     <div className={`rounded-xl bg-navy-light ${isRoomyTablet ? 'p-8' : 'p-2'}`}>
       <h2 className={`font-bold ${isRoomyTablet ? 'mb-4 text-3xl' : 'mb-1 text-lg'}`}>
         {t('Resultado final')}
       </h2>
       <p className={`font-semibold ${isRoomyTablet ? 'text-2xl' : 'text-base'}`}>
-        {teamName(match.team1)} {state.finalGames1} × {state.finalGames2} {teamName(match.team2)}
+        {teamName(match.team1)}{' '}
+        {isMultiSetMatch ? `${state.sets1} × ${state.sets2}` : `${state.finalGames1} × ${state.finalGames2}`}{' '}
+        {teamName(match.team2)}
       </p>
+      {isMultiSetMatch && (
+        <p className={`text-sky ${isRoomyTablet ? 'mt-1 text-lg' : 'text-sm'}`}>
+          {t('Sets:')} {setsLine}
+          {hadSuperTiebreak ? ` (${t('* super tiebreak')})` : ''}
+        </p>
+      )}
       <p className={`text-cream/70 ${isRoomyTablet ? 'mt-2 text-lg' : 'text-sm'}`}>
         {t('Pontos:')} {match.points1} – {match.points2} · {t('Duração:')}{' '}
         {formatDuration(elapsedSeconds)}
@@ -418,9 +443,15 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   const games2Filled = state.isMatchOver ? (state.finalGames2 ?? state.games2) : state.games2
   const gamesLeadCount = Math.max(games1Filled, games2Filled)
 
-  const gamesRow = (testId: string, filled: number, filledClass: string, emptyClass: string) => (
+  const progressRow = (
+    testId: string,
+    filled: number,
+    rowBoxCount: number,
+    filledClass: string,
+    emptyClass: string,
+  ) => (
     <div data-testid={testId} className="flex flex-1 gap-1">
-      {Array.from({ length: boxCount }, (_, i) => (
+      {Array.from({ length: rowBoxCount }, (_, i) => (
         <div
           key={i}
           className={`h-2.5 flex-1 rounded-sm border ${i < filled ? filledClass : emptyClass}`}
@@ -434,8 +465,23 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   // without needing a "T1"/"T2" label in each box.
   const gamesProgressBlock = (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-1">
-      {gamesRow('games-progress-team1', games1Filled, 'border-lime bg-lime', 'border-lime/25')}
-      {gamesRow('games-progress-team2', games2Filled, 'border-cream bg-cream', 'border-cream/25')}
+      {progressRow('games-progress-team1', games1Filled, boxCount, 'border-lime bg-lime', 'border-lime/25')}
+      {progressRow('games-progress-team2', games2Filled, boxCount, 'border-cream bg-cream', 'border-cream/25')}
+    </div>
+  )
+
+  // Only shown for a best-of-3/5 match (setsToWinMatch > 1) — a single-set
+  // match (the default) has nothing meaningful to show here and the screen
+  // stays pixel-identical to before multi-set support existed. Sky is a new
+  // theme color exclusive to Sets, so it never gets confused with the
+  // lime/cream team colors or the gold alert color used elsewhere.
+  const setsProgressBlock = config.setsToWinMatch > 1 && (
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-1">
+      <div className="text-center text-xs font-semibold text-sky">
+        {t('Sets: {x} de {y}', { x: Math.max(state.sets1, state.sets2), y: config.setsToWinMatch })}
+      </div>
+      {progressRow('sets-progress-team1', state.sets1, config.setsToWinMatch, 'border-sky bg-sky', 'border-sky/25')}
+      {progressRow('sets-progress-team2', state.sets2, config.setsToWinMatch, 'border-sky bg-sky', 'border-sky/25')}
     </div>
   )
 
@@ -464,11 +510,16 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
           </span>
         </div>
         <div className="truncate text-center font-semibold text-cream/80">
-          {t('Games: {x} de {y}', { x: gamesLeadCount, y: gamesTarget })}
+          {/* No games at all during the deciding super-tiebreak — the Sets
+              row below is what matters there, this stays blank rather than
+              showing a stuck "Games: 0 de N". */}
+          {!state.isDecidingSuperTiebreak &&
+            t('Games: {x} de {y}', { x: gamesLeadCount, y: gamesTarget })}
         </div>
         {layoutToggle}
       </div>
-      {gamesProgressBlock}
+      {!state.isDecidingSuperTiebreak && gamesProgressBlock}
+      {setsProgressBlock}
 
       {isTablet ? (
         <div className="grid grid-cols-[1fr_1.4fr_1fr] items-stretch gap-3">

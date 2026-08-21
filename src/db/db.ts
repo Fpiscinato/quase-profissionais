@@ -2,7 +2,20 @@ import Dexie, { type EntityTable } from 'dexie'
 import { applyPoint, computeMatchState } from '../engine/score'
 import type { CourtSide } from '../engine/serve'
 import { DEFAULT_MATCH_CONFIG } from '../engine/types'
-import type { MatchConfig, PlayerId, PointLog, Team, TeamSide } from '../engine/types'
+import type { MatchConfig, PlayerId, PointLog, SetResult, Team, TeamSide } from '../engine/types'
+
+/**
+ * Fills in any MatchConfig fields missing from a stored TournamentRow.options —
+ * tournaments created before a config field existed (e.g. setsToWinMatch,
+ * superTiebreakPoints) have an `options` object that predates it, so at
+ * runtime that field reads as undefined despite MatchConfig typing it as
+ * required. Same "absent field = legacy default" pattern already used for
+ * MatchRow.team1InitialSide/TournamentRow.origin, just applied to the whole
+ * config object at once.
+ */
+export function resolveMatchConfig(options: MatchConfig): MatchConfig {
+  return { ...DEFAULT_MATCH_CONFIG, ...options }
+}
 
 /** The 5 players every fresh install (and every full reset) must seed (Section 1). */
 export const DEFAULT_PLAYER_NAMES = ['Jarede', 'Mateus', 'Mateus Adv', 'Emerson', 'Fernando']
@@ -58,7 +71,14 @@ export interface MatchRow {
   serveOrder: PlayerId[]
   /** Physical side of the court Team 1 starts the set on; Team 2 starts on the opposite side. Absent on matches created before this feature — treat as 'Direita'. */
   team1InitialSide?: CourtSide
+  /** One flat, continuous log for the whole match (every set) — see PointLog. */
   pointLog: PointLog
+  /** Completed sets, in order played. Absent/empty on matches created before multi-set support — treat as a single implicit set won by winnerTeam. */
+  sets?: SetResult[]
+  /** Sets won by each side. Absent on matches created before multi-set support — treat as 1/0 or 0/1 from winnerTeam. */
+  sets1?: number
+  sets2?: number
+  /** Total games across every set (was: the single set's games, before multi-set support — identical value for a single-set match). */
   games1: number
   games2: number
   points1: number
@@ -91,6 +111,15 @@ export interface AppSettingsRow {
   keyBindings?: Record<string, string>
   /** Device-local layout preference for the live match screen. 'auto' picks by viewport width. */
   layoutMode?: 'auto' | 'tablet' | 'smartphone'
+  /**
+   * Whoever is physically holding the remote/clicker (see features/keys/*) —
+   * "Configurar partida" pre-selects this player (if they're in the round)
+   * and, if set, swaps team1/team2 on match creation so their team always
+   * lands on remoteHolderFixedTeam. Absent means no one configured yet.
+   */
+  remoteHolderPlayerId?: PlayerId
+  /** Which side remoteHolderPlayerId's team is always swapped to occupy. Defaults to 'team1' when a holder is set but this is absent. */
+  remoteHolderFixedTeam?: TeamSide
 }
 
 const db = new Dexie('quase-profissionais') as Dexie & {
@@ -224,6 +253,9 @@ export async function createMatchForRound(input: CreateMatchInput): Promise<Matc
     serveOrder: input.serveOrder,
     team1InitialSide: input.team1InitialSide ?? 'Esquerda',
     pointLog: [],
+    sets: [],
+    sets1: 0,
+    sets2: 0,
     games1: 0,
     games2: 0,
     points1: 0,
@@ -382,14 +414,24 @@ function tallyPoints(pointLog: PointLog): { points1: number; points2: number } {
   return { points1, points2 }
 }
 
-/** Derives the games/points/winner snapshot stored on the row from a point log. */
+/** Derives the sets/games/points/winner snapshot stored on the row from a point log. */
 function deriveMatchTally(pointLog: PointLog, config: MatchConfig) {
   const state = computeMatchState(pointLog, config)
   const { points1, points2 } = tallyPoints(pointLog)
+  // games1/games2 are the total across every completed set (a single-set
+  // match — the default — has exactly one completedSets entry, so this is
+  // unchanged from before multi-set support). The in-progress set (if any)
+  // doesn't count yet, matching the old "only counted once the set/match is
+  // decided" behavior.
+  const games1 = state.completedSets.reduce((sum, s) => sum + s.games1, 0)
+  const games2 = state.completedSets.reduce((sum, s) => sum + s.games2, 0)
   return {
     pointLog,
-    games1: state.finalGames1 ?? state.games1,
-    games2: state.finalGames2 ?? state.games2,
+    sets: state.completedSets,
+    sets1: state.sets1,
+    sets2: state.sets2,
+    games1,
+    games2,
     points1,
     points2,
     winnerTeam: state.winner,

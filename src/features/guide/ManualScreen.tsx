@@ -8,27 +8,27 @@ const SECTIONS = [
   },
   {
     title: '2. Comece um torneio',
-    body: 'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe) e quantos games decidem o set. Toque em "Confirmar e criar torneio".',
+    body: 'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Toque em "Confirmar e criar torneio".',
   },
   {
     title: '3. Ou pratique (sem torneio)',
-    body: 'Em "Praticar" você escolhe o formato, os jogadores dos dois times e quantos games decidem o set, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.',
+    body: 'Em "Praticar" você escolhe o formato, os jogadores dos dois times, quantos games decidem o set e quantos sets decidem a partida, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.',
   },
   {
     title: '4. Jogue as rodadas',
-    body: 'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro e o lado inicial da quadra, depois "Iniciar partida" pra abrir a tela ao vivo. Se já sabe que vai começar na hora, use direto o botão "Confirmar e iniciar partida" — ele pula a volta pra lista de rodadas e já abre o jogo ao vivo.',
+    body: 'A tela "Rodadas" lista os confrontos do dia. Toque em "Configurar partida" pra definir quem saca primeiro, o lado inicial da quadra e, se alguém for marcar os pontos pelo controle remoto físico, quem é essa pessoa e se o time dela fica sempre como Time 1 ou Time 2 (o app troca os times automaticamente pra isso — fica lembrado no aparelho pras próximas partidas). Depois é só "Iniciar partida" pra abrir a tela ao vivo. Se já sabe que vai começar na hora, use direto o botão "Confirmar e iniciar partida" — ele pula a volta pra lista de rodadas e já abre o jogo ao vivo.',
   },
   {
     title: '5. Tela ao vivo',
-    body: 'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. No topo, ao lado do cronômetro, o placar "Games: X de Y" e duas fileiras de caixinhas (uma por time, na cor de cada um) mostram quantos games cada time já ganhou e quantos faltam pra fechar o set. O histórico de lado da quadra (as letras D/E embaixo do nome do time) mostra só as últimas 5 trocas, pra não estourar a tela em sets que vão pro tiebreak longo. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.',
+    body: 'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. No topo, ao lado do cronômetro, o placar "Games: X de Y" e duas fileiras de caixinhas (uma por time, na cor de cada um) mostram quantos games cada time já ganhou e quantos faltam pra fechar o set. O histórico de lado da quadra (as letras D/E embaixo do nome do time) mostra só as últimas 5 trocas, pra não estourar a tela em sets que vão pro tiebreak longo. Numa partida melhor-de-3/5, uma segunda fileira azul mostra os sets ganhos por cada time, e um aviso "Set encerrado" aparece entre um set e outro; o set decisivo (empate 1-1 ou 2-2) vira um super-tiebreak até 10 pontos. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.',
   },
   {
     title: '6. Ranking',
-    body: '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.',
+    body: '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla — as colunas SV/SP mostram sets vencidos/perdidos ao lado de games e pontos. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.',
   },
   {
     title: '7. Histórico',
-    body: '"Histórico" guarda todos os torneios e partidas anteriores, agrupados por dia — cada dia mostra quantas partidas teve e o tempo total jogado naquele dia, além do placar, duração e tempo total jogado por jogador e por dupla no card do topo. O mesmo checkbox "Somente partidas de torneio" também funciona aqui.',
+    body: '"Histórico" guarda todos os torneios e partidas anteriores, agrupados por dia — cada dia mostra quantas partidas teve e o tempo total jogado naquele dia, além do placar, duração e tempo total jogado por jogador e por dupla no card do topo. Numa partida melhor-de-3/5, o placar de cada partida mostra os sets (com o resultado de cada um) além do total de games. O mesmo checkbox "Somente partidas de torneio" também funciona aqui.',
   },
   {
     title: '8. Backup',
@@ -40,7 +40,7 @@ const SECTIONS = [
   },
   {
     title: '10. Controle remoto',
-    body: 'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado.',
+    body: 'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado. Se quem aperta o controle se confunde com a troca de times a cada rodada, use "Jogador com o controle remoto" em "Configurar partida" pra fixar o time dele sempre no mesmo botão.',
   },
   {
     title: '11. Layout tablet',

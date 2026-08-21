@@ -6,6 +6,8 @@ import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-li
 import App from '../../App'
 import { createMatchForRound, createTournament, db, ensurePlayersSeeded } from '../../db/db'
 import { buildServeOrder } from '../../engine/serve'
+import { DEFAULT_MATCH_CONFIG } from '../../engine/types'
+import type { MatchConfig } from '../../engine/types'
 
 afterEach(cleanup)
 
@@ -45,7 +47,10 @@ async function expectServe(playerName: string, side: 'Direita' | 'Esquerda') {
   })
 }
 
-async function seedOneRoundMatch(team1InitialSide: 'Esquerda' | 'Direita' = 'Esquerda') {
+async function seedOneRoundMatch(
+  team1InitialSide: 'Esquerda' | 'Direita' = 'Esquerda',
+  options?: Partial<MatchConfig>,
+) {
   await ensurePlayersSeeded()
   const players = await db.players.toArray()
   const byName = (n: string) => players.find((p) => p.name === n)!.id
@@ -56,6 +61,7 @@ async function seedOneRoundMatch(team1InitialSide: 'Esquerda' | 'Direita' = 'Esq
     format: 'duplas',
     teamFormationMode: 'manual',
     rounds: [{ team1: [a, b], team2: [c, d], restingPlayerIds: [e] }],
+    options: options ? { ...DEFAULT_MATCH_CONFIG, ...options } : undefined,
     origin: 'torneio',
   })
   const serveOrder = buildServeOrder([a, b], [c, d]) // [a, c, b, d]
@@ -171,11 +177,10 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
     // At exactly 6 tiebreak points, sides change again (team1 -> Direita/right).
     for (let i = 0; i < 6; i++) await ponto2()
     await expectText('6 – 0')
-    expect(screen.queryByText('Set encerrado')).toBeNull()
+    expect(screen.queryByText('Resultado final')).toBeNull()
 
     await ponto2() // 7th tiebreak point -> match over
 
-    await expectText('Set encerrado')
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Ponto — Time 1' })).toBeNull()
       expect(screen.queryByRole('button', { name: 'Ponto — Time 2' })).toBeNull()
@@ -185,10 +190,10 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
 
     // Desfazer must still work post-decision, to fix a mistaken final tap.
     await desfazer()
-    await expectGone('Set encerrado')
+    await expectGone('Resultado final')
     await screen.findByRole('button', { name: 'Ponto — Time 2' })
     await ponto2() // redo it
-    await expectText('Set encerrado')
+    await expectText('Resultado final')
 
     fireEvent.click(screen.getByRole('button', { name: 'Salvar partida' }))
 
@@ -377,7 +382,7 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
 
     // Team2 wins the tiebreak -> credited a 5th ("+1") box, filling its row.
     for (let i = 0; i < 7; i++) await ponto2()
-    await expectText('Set encerrado')
+    await expectText('Resultado final')
     await expectText('Games: 5 de 4')
     expect(filledCount('games-progress-team1')).toBe(4)
     expect(filledCount('games-progress-team2')).toBe(5)
@@ -414,5 +419,50 @@ describe('Live match screen (Phase 3), driven by the Phase-1 engine', () => {
 
     const settings = await db.appSettings.get('settings')
     expect(settings?.currentMatchId).toBeUndefined()
+  })
+
+  it('plays a best-of-3 match through a tied decider (super-tiebreak) end to end', async () => {
+    const { match } = await seedOneRoundMatch('Esquerda', { setsToWinMatch: 2 })
+    await openLiveMatch()
+
+    const winStraightSet = async (side: 'team1' | 'team2') => {
+      for (let i = 0; i < 16; i++) await (side === 'team1' ? ponto1() : ponto2())
+    }
+
+    await expectText('Sets: 0 de 2')
+    expect(screen.getByTestId('sets-progress-team1').children).toHaveLength(2)
+
+    // Set 1: team1 wins straight 4-0 -> 1-0 in sets, banner shows, games reset.
+    await winStraightSet('team1')
+    await expectText('Set encerrado')
+    await expectText('Sets: 1 de 2')
+    await expectText('Games: 0 de 4')
+
+    // Set 2: team2 wins straight 4-0 -> 1-1 in sets -> the 3rd set is a
+    // deciding super-tiebreak, not another full set of games.
+    await winStraightSet('team2')
+    await expectText('Super tiebreak (set decisivo)')
+    expect(screen.queryByText(/Games: \d de 4/)).toBeNull()
+
+    // team1 closes the super-tiebreak 10-2 -> wins the match 2 sets to 1.
+    for (let i = 0; i < 9; i++) await ponto1()
+    for (let i = 0; i < 2; i++) await ponto2()
+    await ponto1()
+
+    await expectText('Resultado final')
+    expect(screen.getByText(/2 × 1/)).toBeInTheDocument()
+    expect(screen.getByText(/4-0, 0-4, 10-2\*/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar partida' }))
+    await screen.findByText('Rodadas')
+
+    const persisted = await db.matches.get(match.id)
+    expect(persisted?.sets1).toBe(2)
+    expect(persisted?.sets2).toBe(1)
+    expect(persisted?.sets).toHaveLength(3)
+    expect(persisted?.sets?.[2]).toEqual({ games1: 10, games2: 2, winner: 'team1', superTiebreak: true })
+    expect(persisted?.games1).toBe(14) // 4 (set 1) + 0 (set 2) + 10 (super-tiebreak points)
+    expect(persisted?.games2).toBe(6) // 0 + 4 + 2
+    expect(persisted?.winnerTeam).toBe('team1')
   })
 })

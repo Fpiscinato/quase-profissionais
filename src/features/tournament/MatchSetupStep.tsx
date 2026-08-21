@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { buildServeOrder, type CourtSide } from '../../engine/serve'
-import type { PlayerId, Team } from '../../engine/types'
+import type { PlayerId, Team, TeamSide } from '../../engine/types'
 import type { PlayerRow, RoundRecord } from '../../db/db'
-import { createMatchForRound } from '../../db/db'
+import { createMatchForRound, updateSettings } from '../../db/db'
+import { useSettings } from '../../db/hooks'
 import { shuffle } from '../../lib/shuffle'
-import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
+import { card, primaryButton, secondaryButton, textInput, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
 import { useT } from '../../i18n/useT'
 
@@ -28,6 +29,7 @@ function randomServeOrder(team1: Team, team2: Team): PlayerId[] {
 
 export function MatchSetupStep({ tournamentId, round, byId, onDone, onDoneAndStart, onBack }: Props) {
   const { t } = useT()
+  const settings = useSettings()
   const [mode, setMode] = useState<OrderMode>('random')
   const [randomOrder, setRandomOrder] = useState<PlayerId[]>(() =>
     randomServeOrder(round.team1, round.team2),
@@ -43,6 +45,41 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onDoneAndSta
 
   const allPlayers = useMemo(() => [...round.team1, ...round.team2], [round.team1, round.team2])
   const totalSlots = allPlayers.length
+
+  // Whoever is holding the physical remote (features/keys/*) can get
+  // confused if their team isn't always the same button/label from round to
+  // round — this fixes their team to a chosen side, remembered on the
+  // device (AppSettingsRow) and pre-selected here, editable per match in
+  // case the remote changes hands. null means "not touched this screen yet,
+  // fall back to the device default" — distinct from 'none'/a real team,
+  // which the user explicitly picked.
+  const [explicitHolderId, setExplicitHolderId] = useState<PlayerId | 'none' | null>(null)
+  const [explicitHolderTeam, setExplicitHolderTeam] = useState<TeamSide | null>(null)
+  const settingsHolderId = settings?.remoteHolderPlayerId
+  const holderId: PlayerId | 'none' =
+    explicitHolderId !== null
+      ? explicitHolderId
+      : settingsHolderId && allPlayers.includes(settingsHolderId)
+        ? settingsHolderId
+        : 'none'
+  const holderFixedTeam: TeamSide = explicitHolderTeam ?? settings?.remoteHolderFixedTeam ?? 'team1'
+
+  const handleHolderChange = (id: PlayerId | 'none') => {
+    setExplicitHolderId(id)
+    updateSettings({ remoteHolderPlayerId: id === 'none' ? undefined : id })
+  }
+  const handleHolderTeamChange = (side: TeamSide) => {
+    setExplicitHolderTeam(side)
+    updateSettings({ remoteHolderFixedTeam: side })
+  }
+
+  // team1/team2 are just labels chosen at match creation — nothing downstream
+  // cares which specific team is "team1", so swapping here (when the remote
+  // holder's actual team doesn't match their fixed side) is enough to make
+  // the live screen's "Ponto Time 1/2" buttons always land on their team.
+  const shouldSwapForHolder = holderId !== 'none' && teamOf(holderId) !== holderFixedTeam
+  const effectiveTeam1 = shouldSwapForHolder ? round.team2 : round.team1
+  const effectiveTeam2 = shouldSwapForHolder ? round.team1 : round.team2
 
   const canPickManually = (id: PlayerId) => {
     if (manualOrder.includes(id)) return false
@@ -65,8 +102,8 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onDoneAndSta
     const match = await createMatchForRound({
       tournamentId,
       roundIndex: round.index,
-      team1: round.team1,
-      team2: round.team2,
+      team1: effectiveTeam1,
+      team2: effectiveTeam2,
       serveOrder,
       team1InitialSide,
     })
@@ -81,10 +118,51 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onDoneAndSta
           {t('Configurar partida')} — {t('Rodada')} {round.index + 1}
         </h1>
         <p className="text-sm text-cream/70">
-          <span className="font-semibold text-lime">{t('Time 1')}:</span> {teamName(round.team1)}
+          <span className="font-semibold text-lime">{t('Time 1')}:</span> {teamName(effectiveTeam1)}
           <span className="text-cream/50"> {t('vs')} </span>
-          <span className="font-semibold text-cream">{t('Time 2')}:</span> {teamName(round.team2)}
+          <span className="font-semibold text-cream">{t('Time 2')}:</span> {teamName(effectiveTeam2)}
         </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          {t('Jogador com o controle remoto')}
+          <HelpHint
+            text={t(
+              'Se alguém vai marcar os pontos pelo controle físico, escolha quem é aqui — o time dele fica sempre fixado como Time 1 ou Time 2, trocando os times automaticamente se precisar, pra os botões do controle nunca mudarem de lugar de uma rodada pra outra. Fica lembrado no aparelho pras próximas partidas.',
+            )}
+          />
+        </span>
+        <select
+          className={textInput}
+          value={holderId}
+          onChange={(e) => handleHolderChange(e.target.value as PlayerId | 'none')}
+        >
+          <option value="none">{t('Nenhum')}</option>
+          {allPlayers.map((id) => (
+            <option key={id} value={id}>
+              {name(id)}
+            </option>
+          ))}
+        </select>
+        {holderId !== 'none' && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleHolderTeamChange('team1')}
+              className={toggleButton(holderFixedTeam === 'team1')}
+            >
+              {t('Time dele: Time 1')}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleHolderTeamChange('team2')}
+              className={toggleButton(holderFixedTeam === 'team2')}
+            >
+              {t('Time dele: Time 2')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

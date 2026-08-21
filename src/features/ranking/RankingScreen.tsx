@@ -15,6 +15,11 @@ import { groupByMatchesPlayed } from './rankingFilter'
 import { RankingReport, type RankingReportProps } from './RankingReport'
 
 function toMatchResult(m: MatchRow): MatchResult {
+  // Matches recorded before multi-set support don't have sets1/sets2 — a
+  // pre-existing match is inherently a single set, so it counts as 1 set won
+  // by whoever won the match.
+  const sets1 = m.sets1 ?? (m.winnerTeam === 'team1' ? 1 : 0)
+  const sets2 = m.sets2 ?? (m.winnerTeam === 'team2' ? 1 : 0)
   return {
     team1: m.team1,
     team2: m.team2,
@@ -22,6 +27,8 @@ function toMatchResult(m: MatchRow): MatchResult {
     games2: m.games2,
     points1: m.points1,
     points2: m.points2,
+    sets1,
+    sets2,
     winnerTeam: m.winnerTeam!,
   }
 }
@@ -209,7 +216,7 @@ export function RankingScreen() {
           {t('Ranking')}
           <HelpHint
             text={t(
-              'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
+              'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). SV/SP (sets vencidos/perdidos) aparecem na tabela, de partidas melhor-de-3/5, mas não entram no critério de desempate. O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
             )}
           />
         </h1>
@@ -333,6 +340,8 @@ export function RankingScreen() {
                     </th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PJ')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PV')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-sky">{t('SV')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-sky">{t('SP')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('GV')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('GP')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PtV')}</th>
@@ -352,6 +361,8 @@ export function RankingScreen() {
                               </td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.setsWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.setsLost}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</td>
@@ -366,7 +377,7 @@ export function RankingScreen() {
                             <td className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
                               {groupLabel(section.matchesPlayed)}
                             </td>
-                            <td className="bg-navy pt-3 pb-1" colSpan={6} />
+                            <td className="bg-navy pt-3 pb-1" colSpan={8} />
                           </tr>,
                           ...rows,
                         ]
@@ -382,6 +393,8 @@ export function RankingScreen() {
                               </td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.setsWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.setsLost}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesLost}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.pointsWon}</td>
@@ -396,7 +409,7 @@ export function RankingScreen() {
                             <td className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
                               {groupLabel(section.matchesPlayed)}
                             </td>
-                            <td className="bg-navy pt-3 pb-1" colSpan={6} />
+                            <td className="bg-navy pt-3 pb-1" colSpan={8} />
                           </tr>,
                           ...rows,
                         ]
@@ -408,7 +421,7 @@ export function RankingScreen() {
           </div>
           <p className="text-xs text-cream/50">
             {t(
-              'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+              'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
             )}
             {mode === 'duplas' &&
               ` · ${t('Duplas: só conta quem jogou junto na mesma dupla.')}`}
