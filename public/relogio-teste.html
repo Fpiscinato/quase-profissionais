@@ -140,28 +140,30 @@
   .pad--2 { background: var(--cream); color: var(--navy); }
 
   .action-row {
-    flex: 1;
+    flex: 0.85;
     display: flex;
     flex-direction: row;
-    gap: 4.5vw;
+    align-items: center;
+    justify-content: space-between;
     min-height: 0;
   }
 
   .action-btn {
-    flex: 1;
+    flex: 0 0 40%;
+    height: 66%;
     min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    border-radius: 12px;
+    gap: 1px;
+    border-radius: 10px;
     font-weight: 700;
-    font-size: clamp(8.5px, 3.2vw, 11px);
+    font-size: clamp(7.5px, 2.8vw, 9.5px);
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
-  .action-btn .icon { font-size: clamp(13px, 5.5vw, 19px); line-height: 1; }
+  .action-btn .icon { font-size: clamp(11px, 4.6vw, 16px); line-height: 1; }
   .action-btn:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
   .action-btn:disabled { opacity: 0.35; }
 
@@ -187,9 +189,24 @@
     display: none;
   }
   body.dimmed #dimOverlay { display: block; }
+
+  .bg-logo {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 46vmin;
+    height: 46vmin;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+    opacity: 0.07;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .app { position: relative; z-index: 1; }
 </style>
 </head>
 <body>
+<img class="bg-logo" src="/logo.png" alt="" aria-hidden="true" />
 <div class="app">
   <button id="wakeBtn" class="wake-banner" type="button" aria-pressed="false">
     Tela: verificando…
