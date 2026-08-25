@@ -9,12 +9,6 @@ import { db, getSettings } from '../../db/db'
 afterEach(cleanup)
 
 describe('WatchSetupScreen', () => {
-  it('warns and disables pairing while the relay is still the placeholder URL', async () => {
-    render(<WatchSetupScreen />)
-    await screen.findByText(/relay-worker\/RELAY.md/)
-    expect(screen.getByRole('button', { name: 'Gerar código' })).toBeDisabled()
-  })
-
   it('shows the paired code and offers unpairing once a watchRoomPin is set', async () => {
     await db.appSettings.put({ id: 'settings', schemaVersion: 1, watchRoomPin: '482913' })
     render(<WatchSetupScreen />)

@@ -12,7 +12,7 @@ export function WatchSetupScreen() {
   const { t } = useT()
   const settings = useSettings()
   const pin = settings?.watchRoomPin
-  const autoDim = settings?.watchAutoDim ?? true
+  const autoDim = settings?.watchAutoDim ?? false
 
   // Só entra em modo "esperando o relógio" quando existe um pin — parado
   // (pin undefined) o hook não abre socket nenhum.

@@ -199,7 +199,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     : '0'
   const { watchConnected } = useWatchRelay({
     pin: settings?.watchRoomPin,
-    autoDim: settings?.watchAutoDim ?? true,
+    autoDim: settings?.watchAutoDim ?? false,
     score1: watchScore1,
     score2: watchScore2,
     serverTag: watchServeInfo ? playerTag(byId.get(watchServeInfo.serverId) ?? { id: '', name: '?', active: true }) : '',

@@ -128,7 +128,7 @@ export interface AppSettingsRow {
    * per match. Absent means no watch paired.
    */
   watchRoomPin?: string
-  /** Whether the watch screen dims itself after idle, vs. staying always on. Defaults to true (dims) when absent. */
+  /** Whether the watch screen dims itself after idle, vs. staying always on. Defaults to false (always on) when absent. */
   watchAutoDim?: boolean
 }
 
@@ -310,7 +310,7 @@ export function normalizeName(name: string): string {
 export const MAX_PLAYER_NAME_LENGTH = 16
 
 /** Nickname shown on the relógio (Wear OS) remote — small screen, so kept to 3 letters. */
-export const MAX_NICKNAME_LENGTH = 3
+export const MAX_NICKNAME_LENGTH = 4
 
 async function assertNameAvailable(name: string, excludingId?: string): Promise<void> {
   const target = normalizeName(name)

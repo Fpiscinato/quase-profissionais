@@ -53,9 +53,9 @@
     justify-content: center;
     gap: 1.2vh;
   }
-  .pin-title { font-size: clamp(10px, 3.4vw, 13px); font-weight: 700; color: rgba(242, 240, 230, 0.75); text-align: center; }
+  .pin-title { font-size: clamp(11px, 3.8vw, 14px); font-weight: 700; color: rgba(242, 240, 230, 0.8); text-align: center; }
   .pin-display {
-    font-size: clamp(20px, 8vw, 30px);
+    font-size: clamp(24px, 10vw, 36px);
     font-weight: 800;
     letter-spacing: 0.2em;
     font-variant-numeric: tabular-nums;
@@ -64,35 +64,35 @@
   .pin-pad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.2vw;
+    gap: 1.6vw;
     width: 100%;
-    max-width: 220px;
+    max-width: 270px;
   }
   .pin-key {
     aspect-ratio: 1;
     border: none;
     border-radius: 50%;
-    background: rgba(242, 240, 230, 0.1);
+    background: rgba(242, 240, 230, 0.12);
     color: var(--cream);
-    font-size: clamp(14px, 5vw, 19px);
+    font-size: clamp(17px, 6.2vw, 24px);
     font-weight: 700;
   }
-  .pin-key:active { background: rgba(242, 240, 230, 0.22); }
-  .pin-key--wide { border-radius: 40%; font-size: clamp(11px, 4vw, 14px); }
+  .pin-key:active { background: rgba(242, 240, 230, 0.24); }
+  .pin-key--wide { border-radius: 40%; font-size: clamp(13px, 4.6vw, 17px); }
   .pin-connect {
     margin-top: 0.6vh;
-    min-height: 34px;
-    padding: 0 20px;
+    min-height: 42px;
+    padding: 0 26px;
     border: none;
     border-radius: 999px;
     background: var(--lime);
     color: var(--navy);
     font-weight: 800;
-    font-size: clamp(11px, 4vw, 14px);
+    font-size: clamp(13px, 4.6vw, 17px);
     text-transform: uppercase;
   }
   .pin-connect:disabled { opacity: 0.35; }
-  .pin-error { color: var(--destructive); font-size: clamp(9px, 3vw, 11px); font-weight: 700; min-height: 1.4em; text-align: center; }
+  .pin-error { color: var(--destructive); font-size: clamp(10px, 3.4vw, 12px); font-weight: 700; min-height: 1.4em; text-align: center; }
 
   /* ---------- Tela de placar ---------- */
   .score-screen { flex: 1; display: none; flex-direction: column; gap: 0.7vh; }
@@ -122,31 +122,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 7px;
     margin-top: 0.9vh;
-    font-size: clamp(9px, 3.2vw, 12px);
-    font-weight: 700;
-    color: rgba(242, 240, 230, 0.75);
+    font-size: clamp(12px, 4.4vw, 16px);
+    font-weight: 800;
+    color: rgba(242, 240, 230, 0.9);
   }
-  .serve-ball { font-size: clamp(10px, 3.6vw, 14px); }
+  .serve-ball { font-size: clamp(13px, 4.8vw, 18px); }
   .serve-side {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 1.6em;
-    padding: 1px 5px;
+    padding: 2px 6px;
     border-radius: 5px;
     background: rgba(164, 206, 58, 0.18);
     color: var(--lime);
   }
 
   .team-row {
-    flex: 2.4;
+    flex: 2.2;
     display: flex;
     flex-direction: row;
     gap: 4vw;
     min-height: 0;
-    margin-top: 0.7vh;
+    margin-top: 1vh;
   }
 
   .pad {
@@ -161,7 +161,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    font-size: clamp(9.5px, 4.2vw, 13px);
+    font-size: clamp(11px, 5vw, 15px);
     transition: transform 0.08s ease, filter 0.08s ease;
   }
   .pad:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
@@ -173,10 +173,10 @@
   .pad-score {
     position: absolute;
     top: 7px;
-    font-size: clamp(12px, 5vw, 17px);
+    font-size: clamp(15px, 6.2vw, 21px);
     font-variant-numeric: tabular-nums;
     font-weight: 800;
-    opacity: 0.85;
+    opacity: 0.9;
   }
   .pad-score--1 { right: 8px; }
   .pad-score--2 { left: 8px; }
@@ -186,6 +186,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: 1vh;
     padding: 0.6vh 0;
   }
   .link-pill {
@@ -220,11 +221,11 @@
     min-height: 0;
   }
 
-  .action-logo { flex: 0 0 auto; width: clamp(22px, 8vw, 30px); height: clamp(22px, 8vw, 30px); object-fit: contain; border-radius: 6px; }
+  .action-logo { flex: 0 0 auto; width: clamp(28px, 10vw, 38px); height: clamp(28px, 10vw, 38px); object-fit: contain; border-radius: 7px; }
 
   .action-btn {
     flex: 0 0 36%;
-    height: 82%;
+    height: 92%;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -555,7 +556,7 @@
   // está setado pra "Sempre ativa" (autoDim === false, mandado no state).
   var DIM_DELAY_MS = 8000;
   var dimTimer = null;
-  var autoDim = true;
+  var autoDim = false;
 
   function scheduleDim() {
     clearTimeout(dimTimer);

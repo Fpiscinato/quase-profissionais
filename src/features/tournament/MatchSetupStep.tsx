@@ -126,10 +126,10 @@ export function MatchSetupStep({ tournamentId, round, byId, onDone, onDoneAndSta
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-cream/80">
-          {t('Jogador com o controle remoto')}
+          {t('Jogador com o controle remoto ou relógio')}
           <HelpHint
             text={t(
-              'Se alguém vai marcar os pontos pelo controle físico, escolha quem é aqui — o time dele fica sempre fixado como Time 1 ou Time 2, trocando os times automaticamente se precisar, pra os botões do controle nunca mudarem de lugar de uma rodada pra outra. Fica lembrado no aparelho pras próximas partidas.',
+              'Se alguém vai marcar os pontos pelo controle físico ou pelo relógio, escolha quem é aqui — o time dele fica sempre fixado como Time 1 ou Time 2, trocando os times automaticamente se precisar, pra os botões nunca mudarem de lugar de uma rodada pra outra. Fica lembrado no aparelho pras próximas partidas.',
             )}
           />
         </span>

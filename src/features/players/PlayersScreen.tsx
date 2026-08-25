@@ -138,10 +138,10 @@ export function PlayersScreen() {
           </button>
         </div>
         <p className="text-xs text-cream/50">
-          {t('Apelido de até 3 letras')}
+          {t('Apelido de até 4 letras')}
           <HelpHint
             text={t(
-              'Usado nas telas pequenas, como o relógio — se não preencher, o app usa as 3 primeiras letras do nome.',
+              'Usado nas telas pequenas, como o relógio — se não preencher, o app usa as 4 primeiras letras do nome.',
             )}
           />
         </p>
