@@ -245,17 +245,14 @@
   .action-btn--undo { border: 1px solid rgba(217, 72, 58, 0.55); background: rgba(217, 72, 58, 0.14); color: var(--cream); }
   .action-btn--repeat { border: 1px solid rgba(212, 175, 55, 0.55); background: rgba(212, 175, 55, 0.14); color: var(--cream); }
 
-  .reset-link {
-    position: fixed;
-    bottom: 2px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 8px;
-    color: rgba(242, 240, 230, 0.3);
+  .action-logo-btn {
+    flex: 0 0 auto;
     border: none;
     background: transparent;
+    padding: 4px;
+    display: flex;
   }
+  .action-logo-btn:active { transform: scale(0.92); }
 
   #dimOverlay { position: fixed; inset: 0; z-index: 50; background: transparent; display: none; }
   body.dimmed #dimOverlay { display: block; }
@@ -315,7 +312,9 @@
       <button id="undoBtn" class="action-btn action-btn--undo" type="button" disabled>
         <span class="icon" aria-hidden="true">↺</span> Desfazer
       </button>
-      <img class="action-logo" src="/logo.png" alt="" />
+      <button id="resetBtn" class="action-logo-btn" type="button" aria-label="Trocar código">
+        <img class="action-logo" src="/logo.png" alt="" />
+      </button>
       <button id="repeatBtn" class="action-btn action-btn--repeat" type="button" disabled>
         <span class="icon" aria-hidden="true">🔁</span> Repetir
       </button>
@@ -323,7 +322,6 @@
   </div>
 </div>
 <div id="dimOverlay" aria-hidden="true"></div>
-<button class="reset-link" id="resetLink" hidden>trocar código</button>
 
 <script>
   // Placar de Pulso — lado do relógio (Wear OS). Nunca calcula nada da
@@ -358,7 +356,7 @@
   var btn2 = document.getElementById('btn2');
   var undoBtn = document.getElementById('undoBtn');
   var repeatBtn = document.getElementById('repeatBtn');
-  var resetLink = document.getElementById('resetLink');
+  var resetBtn = document.getElementById('resetBtn');
 
   var pin = '';
   var ws = null;
@@ -393,13 +391,14 @@
     localStorage.setItem(STORAGE_KEY, pin);
     connect(pin);
   });
-  resetLink.addEventListener('click', function () {
+  resetBtn.addEventListener('click', function () {
+    scheduleDim();
+    if (!confirm('Trocar código? Isso desconecta este relógio até digitar um novo.')) return;
     localStorage.removeItem(STORAGE_KEY);
     disconnect();
     pin = '';
     updatePinUI();
     document.body.classList.remove('linked');
-    resetLink.hidden = true;
   });
 
   function setLinkUI(state, detail) {
@@ -454,7 +453,6 @@
     disconnect();
     pinScreenEls.error.textContent = '';
     document.body.classList.add('linked');
-    resetLink.hidden = false;
     setLinkUI('connecting');
 
     ws = new WebSocket(RELAY_URL + '/room/' + pin + '?role=watch');
