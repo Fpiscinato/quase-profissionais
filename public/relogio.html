@@ -482,7 +482,6 @@
     for (var i = 0; i < deWords.length; i++) deWords[i].textContent = t('deWord');
     resetBtn.setAttribute('aria-label', t('resetLabel'));
   }
-  applyLang();
 
   var pinScreenEls = {
     display: document.getElementById('pinDisplay'),
@@ -513,6 +512,8 @@
   var undoBtn = document.getElementById('undoBtn');
   var repeatBtn = document.getElementById('repeatBtn');
   var resetBtn = document.getElementById('resetBtn');
+
+  applyLang();
 
   var pin = '';
   var ws = null;
