@@ -301,20 +301,18 @@
   .link-dot.is-ok { background: var(--ok); }
   .link-dot.is-warn { background: var(--warn); }
 
-  /* Fixo (fora do fluxo normal) de propósito — pra nunca empurrar o resto
-     da tela, e pra sempre aparecer, tanto na tela de código quanto na de
-     placar. Serve só pra conferir se o navegador do relógio pegou a
-     versão mais nova depois de um deploy (a página fica com uma conexão
-     sempre ativa, então às vezes não recarrega sozinha). */
-  #buildTag {
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 2px);
-    right: calc(env(safe-area-inset-right, 0px) + 4px);
-    z-index: 60;
-    font-size: 8px;
-    font-weight: 700;
-    color: rgba(242, 240, 230, 0.32);
-    pointer-events: none;
+  /* Em fluxo normal (não fixo), sempre no topo de cada tela — texto
+     estático por deploy, então não "pula" nada durante o uso. Serve só pra
+     conferir se o navegador do relógio pegou a versão mais nova depois de
+     um deploy (a página fica com uma conexão sempre ativa, então às vezes
+     não recarrega sozinha). Preenchido via JS a partir de um único texto
+     (BUILD_TAG), pra nunca esquecer de atualizar os dois lugares. */
+  .build-tag {
+    flex-shrink: 0;
+    text-align: center;
+    font-size: clamp(11px, 4vw, 15px);
+    font-weight: 800;
+    color: var(--gold);
   }
 
   #dimOverlay { position: fixed; inset: 0; z-index: 50; background: transparent; display: none; }
@@ -324,6 +322,7 @@
 <body>
 <div class="app">
   <div class="pin-screen">
+    <div class="build-tag" id="buildTagPin"></div>
     <div class="pin-title">Código do relógio<br />(gerado em "Configurar relógio" no app)</div>
     <div class="pin-display" id="pinDisplay">______</div>
     <div class="pin-pad" id="pinPad">
@@ -346,6 +345,8 @@
 
   <div class="score-screen">
     <div class="link-banner" id="linkBanner">Sem conexão</div>
+
+    <div class="build-tag" id="buildTagScore"></div>
 
     <div class="serve-row">
       <span class="serve-ball" aria-hidden="true">🎾</span>
@@ -394,7 +395,6 @@
   </div>
 </div>
 <div id="dimOverlay" aria-hidden="true"></div>
-<div id="buildTag">relógio v1</div>
 
 <script>
   // Placar de Pulso — lado do relógio (Wear OS). Nunca calcula nada da
@@ -407,6 +407,12 @@
   // separados (este é servido como está, não passa pelo build do Vite) e
   // não há como compartilhar a constante entre eles.
   var RELAY_URL = 'wss://quase-profissionais-relay.f-piscinato.workers.dev';
+
+  // Bumpar esse número a cada mudança neste arquivo — é a forma de
+  // conferir na hora se o navegador do relógio pegou o deploy mais novo.
+  var BUILD_TAG = 'relógio v2';
+  document.getElementById('buildTagPin').textContent = BUILD_TAG;
+  document.getElementById('buildTagScore').textContent = BUILD_TAG;
 
   var STORAGE_KEY = 'quase-profissionais-watch-pin';
 
