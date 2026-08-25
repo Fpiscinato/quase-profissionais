@@ -34,60 +34,14 @@
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: calc(env(safe-area-inset-top, 0px) + max(3.5vh, 14px))
+    padding: calc(env(safe-area-inset-top, 0px) + max(2vh, 8px))
       calc(env(safe-area-inset-right, 0px) + max(6vw, 10px))
       calc(env(safe-area-inset-bottom, 0px) + max(1.5vh, 6px))
       calc(env(safe-area-inset-left, 0px) + max(6vw, 10px));
-    gap: 0.8vh;
+    gap: 0.7vh;
     transition: filter 0.4s ease;
   }
   body.dimmed .app { filter: brightness(0.22); }
-
-  /* Altura fixa pro aviso do topo — antes o texto mudava de tamanho
-     (ex. mensagem do "Repetir") e empurrava o placar/botões pra baixo. */
-  .wake-banner {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: clamp(20px, 6vh, 30px);
-    border: none;
-    border-radius: 8px;
-    padding: 0 6px;
-    font-size: clamp(8.5px, 2.9vw, 10.5px);
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    line-height: 1.2;
-    text-align: center;
-    color: var(--navy);
-    background: var(--destructive);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: background 0.2s ease, color 0.2s ease;
-  }
-  .wake-banner.is-ok { background: var(--ok); }
-  .wake-banner.is-warn { background: var(--warn); }
-  .wake-banner.is-off { background: rgba(242, 240, 230, 0.15); color: var(--cream); }
-
-  .score-row {
-    flex-shrink: 0;
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: clamp(6px, 3vw, 12px);
-    font-variant-numeric: tabular-nums;
-    font-weight: 800;
-  }
-
-  .score-team {
-    font-size: clamp(20px, 9vw, 36px);
-    line-height: 1;
-  }
-  .score-team--1 { color: var(--lime); }
-  .score-team--2 { color: var(--cream); }
-  .score-sep { font-size: clamp(12px, 4vw, 18px); color: rgba(242, 240, 230, 0.4); }
 
   .serve-row {
     flex-shrink: 0;
@@ -112,15 +66,15 @@
   }
 
   .team-row {
-    flex: 2.3;
+    flex: 3;
     display: flex;
     flex-direction: row;
-    gap: 4.5vw;
+    gap: 4vw;
     min-height: 0;
-    margin-top: 0.4vh;
   }
 
   .pad {
+    position: relative;
     flex: 1;
     min-width: 0;
     border: none;
@@ -139,18 +93,65 @@
   .pad--1 { background: var(--lime); color: var(--navy); }
   .pad--2 { background: var(--cream); color: var(--navy); }
 
+  .pad-score {
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    font-size: clamp(11px, 4.6vw, 16px);
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    opacity: 0.8;
+  }
+
+  /* Faixa do meio: logo pequeno (cor normal, não mais um fundo gigante
+     apagado) + status da tela — fica no vão entre os times e as ações. */
+  .mid-row {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.5vh 0;
+  }
+  .mid-logo { width: clamp(16px, 6vw, 22px); height: clamp(16px, 6vw, 22px); object-fit: contain; border-radius: 4px; }
+  .wake-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: none;
+    background: transparent;
+    color: rgba(242, 240, 230, 0.75);
+    font-size: clamp(8px, 2.8vw, 10.5px);
+    font-weight: 700;
+    max-width: 58vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wake-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--destructive);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  .wake-dot.is-ok { background: var(--ok); }
+  .wake-dot.is-warn { background: var(--warn); }
+
   .action-row {
-    flex: 0.85;
+    flex: 1;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    padding: 0 9%;
     min-height: 0;
   }
 
   .action-btn {
-    flex: 0 0 40%;
-    height: 66%;
+    flex: 0 0 38%;
+    height: 62%;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -189,35 +190,10 @@
     display: none;
   }
   body.dimmed #dimOverlay { display: block; }
-
-  .bg-logo {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 46vmin;
-    height: 46vmin;
-    transform: translate(-50%, -50%);
-    object-fit: contain;
-    opacity: 0.07;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .app { position: relative; z-index: 1; }
 </style>
 </head>
 <body>
-<img class="bg-logo" src="/logo.png" alt="" aria-hidden="true" />
 <div class="app">
-  <button id="wakeBtn" class="wake-banner" type="button" aria-pressed="false">
-    Tela: verificando…
-  </button>
-
-  <div class="score-row">
-    <span id="score1" class="score-team score-team--1">0</span>
-    <span class="score-sep">–</span>
-    <span id="score2" class="score-team score-team--2">0</span>
-  </div>
-
   <div class="serve-row">
     <span class="serve-ball" aria-hidden="true">🎾</span>
     <span>JAR</span>
@@ -225,9 +201,23 @@
   </div>
 
   <main class="team-row">
-    <button id="btn1" class="pad pad--1" type="button">Time 1</button>
-    <button id="btn2" class="pad pad--2" type="button">Time 2</button>
+    <button id="btn1" class="pad pad--1" type="button">
+      <span id="score1" class="pad-score">0</span>
+      Time 1
+    </button>
+    <button id="btn2" class="pad pad--2" type="button">
+      <span id="score2" class="pad-score">0</span>
+      Time 2
+    </button>
   </main>
+
+  <div class="mid-row">
+    <img class="mid-logo" src="/logo.png" alt="" />
+    <button id="wakeBtn" class="wake-pill" type="button" aria-pressed="false">
+      <span id="wakeDot" class="wake-dot"></span>
+      <span id="wakeLabel">verificando…</span>
+    </button>
+  </div>
 
   <div class="action-row">
     <button id="undoBtn" class="action-btn action-btn--undo" type="button" disabled>
@@ -252,6 +242,8 @@
   var undoBtn = document.getElementById('undoBtn');
   var repeatBtn = document.getElementById('repeatBtn');
   var wakeBtn = document.getElementById('wakeBtn');
+  var wakeDot = document.getElementById('wakeDot');
+  var wakeLabel = document.getElementById('wakeLabel');
 
   function render() {
     var s1 = 0, s2 = 0;
@@ -276,15 +268,13 @@
     render();
   });
 
-  var wakeBannerFlashTimer = null;
+  var wakeFlashTimer = null;
   repeatBtn.addEventListener('click', function () {
-    var prevClass = wakeBtn.className;
-    var prevText = wakeBtn.textContent;
-    clearTimeout(wakeBannerFlashTimer);
-    wakeBtn.textContent = '🔁 repetiria o anúncio no tablet (simulado)';
-    wakeBannerFlashTimer = setTimeout(function () {
-      wakeBtn.className = prevClass;
-      wakeBtn.textContent = prevText;
+    var prevText = wakeLabel.textContent;
+    clearTimeout(wakeFlashTimer);
+    wakeLabel.textContent = '🔁 repetiria no tablet (simulado)';
+    wakeFlashTimer = setTimeout(function () {
+      wakeLabel.textContent = prevText;
     }, 1400);
   });
 
@@ -335,15 +325,14 @@
   var wakeLock = null;
 
   function setWakeUI(state, detail) {
-    wakeBtn.className =
-      'wake-banner' + (state === 'on' ? ' is-ok' : state === 'trying' ? ' is-warn' : state === 'unsupported' ? ' is-off' : '');
+    wakeDot.className = 'wake-dot' + (state === 'on' ? ' is-ok' : state === 'trying' ? ' is-warn' : '');
     var text = {
-      on: 'Tela sempre ativa ✓',
-      trying: 'Ativando tela sempre ligada…',
-      unsupported: 'Este navegador não segura a tela ligada',
-      failed: 'Tela apagou — toque aqui pra reativar',
+      on: 'Tela sempre ativa',
+      trying: 'Ativando tela…',
+      unsupported: 'Sem suporte a tela ativa',
+      failed: 'Apagou — toque',
     }[state];
-    wakeBtn.textContent = text + (detail ? ' (' + detail + ')' : '');
+    wakeLabel.textContent = text + (detail ? ' (' + detail + ')' : '');
     wakeBtn.setAttribute('aria-pressed', state === 'on' ? 'true' : 'false');
   }
 
