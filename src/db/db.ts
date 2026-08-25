@@ -122,6 +122,14 @@ export interface AppSettingsRow {
   remoteHolderPlayerId?: PlayerId
   /** Which side remoteHolderPlayerId's team is always swapped to occupy. Defaults to 'team1' when a holder is set but this is absent. */
   remoteHolderFixedTeam?: TeamSide
+  /**
+   * 6-digit pairing code for the Wear OS watch remote (see features/watch/) —
+   * shared across matches for the day/tournament once paired, not re-asked
+   * per match. Absent means no watch paired.
+   */
+  watchRoomPin?: string
+  /** Whether the watch screen dims itself after idle, vs. staying always on. Defaults to true (dims) when absent. */
+  watchAutoDim?: boolean
 }
 
 const db = new Dexie('quase-profissionais') as Dexie & {

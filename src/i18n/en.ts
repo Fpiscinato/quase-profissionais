@@ -192,6 +192,30 @@ export const EN: Record<string, string> = {
   '10. Controle remoto': '10. Remote control',
   'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado. Se quem aperta o controle se confunde com a troca de times a cada rodada, use "Jogador com o controle remoto" em "Configurar partida" pra fixar o time dele sempre no mesmo botão.':
     'In "Remote control" you map a physical remote\'s buttons (e.g. a USB presentation "clicker") to Point Team 1, Point Team 2, Repeat announcement, Undo and Save match. Tap "Set", press the remote\'s button, done — works with any device that emulates a keyboard, not just one specific model. The live screen listens for these buttons the whole time, even with Hands-free voice mode off. If whoever holds the remote gets confused by teams swapping each round, use "Player holding the remote control" in "Set up match" to fix their team to the same button every time.',
+  // WatchSetupScreen
+  'Configurar relógio': 'Set up watch',
+  'Marque os pontos direto do pulso — só relógios Samsung/Wear OS por enquanto.':
+    'Score points straight from your wrist — Samsung/Wear OS watches only for now.',
+  'O relay ainda não foi publicado (RELAY_URL continua com o valor de exemplo) — veja relay-worker/RELAY.md pra colocar no ar antes de parear um relógio.':
+    'The relay hasn\'t been published yet (RELAY_URL is still the placeholder value) — see relay-worker/RELAY.md to bring it up before pairing a watch.',
+  'Gerar código': 'Generate code',
+  'Código do relógio': 'Watch code',
+  'Relógio conectado ✓': 'Watch connected ✓',
+  'Aguardando o relógio…': 'Waiting for the watch…',
+  'Conectando ao relay…': 'Connecting to the relay…',
+  'Gerar novo código': 'Generate new code',
+  'No navegador do relógio, abra:': 'In the watch\'s browser, open:',
+  'e digite o código acima.': 'and type the code above.',
+  'Sem Wi-Fi na quadra? Ative o ponto de acesso do tablet/celular e conecte o Wi-Fi do relógio nele (não é o Bluetooth de sempre) — funciona igual.':
+    'No Wi-Fi at the court? Turn on the tablet/phone\'s hotspot and connect the watch\'s own Wi-Fi to it (not the usual Bluetooth) — works the same way.',
+  'Tela do relógio': 'Watch screen',
+  'Escurecer sozinha economiza bateria; sempre ativa nunca escurece, mas gasta mais.':
+    'Dimming on its own saves battery; always on never dims, but uses more.',
+  'Escurecer sozinha': 'Dim on its own',
+  'Sempre ativa': 'Always on',
+  'Desparear relógio': 'Unpair watch',
+  'Marcar pontos pelo Galaxy Watch': 'Score points via Galaxy Watch',
+
   '11. Layout tablet': '11. Tablet layout',
   'A tela ao vivo tem um botão "📐" (perto do cronômetro) que alterna entre Automático, Tablet e Smartphone. Automático detecta o tamanho da tela sozinho; Tablet espalha os times e o placar lado a lado, útil numa tela maior; Smartphone mantém o layout empilhado de sempre.':
     'The live screen has a "📐" button (near the timer) that cycles through Automatic, Tablet and Smartphone. Automatic detects the screen size on its own; Tablet spreads the teams and score side by side, useful on a bigger screen; Smartphone keeps the usual stacked layout.',

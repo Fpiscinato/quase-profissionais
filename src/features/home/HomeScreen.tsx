@@ -11,6 +11,7 @@ export type View =
   | 'manual'
   | 'backup'
   | 'atalhos'
+  | 'relogio'
 
 interface NavItem {
   view: View
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { view: 'manual', label: 'Como usar', hint: 'Passo a passo do app' },
   { view: 'backup', label: 'Backup', hint: 'Exportar / importar dados' },
   { view: 'atalhos', label: 'Controle remoto', hint: 'Mapear teclas do apresentador' },
+  { view: 'relogio', label: 'Configurar relógio', hint: 'Marcar pontos pelo Galaxy Watch' },
 ]
 
 interface Props {

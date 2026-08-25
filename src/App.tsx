@@ -11,6 +11,7 @@ import { ManualScreen } from './features/guide/ManualScreen'
 import { BackupScreen } from './features/backup/BackupScreen'
 import { HomeScreen, type View } from './features/home/HomeScreen'
 import { KeyBindingsScreen } from './features/keys/KeyBindingsScreen'
+import { WatchSetupScreen } from './features/watch/WatchSetupScreen'
 import { voiceCommandsSupported } from './features/voice/useVoiceCommands'
 import { primeSpeechEngine, speak } from './features/voice/speech'
 import { resolveEffectiveLayout, TABLET_MIN_WIDTH_QUERY } from './features/match/layoutMode'
@@ -247,6 +248,7 @@ function App() {
       {view === 'manual' && <ManualScreen />}
       {view === 'backup' && <BackupScreen />}
       {view === 'atalhos' && <KeyBindingsScreen />}
+      {view === 'relogio' && <WatchSetupScreen />}
     </div>
   )
 }

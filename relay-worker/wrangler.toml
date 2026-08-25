@@ -1,0 +1,15 @@
+name = "quase-profissionais-relay"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# Esse Worker é separado do site estático (não dá pra ter Durable Object
+# dentro de um projeto Cloudflare Pages) — veja RELAY.md pro passo a passo
+# de deploy. Ele só repassa mensagens ao vivo entre o app (tablet/celular)
+# e o relógio, uma sala por código de pareamento; não grava nada.
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "RelayRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RelayRoom"]
