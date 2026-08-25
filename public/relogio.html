@@ -131,6 +131,11 @@
     color: rgba(242, 240, 230, 0.9);
   }
   .serve-ball { font-size: clamp(18px, 6.8vw, 25px); }
+  /* Cor do nome e do lado (D/E) de quem saca acompanha o time dele —
+     mesmas cores dos botões (lime = Time 1, cream = Time 2) — dá pra
+     saber quem saca sem ler o nome. */
+  #serverTag.server-team-1 { color: var(--lime); }
+  #serverTag.server-team-2 { color: var(--cream); }
   .serve-side {
     display: inline-flex;
     align-items: center;
@@ -138,9 +143,11 @@
     min-width: 1.4em;
     padding: 2px 7px;
     border-radius: 5px;
-    background: rgba(164, 206, 58, 0.18);
-    color: var(--lime);
+    background: rgba(242, 240, 230, 0.12);
+    color: rgba(242, 240, 230, 0.75);
   }
+  .serve-side.server-team-1 { background: rgba(164, 206, 58, 0.18); color: var(--lime); }
+  .serve-side.server-team-2 { background: rgba(242, 240, 230, 0.2); color: var(--cream); }
 
   /* Segunda linha: progresso da partida, mesmo texto/formato da tela
      principal ("Games: X de Y" / "Sets: X de Y"), não o placar de cada
@@ -237,11 +244,29 @@
     justify-content: center;
     min-height: 2.6em;
     margin-top: 0.4vh;
-    padding: 0 4px;
+    padding: 0 6px;
+    border-radius: 10px;
     text-align: center;
     font-size: clamp(11px, 4vw, 15px);
     font-weight: 800;
     color: var(--gold);
+    transition: background 0.15s ease;
+  }
+  /* Preenche a faixa inteira (não só a letra) e dá um "pulso" de entrada —
+     bem mais chamativo que só texto colorido, principalmente pro aviso de
+     troca de lado, que exige ação física na hora. */
+  .alert-row.is-active {
+    background: var(--gold);
+    color: var(--navy);
+    animation: alertPulse 0.5s ease;
+  }
+  @keyframes alertPulse {
+    0% { transform: scale(0.88); opacity: 0.4; }
+    55% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .alert-row.is-active { animation: none; }
   }
 
   .action-row {
@@ -413,7 +438,7 @@
   // Bumpar esse número a cada mudança neste arquivo — é a forma de
   // conferir na hora se o navegador do relógio pegou o deploy mais novo.
   // Mesmo esquema do APP_VERSION (src/version.ts): 1.1 até 1.9, depois 2.0.
-  var BUILD_TAG = 'v1.4';
+  var BUILD_TAG = 'v1.5';
   document.getElementById('buildTagPin').textContent = BUILD_TAG;
   document.getElementById('buildTagScore').textContent = BUILD_TAG;
 
@@ -689,9 +714,15 @@
         renderPadProgress(padProgress1El, g1, gTarget, s1, sTarget);
         renderPadProgress(padProgress2El, g2, gTarget, s2, sTarget);
 
-        alertRowEl.textContent = msg.alertText || '';
+        var alertText = msg.alertText || '';
+        alertRowEl.textContent = alertText;
+        alertRowEl.className = 'alert-row' + (alertText ? ' is-active' : '');
+
         serverTagEl.textContent = msg.serverTag || '—';
         serverSideEl.textContent = msg.serverSide || '–';
+        var serverTeamClass = msg.serverTeam === 1 ? ' server-team-1' : msg.serverTeam === 2 ? ' server-team-2' : '';
+        serverTagEl.className = serverTeamClass.trim();
+        serverSideEl.className = 'serve-side' + serverTeamClass;
         setLinkUI('live');
         // setLinkUI just enabled everything for "live" — narrow back down
         // for the two cases it doesn't know about (mid-game state).

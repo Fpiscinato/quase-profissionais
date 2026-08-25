@@ -21,6 +21,8 @@ export interface WatchStatePayload {
   setsTarget: string
   serverTag: string
   serverSide: 'D' | 'E' | null
+  /** Which team the current server belongs to — colors the server tag on the watch (lime/cream, same as the team buttons). */
+  serverTeam: 1 | 2 | null
   canUndo: boolean
   autoDim: boolean
   matchOver: boolean
@@ -47,6 +49,7 @@ interface WatchRelayParams {
   setsTarget: string
   serverTag: string
   serverSide: 'D' | 'E' | null
+  serverTeam: 1 | 2 | null
   canUndo: boolean
   matchOver: boolean
   /** e.g. "Troquem de lado" / "Tiebreak!" — empty when there's nothing to flag. */
@@ -70,6 +73,7 @@ function statePayload(p: WatchRelayParams): WatchStatePayload {
     setsTarget: p.setsTarget,
     serverTag: p.serverTag,
     serverSide: p.serverSide,
+    serverTeam: p.serverTeam,
     canUndo: p.canUndo,
     autoDim: p.autoDim,
     matchOver: p.matchOver,
@@ -181,6 +185,7 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
     params.setsTarget,
     params.serverTag,
     params.serverSide,
+    params.serverTeam,
     params.canUndo,
     params.autoDim,
     params.matchOver,

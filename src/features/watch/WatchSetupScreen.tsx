@@ -30,6 +30,7 @@ export function WatchSetupScreen() {
     setsTarget: '1',
     serverTag: '',
     serverSide: null,
+    serverTeam: null,
     canUndo: false,
     matchOver: false,
     alertText: '',

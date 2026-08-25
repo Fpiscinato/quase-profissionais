@@ -223,6 +223,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     alertText: watchAlertText,
     serverTag: watchServeInfo ? playerTag(byId.get(watchServeInfo.serverId) ?? { id: '', name: '?', active: true }) : '',
     serverSide: watchServeInfo ? (watchServeInfo.side === 'Direita' ? 'D' : 'E') : null,
+    serverTeam: watchServeInfo && match ? (match.team1.includes(watchServeInfo.serverId) ? 1 : 2) : null,
     canUndo: (match?.pointLog.length ?? 0) > 0,
     matchOver: state?.isMatchOver ?? false,
     onPoint: (team) => config && !state?.isMatchOver && recordPoint(matchId, team === 1 ? 'team1' : 'team2', config),
