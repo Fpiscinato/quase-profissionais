@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   cancelMatch,
   db,
+  playerTag,
   recordPoint,
   resolveMatchConfig,
   saveMatch,
@@ -10,6 +11,7 @@ import {
   undoLastPoint,
   updateSettings,
 } from '../../db/db'
+import { useWatchRelay } from '../watch/useWatchRelay'
 import { usePlayers, useSettings, useTournament } from '../../db/hooks'
 import { computeMatchState } from '../../engine/score'
 import type { CourtSide } from '../../engine/serve'
@@ -178,6 +180,35 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       undo: () => config && undoLastPoint(matchId, config),
       save: () => state?.isMatchOver && handleSave(),
     },
+  })
+
+  // Watch remote (see features/watch/) — a dumb display+input device that
+  // only ever sends taps and shows whatever this side last mirrored down.
+  // Same handlers as the on-screen buttons below, so it can never diverge
+  // from what a tap on the tablet itself would do.
+  const watchServeInfo = serveInfo
+  const watchScore1 = state
+    ? state.isTiebreak
+      ? String(state.tiebreak.points1)
+      : pointLabel(state.currentGame.points1, state.currentGame.points2, config?.deuceMode ?? 'advantage')
+    : '0'
+  const watchScore2 = state
+    ? state.isTiebreak
+      ? String(state.tiebreak.points2)
+      : pointLabel(state.currentGame.points2, state.currentGame.points1, config?.deuceMode ?? 'advantage')
+    : '0'
+  const { watchConnected } = useWatchRelay({
+    pin: settings?.watchRoomPin,
+    autoDim: settings?.watchAutoDim ?? true,
+    score1: watchScore1,
+    score2: watchScore2,
+    serverTag: watchServeInfo ? playerTag(byId.get(watchServeInfo.serverId) ?? { id: '', name: '?', active: true }) : '',
+    serverSide: watchServeInfo ? (watchServeInfo.side === 'Direita' ? 'D' : 'E') : null,
+    canUndo: (match?.pointLog.length ?? 0) > 0,
+    matchOver: state?.isMatchOver ?? false,
+    onPoint: (team) => config && !state?.isMatchOver && recordPoint(matchId, team === 1 ? 'team1' : 'team2', config),
+    onUndo: () => config && undoLastPoint(matchId, config),
+    onRepeat: repeatLastAnnouncement,
   })
 
   if (!match || !tournament || !state || !config) {
@@ -496,6 +527,21 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     </button>
   )
 
+  // Only shown once a watch has been paired (features/watch/WatchSetupScreen) —
+  // lets whoever is running the tablet notice at a glance if the watch fell
+  // off the link, instead of only finding out when nobody's points are
+  // landing from it.
+  const watchBadge = settings?.watchRoomPin && (
+    <span
+      data-testid="watch-connection-badge"
+      className={`flex min-h-7 items-center gap-1 rounded-md border px-2 text-xs font-bold ${
+        watchConnected ? 'border-lime/40 text-lime' : 'border-destructive/40 text-destructive'
+      }`}
+    >
+      ⌚ {watchConnected ? t('conectado') : t('sem conexão')}
+    </span>
+  )
+
   return (
     <div className="flex flex-col gap-1 p-3">
       {/* Grid (not a plain flex row with an absolutely-centered label) so the
@@ -516,7 +562,10 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
           {!state.isDecidingSuperTiebreak &&
             t('Games: {x} de {y}', { x: gamesLeadCount, y: gamesTarget })}
         </div>
-        {layoutToggle}
+        <div className="flex items-center gap-2">
+          {watchBadge}
+          {layoutToggle}
+        </div>
       </div>
       {!state.isDecidingSuperTiebreak && gamesProgressBlock}
       {setsProgressBlock}

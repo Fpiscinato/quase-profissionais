@@ -215,6 +215,8 @@ export const EN: Record<string, string> = {
   'Sempre ativa': 'Always on',
   'Desparear relógio': 'Unpair watch',
   'Marcar pontos pelo Galaxy Watch': 'Score points via Galaxy Watch',
+  conectado: 'connected',
+  'sem conexão': 'no connection',
 
   '11. Layout tablet': '11. Tablet layout',
   'A tela ao vivo tem um botão "📐" (perto do cronômetro) que alterna entre Automático, Tablet e Smartphone. Automático detecta o tamanho da tela sozinho; Tablet espalha os times e o placar lado a lado, útil numa tela maior; Smartphone mantém o layout empilhado de sempre.':

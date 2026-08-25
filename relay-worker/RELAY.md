@@ -23,11 +23,16 @@ Cloudflare Pages — precisa ser um Worker próprio. Só precisa fazer isso
    https://quase-profissionais-relay.<sua-subdomínio>.workers.dev
    ```
    **Copie essa URL.**
-5. Cole essa URL em `src/features/watch/relayConfig.ts` (no app
-   principal), na constante `RELAY_URL`, trocando `wss://` no lugar de
-   `https://` (ex.: `wss://quase-profissionais-relay.<sua-subdomínio>.workers.dev`).
+5. Cole essa URL (trocando `https://` por `wss://`) em **dois lugares** —
+   são dois arquivos separados que não compartilham essa constante entre
+   si:
+   - `src/features/watch/relayConfig.ts`, na constante `RELAY_URL`.
+   - `public/relogio.html`, na variável `RELAY_URL` bem no início do
+     `<script>` (essa página não passa pelo build do Vite, é servida como
+     está).
    Depois é só commitar/dar push do app principal de novo — o Cloudflare
-   Pages já redeploya sozinho, como sempre.
+   Pages já redeploya sozinho, como sempre. Enquanto isso não for feito,
+   a tela "Configurar relógio" mostra um aviso e não deixa gerar código.
 
 Não precisa mexer em mais nada no painel do Cloudflare além do login do
 `wrangler` — esse Worker já vem com o Durable Object configurado

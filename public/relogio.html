@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Placar de Pulso</title>
+<style>
+  :root {
+    --navy: #152142;
+    --navy-light: #1f2e5c;
+    --lime: #a4ce3a;
+    --cream: #f2f0e6;
+    --gold: #d4af37;
+    --destructive: #d9483a;
+    --ok: #6fd07a;
+    --warn: #d4af37;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--navy);
+    color: var(--cream);
+    font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .app {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: calc(env(safe-area-inset-top, 0px) + max(2vh, 8px))
+      calc(env(safe-area-inset-right, 0px) + max(6vw, 10px))
+      calc(env(safe-area-inset-bottom, 0px) + max(1.5vh, 6px))
+      calc(env(safe-area-inset-left, 0px) + max(6vw, 10px));
+    gap: 0.7vh;
+    transition: filter 0.4s ease;
+  }
+  body.dimmed .app { filter: brightness(0.22); }
+  [hidden] { display: none !important; }
+
+  /* ---------- Tela de código (teclado numérico) ---------- */
+  .pin-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2vh;
+  }
+  .pin-title { font-size: clamp(10px, 3.4vw, 13px); font-weight: 700; color: rgba(242, 240, 230, 0.75); text-align: center; }
+  .pin-display {
+    font-size: clamp(20px, 8vw, 30px);
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    font-variant-numeric: tabular-nums;
+    min-height: 1.4em;
+  }
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2vw;
+    width: 100%;
+    max-width: 220px;
+  }
+  .pin-key {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 50%;
+    background: rgba(242, 240, 230, 0.1);
+    color: var(--cream);
+    font-size: clamp(14px, 5vw, 19px);
+    font-weight: 700;
+  }
+  .pin-key:active { background: rgba(242, 240, 230, 0.22); }
+  .pin-key--wide { border-radius: 40%; font-size: clamp(11px, 4vw, 14px); }
+  .pin-connect {
+    margin-top: 0.6vh;
+    min-height: 34px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 999px;
+    background: var(--lime);
+    color: var(--navy);
+    font-weight: 800;
+    font-size: clamp(11px, 4vw, 14px);
+    text-transform: uppercase;
+  }
+  .pin-connect:disabled { opacity: 0.35; }
+  .pin-error { color: var(--destructive); font-size: clamp(9px, 3vw, 11px); font-weight: 700; min-height: 1.4em; text-align: center; }
+
+  /* ---------- Tela de placar ---------- */
+  .score-screen { flex: 1; display: none; flex-direction: column; gap: 0.7vh; }
+  body.linked .score-screen { display: flex; }
+  body.linked .pin-screen { display: none; }
+
+  .link-banner {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: clamp(20px, 6vh, 30px);
+    border-radius: 8px;
+    font-size: clamp(9px, 3vw, 11px);
+    font-weight: 800;
+    text-align: center;
+    color: var(--navy);
+    background: var(--destructive);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .link-banner.is-ok { display: none; }
+
+  .serve-row {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 0.9vh;
+    font-size: clamp(9px, 3.2vw, 12px);
+    font-weight: 700;
+    color: rgba(242, 240, 230, 0.75);
+  }
+  .serve-ball { font-size: clamp(10px, 3.6vw, 14px); }
+  .serve-side {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.6em;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: rgba(164, 206, 58, 0.18);
+    color: var(--lime);
+  }
+
+  .team-row {
+    flex: 2.4;
+    display: flex;
+    flex-direction: row;
+    gap: 4vw;
+    min-height: 0;
+    margin-top: 0.7vh;
+  }
+
+  .pad {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    border: none;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: clamp(9.5px, 4.2vw, 13px);
+    transition: transform 0.08s ease, filter 0.08s ease;
+  }
+  .pad:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
+  .pad:disabled { opacity: 0.3; }
+
+  .pad--1 { background: var(--lime); color: var(--navy); }
+  .pad--2 { background: var(--cream); color: var(--navy); }
+
+  .pad-score {
+    position: absolute;
+    top: 7px;
+    font-size: clamp(12px, 5vw, 17px);
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    opacity: 0.85;
+  }
+  .pad-score--1 { right: 8px; }
+  .pad-score--2 { left: 8px; }
+
+  .mid-row {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6vh 0;
+  }
+  .link-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: rgba(242, 240, 230, 0.75);
+    font-size: clamp(8px, 2.8vw, 10.5px);
+    font-weight: 700;
+    max-width: 70vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .link-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--destructive);
+    flex-shrink: 0;
+  }
+  .link-dot.is-ok { background: var(--ok); }
+  .link-dot.is-warn { background: var(--warn); }
+
+  .action-row {
+    flex: 1.3;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 7%;
+    min-height: 0;
+  }
+
+  .action-logo { flex: 0 0 auto; width: clamp(22px, 8vw, 30px); height: clamp(22px, 8vw, 30px); object-fit: contain; border-radius: 6px; }
+
+  .action-btn {
+    flex: 0 0 36%;
+    height: 82%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: clamp(8px, 2.9vw, 10px);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .action-btn .icon { font-size: clamp(12px, 5vw, 17px); line-height: 1; }
+  .action-btn:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
+  .action-btn:disabled { opacity: 0.3; }
+
+  .action-btn--undo { border: 1px solid rgba(217, 72, 58, 0.55); background: rgba(217, 72, 58, 0.14); color: var(--cream); }
+  .action-btn--repeat { border: 1px solid rgba(212, 175, 55, 0.55); background: rgba(212, 175, 55, 0.14); color: var(--cream); }
+
+  .reset-link {
+    position: fixed;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8px;
+    color: rgba(242, 240, 230, 0.3);
+    border: none;
+    background: transparent;
+  }
+
+  #dimOverlay { position: fixed; inset: 0; z-index: 50; background: transparent; display: none; }
+  body.dimmed #dimOverlay { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="pin-screen">
+    <div class="pin-title">Código do relógio<br />(gerado em "Configurar relógio" no app)</div>
+    <div class="pin-display" id="pinDisplay">______</div>
+    <div class="pin-pad" id="pinPad">
+      <button class="pin-key" data-digit="1">1</button>
+      <button class="pin-key" data-digit="2">2</button>
+      <button class="pin-key" data-digit="3">3</button>
+      <button class="pin-key" data-digit="4">4</button>
+      <button class="pin-key" data-digit="5">5</button>
+      <button class="pin-key" data-digit="6">6</button>
+      <button class="pin-key" data-digit="7">7</button>
+      <button class="pin-key" data-digit="8">8</button>
+      <button class="pin-key" data-digit="9">9</button>
+      <button class="pin-key pin-key--wide" id="pinClear">limpar</button>
+      <button class="pin-key" data-digit="0">0</button>
+      <button class="pin-key pin-key--wide" id="pinBack">⌫</button>
+    </div>
+    <button class="pin-connect" id="pinConnect" disabled>Conectar</button>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+
+  <div class="score-screen">
+    <div class="link-banner" id="linkBanner">Sem conexão</div>
+
+    <div class="serve-row">
+      <span class="serve-ball" aria-hidden="true">🎾</span>
+      <span id="serverTag">—</span>
+      <span class="serve-side" id="serverSide">–</span>
+    </div>
+
+    <main class="team-row">
+      <button id="btn1" class="pad pad--1" type="button" disabled>
+        <span id="score1" class="pad-score pad-score--1">0</span>
+        Time 1
+      </button>
+      <button id="btn2" class="pad pad--2" type="button" disabled>
+        <span id="score2" class="pad-score pad-score--2">0</span>
+        Time 2
+      </button>
+    </main>
+
+    <div class="mid-row">
+      <span class="link-pill">
+        <span id="linkDot" class="link-dot"></span>
+        <span id="linkLabel">conectando…</span>
+      </span>
+    </div>
+
+    <div class="action-row">
+      <button id="undoBtn" class="action-btn action-btn--undo" type="button" disabled>
+        <span class="icon" aria-hidden="true">↺</span> Desfazer
+      </button>
+      <img class="action-logo" src="/logo.png" alt="" />
+      <button id="repeatBtn" class="action-btn action-btn--repeat" type="button" disabled>
+        <span class="icon" aria-hidden="true">🔁</span> Repetir
+      </button>
+    </div>
+  </div>
+</div>
+<div id="dimOverlay" aria-hidden="true"></div>
+<button class="reset-link" id="resetLink" hidden>trocar código</button>
+
+<script>
+  // Placar de Pulso — lado do relógio (Wear OS). Nunca calcula nada da
+  // partida: só manda toques e mostra o que o app principal (tablet/
+  // celular) manda de volta pelo relay. Ver relay-worker/ e
+  // src/features/watch/useWatchRelay.ts pro outro lado dessa conversa.
+  //
+  // IMPORTANTE: RELAY_URL abaixo precisa ser o mesmo endereço configurado
+  // em src/features/watch/relayConfig.ts (RELAY_URL) — são dois arquivos
+  // separados (este é servido como está, não passa pelo build do Vite) e
+  // não há como compartilhar a constante entre eles.
+  var RELAY_URL = 'wss://SEU-RELAY-AQUI.workers.dev';
+
+  var STORAGE_KEY = 'quase-profissionais-watch-pin';
+
+  var pinScreenEls = {
+    display: document.getElementById('pinDisplay'),
+    pad: document.getElementById('pinPad'),
+    connect: document.getElementById('pinConnect'),
+    error: document.getElementById('pinError'),
+    clear: document.getElementById('pinClear'),
+    back: document.getElementById('pinBack'),
+  };
+  var linkBanner = document.getElementById('linkBanner');
+  var linkDot = document.getElementById('linkDot');
+  var linkLabel = document.getElementById('linkLabel');
+  var score1El = document.getElementById('score1');
+  var score2El = document.getElementById('score2');
+  var serverTagEl = document.getElementById('serverTag');
+  var serverSideEl = document.getElementById('serverSide');
+  var btn1 = document.getElementById('btn1');
+  var btn2 = document.getElementById('btn2');
+  var undoBtn = document.getElementById('undoBtn');
+  var repeatBtn = document.getElementById('repeatBtn');
+  var resetLink = document.getElementById('resetLink');
+
+  var pin = '';
+  var ws = null;
+  var socketOpen = false;
+  var peerConnected = false;
+  var lastMessageAt = 0;
+  var reconnectTimer = null;
+  var heartbeatTimer = null;
+  var watchdogTimer = null;
+
+  function updatePinUI() {
+    pinScreenEls.display.textContent = (pin + '______').slice(0, 6).split('').join(' ');
+    pinScreenEls.connect.disabled = pin.length !== 6;
+  }
+
+  pinScreenEls.pad.addEventListener('click', function (evt) {
+    var digit = evt.target.getAttribute('data-digit');
+    if (digit === null) return;
+    if (pin.length < 6) pin += digit;
+    updatePinUI();
+  });
+  pinScreenEls.back.addEventListener('click', function () {
+    pin = pin.slice(0, -1);
+    updatePinUI();
+  });
+  pinScreenEls.clear.addEventListener('click', function () {
+    pin = '';
+    updatePinUI();
+  });
+  pinScreenEls.connect.addEventListener('click', function () {
+    if (pin.length !== 6) return;
+    localStorage.setItem(STORAGE_KEY, pin);
+    connect(pin);
+  });
+  resetLink.addEventListener('click', function () {
+    localStorage.removeItem(STORAGE_KEY);
+    disconnect();
+    pin = '';
+    updatePinUI();
+    document.body.classList.remove('linked');
+    resetLink.hidden = true;
+  });
+
+  function setLinkUI(state, detail) {
+    // state: 'connecting' | 'waiting' | 'live' | 'lost'
+    linkDot.className = 'link-dot' + (state === 'live' ? ' is-ok' : state === 'waiting' ? ' is-warn' : '');
+    var text = {
+      connecting: 'conectando…',
+      waiting: 'aguardando o app…',
+      live: 'conectado',
+      lost: 'sem conexão — reconectando…',
+    }[state];
+    linkLabel.textContent = text + (detail ? ' (' + detail + ')' : '');
+
+    var linked = state === 'live';
+    linkBanner.className = 'link-banner' + (linked ? ' is-ok' : '');
+    linkBanner.textContent = linked ? '' : 'Sem conexão — botões travados';
+    btn1.disabled = !linked;
+    btn2.disabled = !linked;
+    undoBtn.disabled = !linked;
+    repeatBtn.disabled = !linked;
+  }
+
+  function send(msg) {
+    if (ws && socketOpen) ws.send(JSON.stringify(msg));
+  }
+
+  function scheduleReconnect() {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(function () {
+      connect(pin);
+    }, 3000);
+  }
+
+  function disconnect() {
+    clearTimeout(reconnectTimer);
+    clearInterval(heartbeatTimer);
+    clearInterval(watchdogTimer);
+    if (ws) {
+      try {
+        ws.onclose = null;
+        ws.close();
+      } catch (e) {}
+    }
+    ws = null;
+    socketOpen = false;
+    peerConnected = false;
+  }
+
+  function connect(pinToUse) {
+    if (!pinToUse || pinToUse.length !== 6) return;
+    pin = pinToUse;
+    disconnect();
+    pinScreenEls.error.textContent = '';
+    document.body.classList.add('linked');
+    resetLink.hidden = false;
+    setLinkUI('connecting');
+
+    ws = new WebSocket(RELAY_URL + '/room/' + pin + '?role=watch');
+
+    ws.onopen = function () {
+      socketOpen = true;
+      lastMessageAt = Date.now();
+      setLinkUI('waiting');
+      heartbeatTimer = setInterval(function () {
+        send({ type: 'ping' });
+      }, 5000);
+      watchdogTimer = setInterval(function () {
+        if (Date.now() - lastMessageAt > 15000) {
+          peerConnected = false;
+          setLinkUI('lost');
+        }
+      }, 3000);
+    };
+
+    ws.onmessage = function (evt) {
+      lastMessageAt = Date.now();
+      var msg;
+      try {
+        msg = JSON.parse(evt.data);
+      } catch (e) {
+        return;
+      }
+      if (msg.type === 'peer-joined') {
+        peerConnected = true;
+        setLinkUI('waiting');
+      } else if (msg.type === 'peer-left') {
+        peerConnected = false;
+        setLinkUI('lost');
+      } else if (msg.type === 'state') {
+        peerConnected = true;
+        score1El.textContent = msg.score1;
+        score2El.textContent = msg.score2;
+        serverTagEl.textContent = msg.serverTag || '—';
+        serverSideEl.textContent = msg.serverSide || '–';
+        setLinkUI('live');
+        // setLinkUI just enabled everything for "live" — narrow back down
+        // for the two cases it doesn't know about (mid-game state).
+        btn1.disabled = !!msg.matchOver;
+        btn2.disabled = !!msg.matchOver;
+        undoBtn.disabled = !msg.canUndo;
+        var dimChanged = autoDim !== (msg.autoDim !== false);
+        autoDim = msg.autoDim !== false;
+        if (dimChanged) scheduleDim();
+      }
+    };
+
+    ws.onclose = function () {
+      socketOpen = false;
+      peerConnected = false;
+      clearInterval(heartbeatTimer);
+      clearInterval(watchdogTimer);
+      setLinkUI('lost');
+      scheduleReconnect();
+    };
+    ws.onerror = function () {
+      try {
+        ws.close();
+      } catch (e) {}
+    };
+  }
+
+  btn1.addEventListener('click', function () {
+    send({ type: 'point', team: 1 });
+    scheduleDim();
+  });
+  btn2.addEventListener('click', function () {
+    send({ type: 'point', team: 2 });
+    scheduleDim();
+  });
+  undoBtn.addEventListener('click', function () {
+    send({ type: 'undo' });
+    scheduleDim();
+  });
+  repeatBtn.addEventListener('click', function () {
+    send({ type: 'repeat' });
+    scheduleDim();
+  });
+
+  // Melhor esforço: tela cheia reduz a chance do sistema do relógio
+  // sobrepor a própria interface dele por cima da página.
+  document.addEventListener(
+    'click',
+    function () {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(function () {});
+      }
+    },
+    { once: true },
+  );
+
+  // Escurece sozinho depois de um tempo parado (visual — a tela continua
+  // tecnicamente ligada) e volta ao normal no primeiro toque, na mesma
+  // página. Desligado por completo quando "Configurar relógio" no app
+  // está setado pra "Sempre ativa" (autoDim === false, mandado no state).
+  var DIM_DELAY_MS = 8000;
+  var dimTimer = null;
+  var autoDim = true;
+
+  function scheduleDim() {
+    clearTimeout(dimTimer);
+    if (!autoDim) {
+      document.body.classList.remove('dimmed');
+      return;
+    }
+    dimTimer = setTimeout(function () {
+      document.body.classList.add('dimmed');
+    }, DIM_DELAY_MS);
+  }
+
+  function wakeFromDim() {
+    document.body.classList.remove('dimmed');
+    scheduleDim();
+  }
+
+  document.getElementById('dimOverlay').addEventListener('click', wakeFromDim);
+  scheduleDim();
+
+  // Wake Lock: mantém a tela acesa (não apaga/bloqueia) enquanto a página
+  // está aberta — o escurecimento acima é só visual, por cima disso.
+  var wakeLock = null;
+  async function requestWake() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', function () {
+        wakeLock = null;
+      });
+    } catch (err) {
+      wakeLock = null;
+    }
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && wakeLock === null) requestWake();
+  });
+  requestWake();
+
+  updatePinUI();
+  var savedPin = localStorage.getItem(STORAGE_KEY);
+  if (savedPin && savedPin.length === 6) {
+    pin = savedPin;
+    updatePinUI();
+    connect(savedPin);
+  }
+</script>
+</body>
+</html>
