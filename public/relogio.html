@@ -177,7 +177,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-bottom: 20px;
+    padding-bottom: 28px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -201,20 +201,22 @@
   .pad-score--1 { right: 8px; }
   .pad-score--2 { left: 8px; }
 
-  /* Bolinha por game vencido no set atual, raquetinha (🎾 — não existe
-     emoji de raquete isolada com suporte amplo) por set vencido. Escuro
-     translúcido quando "vazio" pra ler contra o fundo claro do botão. */
+  /* Bolinha por game vencido no set atual (linha de cima), raquetinha
+     (🎾 — não existe emoji de raquete isolada com suporte amplo) por set
+     vencido (linha de baixo) — duas fileiras separadas, cada uma centrada.
+     Escuro translúcido quando "vazio" pra ler contra o fundo claro do
+     botão. */
   .pad-progress {
     position: absolute;
     bottom: 5px;
     left: 4px;
     right: 4px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
     gap: 3px;
   }
+  .pad-progress-line { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; }
   .pad-dot {
     width: 7px;
     height: 7px;
@@ -222,7 +224,7 @@
     background: rgba(21, 33, 66, 0.22);
   }
   .pad-dot.is-won { background: var(--navy); }
-  .pad-racket { font-size: 10px; line-height: 1; opacity: 0.25; filter: grayscale(1); }
+  .pad-racket { font-size: 13px; line-height: 1; opacity: 0.25; filter: grayscale(1); }
   .pad-racket.is-won { opacity: 1; filter: none; }
 
   /* Faixa de alerta (troca de lado / tiebreak / set encerrado etc.) —
@@ -323,7 +325,7 @@
 <div class="app">
   <div class="pin-screen">
     <div class="build-tag" id="buildTagPin"></div>
-    <div class="pin-title">Código do relógio<br />(gerado em "Configurar relógio" no app)</div>
+    <div class="pin-title" id="pinTitle">Código do relógio<br />(gerado em "Configurar relógio" no app)</div>
     <div class="pin-display" id="pinDisplay">______</div>
     <div class="pin-pad" id="pinPad">
       <button class="pin-key" data-digit="1">1</button>
@@ -355,20 +357,20 @@
     </div>
 
     <div class="progress-row">
-      Games <b id="gamesLead">0</b> de <b id="gamesTarget">4</b>
+      <span id="gamesWord">Games</span> <b id="gamesLead">0</b> <span class="deWord">de</span> <b id="gamesTarget">4</b>
       <span class="progress-sep" id="setsProgressSep" hidden>·</span>
-      <span id="setsProgress" hidden>Sets <b id="setsLead">0</b> de <b id="setsTarget">1</b></span>
+      <span id="setsProgress" hidden><span id="setsWord">Sets</span> <b id="setsLead">0</b> <span class="deWord">de</span> <b id="setsTarget">1</b></span>
     </div>
 
     <main class="team-row">
       <button id="btn1" class="pad pad--1" type="button" disabled>
         <span id="score1" class="pad-score pad-score--1">0</span>
-        Time 1
+        <span id="team1Label">Time 1</span>
         <span class="pad-progress" id="padProgress1"></span>
       </button>
       <button id="btn2" class="pad pad--2" type="button" disabled>
         <span id="score2" class="pad-score pad-score--2">0</span>
-        Time 2
+        <span id="team2Label">Time 2</span>
         <span class="pad-progress" id="padProgress2"></span>
       </button>
     </main>
@@ -377,7 +379,7 @@
 
     <div class="action-row">
       <button id="undoBtn" class="action-btn action-btn--undo" type="button" disabled>
-        <span class="icon" aria-hidden="true">↺</span> Desfazer
+        <span class="icon" aria-hidden="true">↺</span> <span id="undoLabel">Desfazer</span>
       </button>
       <div class="action-mid">
         <button id="resetBtn" class="action-logo-btn" type="button" aria-label="Trocar código">
@@ -389,7 +391,7 @@
         </span>
       </div>
       <button id="repeatBtn" class="action-btn action-btn--repeat" type="button" disabled>
-        <span class="icon" aria-hidden="true">🔁</span> Repetir
+        <span class="icon" aria-hidden="true">🔁</span> <span id="repeatLabel">Repetir</span>
       </button>
     </div>
   </div>
@@ -410,11 +412,77 @@
 
   // Bumpar esse número a cada mudança neste arquivo — é a forma de
   // conferir na hora se o navegador do relógio pegou o deploy mais novo.
-  var BUILD_TAG = 'relógio v2';
+  // Mesmo esquema do APP_VERSION (src/version.ts): 1.1 até 1.9, depois 2.0.
+  var BUILD_TAG = 'v1.3';
   document.getElementById('buildTagPin').textContent = BUILD_TAG;
   document.getElementById('buildTagScore').textContent = BUILD_TAG;
 
   var STORAGE_KEY = 'quase-profissionais-watch-pin';
+  var LANG_KEY = 'quase-profissionais-watch-lang';
+
+  // Telinha isolada, sem o sistema de i18n do app (src/i18n/) — dicionário
+  // próprio e bem pequeno. O idioma vem do tablet junto com o "state" (mesma
+  // preferência PT/EN do app) e fica lembrado aqui pra já abrir certo antes
+  // de conectar de novo.
+  var STR = {
+    pt: {
+      pinTitle: 'Código do relógio<br />(gerado em "Configurar relógio" no app)',
+      connect: 'Conectar',
+      clearKey: 'limpar',
+      team1: 'Time 1',
+      team2: 'Time 2',
+      undo: 'Desfazer',
+      repeat: 'Repetir',
+      resetLabel: 'Trocar código',
+      resetConfirm: 'Trocar código? Isso desconecta este relógio até digitar um novo.',
+      gamesWord: 'Games',
+      setsWord: 'Sets',
+      deWord: 'de',
+      connecting: 'conectando…',
+      waiting: 'aguardando o app…',
+      live: 'conectado',
+      lost: 'sem conexão — reconectando…',
+      bannerLost: 'Sem conexão — botões travados',
+    },
+    en: {
+      pinTitle: 'Watch code<br />(generated in "Set up watch" in the app)',
+      connect: 'Connect',
+      clearKey: 'clear',
+      team1: 'Team 1',
+      team2: 'Team 2',
+      undo: 'Undo',
+      repeat: 'Repeat',
+      resetLabel: 'Change code',
+      resetConfirm: 'Change code? This disconnects this watch until you type a new one.',
+      gamesWord: 'Games',
+      setsWord: 'Sets',
+      deWord: 'of',
+      connecting: 'connecting…',
+      waiting: 'waiting for the app…',
+      live: 'connected',
+      lost: 'no connection — reconnecting…',
+      bannerLost: 'No connection — buttons locked',
+    },
+  };
+  var currentLang = localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'pt';
+  function t(key) {
+    return STR[currentLang][key];
+  }
+  function applyLang() {
+    document.getElementById('pinTitle').innerHTML = t('pinTitle');
+    pinScreenEls.connect.textContent = t('connect');
+    pinScreenEls.clear.textContent = t('clearKey');
+    document.getElementById('team1Label').textContent = t('team1');
+    document.getElementById('team2Label').textContent = t('team2');
+    document.getElementById('undoLabel').textContent = t('undo');
+    document.getElementById('repeatLabel').textContent = t('repeat');
+    document.getElementById('gamesWord').textContent = t('gamesWord');
+    document.getElementById('setsWord').textContent = t('setsWord');
+    var deWords = document.getElementsByClassName('deWord');
+    for (var i = 0; i < deWords.length; i++) deWords[i].textContent = t('deWord');
+    resetBtn.setAttribute('aria-label', t('resetLabel'));
+  }
+  applyLang();
 
   var pinScreenEls = {
     display: document.getElementById('pinDisplay'),
@@ -489,18 +557,22 @@
     document.body.classList.remove('linked');
   });
 
-  // Bolinhas (games do set atual) + raquetinhas (sets vencidos) no rodapé
-  // de cada botão. Sempre monta o número inteiro de posições (won + vazias)
-  // pro tamanho do botão nunca mudar dependendo do placar.
+  // Bolinhas (games do set atual, linha de cima) + raquetinhas (sets
+  // vencidos, linha de baixo) no rodapé de cada botão. Sempre monta o
+  // número inteiro de posições (won + vazias) pro tamanho do botão nunca
+  // mudar dependendo do placar.
   function renderPadProgress(container, won, gamesTarget, setsWon, setsTarget) {
-    var html = '';
+    var dots = '';
     for (var i = 0; i < gamesTarget; i++) {
-      html += '<span class="pad-dot' + (i < won ? ' is-won' : '') + '"></span>';
+      dots += '<span class="pad-dot' + (i < won ? ' is-won' : '') + '"></span>';
     }
+    var html = '<span class="pad-progress-line">' + dots + '</span>';
     if (setsTarget > 1) {
+      var rackets = '';
       for (var j = 0; j < setsTarget; j++) {
-        html += '<span class="pad-racket' + (j < setsWon ? ' is-won' : '') + '" aria-hidden="true">🎾</span>';
+        rackets += '<span class="pad-racket' + (j < setsWon ? ' is-won' : '') + '" aria-hidden="true">🎾</span>';
       }
+      html += '<span class="pad-progress-line">' + rackets + '</span>';
     }
     container.innerHTML = html;
   }
@@ -508,17 +580,11 @@
   function setLinkUI(state, detail) {
     // state: 'connecting' | 'waiting' | 'live' | 'lost'
     linkDot.className = 'link-dot' + (state === 'live' ? ' is-ok' : state === 'waiting' ? ' is-warn' : '');
-    var text = {
-      connecting: 'conectando…',
-      waiting: 'aguardando o app…',
-      live: 'conectado',
-      lost: 'sem conexão — reconectando…',
-    }[state];
-    linkLabel.textContent = text + (detail ? ' (' + detail + ')' : '');
+    linkLabel.textContent = t(state) + (detail ? ' (' + detail + ')' : '');
 
     var linked = state === 'live';
     linkBanner.className = 'link-banner' + (linked ? ' is-ok' : '');
-    linkBanner.textContent = linked ? '' : 'Sem conexão — botões travados';
+    linkBanner.textContent = linked ? '' : t('bannerLost');
     btn1.disabled = !linked;
     btn2.disabled = !linked;
     undoBtn.disabled = !linked;
@@ -592,6 +658,14 @@
         setLinkUI('lost');
       } else if (msg.type === 'state') {
         peerConnected = true;
+
+        var newLang = msg.lang === 'en' ? 'en' : 'pt';
+        if (newLang !== currentLang) {
+          currentLang = newLang;
+          localStorage.setItem(LANG_KEY, currentLang);
+          applyLang();
+        }
+
         score1El.textContent = msg.score1;
         score2El.textContent = msg.score2;
 
@@ -660,18 +734,6 @@
     send({ type: 'repeat' });
     scheduleDim();
   });
-
-  // Melhor esforço: tela cheia reduz a chance do sistema do relógio
-  // sobrepor a própria interface dele por cima da página.
-  document.addEventListener(
-    'click',
-    function () {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(function () {});
-      }
-    },
-    { once: true },
-  );
 
   // Escurece sozinho depois de um tempo parado (visual — a tela continua
   // tecnicamente ligada) e volta ao normal no primeiro toque, na mesma

@@ -10,6 +10,7 @@ import { buildRoomUrl, isRelayConfigured } from './relayConfig'
  */
 export interface WatchStatePayload {
   type: 'state'
+  lang: 'pt' | 'en'
   score1: string
   score2: string
   games1: string
@@ -29,6 +30,8 @@ export interface WatchStatePayload {
 interface WatchRelayParams {
   /** Undefined/empty = no watch paired for this device yet — the hook stays idle. */
   pin: string | undefined
+  /** Same PT/EN device setting as the rest of the app — the watch has its own tiny dictionary, no i18n system of its own. */
+  lang: 'pt' | 'en'
   autoDim: boolean
   score1: string
   score2: string
@@ -56,6 +59,7 @@ interface WatchRelayParams {
 function statePayload(p: WatchRelayParams): WatchStatePayload {
   return {
     type: 'state',
+    lang: p.lang,
     score1: p.score1,
     score2: p.score2,
     games1: p.games1,
@@ -149,6 +153,7 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    params.lang,
     params.score1,
     params.score2,
     params.games1,

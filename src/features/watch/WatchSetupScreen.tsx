@@ -9,7 +9,7 @@ import { useT } from '../../i18n/useT'
 const WATCH_PAGE_PATH = '/relogio.html'
 
 export function WatchSetupScreen() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const settings = useSettings()
   const pin = settings?.watchRoomPin
   const autoDim = settings?.watchAutoDim ?? false
@@ -18,6 +18,7 @@ export function WatchSetupScreen() {
   // (pin undefined) o hook não abre socket nenhum.
   const { linkOpen, watchConnected } = useWatchRelay({
     pin,
+    lang,
     autoDim,
     score1: '0',
     score2: '0',

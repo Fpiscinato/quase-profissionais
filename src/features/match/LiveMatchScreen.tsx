@@ -210,6 +210,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     .join(' · ')
   const { watchConnected } = useWatchRelay({
     pin: settings?.watchRoomPin,
+    lang,
     autoDim: settings?.watchAutoDim ?? false,
     score1: watchScore1,
     score2: watchScore2,
