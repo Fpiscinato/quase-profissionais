@@ -8,7 +8,7 @@ const SECTIONS = [
   },
   {
     title: '2. Comece um torneio',
-    body: 'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Toque em "Confirmar e criar torneio".',
+    body: 'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe rodada a rodada, Duplas fixas trava os parceiros uma vez só e joga sem misturar), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Toque em "Confirmar e criar torneio".',
   },
   {
     title: '3. Ou pratique (sem torneio)',

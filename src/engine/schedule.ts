@@ -71,6 +71,39 @@ export function generateDoublesRotation(playerIds: PlayerId[]): ScheduledMatch[]
 }
 
 /**
+ * Fixed-pairs doubles (Section 2 alt.): the organiser locks in who partners
+ * whom once, instead of the balanced rotation mixing partnerships round to
+ * round. The schedule then round-robins BETWEEN pairs — same structure as
+ * `generateSinglesRotation` below, just treating each pair as one unit — so
+ * with exactly 2 pairs that's a single round (pair vs pair, nobody rests,
+ * falls out of the round-robin loop with no special-casing needed), and
+ * with 3+ pairs each pair faces every other pair once on the single court,
+ * resting evenly the rounds it isn't playing (the round-robin structure
+ * itself already balances that, same as the singles case).
+ */
+export function generateFixedPairsRotation(pairs: Array<[PlayerId, PlayerId]>): ScheduledMatch[] {
+  const n = pairs.length
+  if (n < 2) throw new Error('Fixed pairs needs at least 2 pairs (4 players)')
+
+  const rounds: ScheduledMatch[] = []
+  let roundIndex = 0
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const playingPairs = new Set([i, j])
+      const restingPlayerIds = pairs.flatMap((pair, idx) => (playingPairs.has(idx) ? [] : pair))
+      rounds.push({
+        roundIndex,
+        team1: [...pairs[i]],
+        team2: [...pairs[j]],
+        restingPlayerIds,
+      })
+      roundIndex++
+    }
+  }
+  return rounds
+}
+
+/**
  * Individual (singles) round robin: everyone plays everyone else once, one
  * match at a time on the single court, resting players are everyone not
  * currently playing.

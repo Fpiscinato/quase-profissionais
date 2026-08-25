@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
-import { generateDoublesRotation, generateSinglesRotation } from '../../engine/schedule'
+import {
+  generateDoublesRotation,
+  generateFixedPairsRotation,
+  generateSinglesRotation,
+} from '../../engine/schedule'
 import { DEFAULT_MATCH_CONFIG } from '../../engine/types'
 import type { PlayerId, ScheduledMatch } from '../../engine/types'
 import { usePlayers } from '../../db/hooks'
 import { createTournament, type TeamFormationMode, type TournamentFormat } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
 import { ManualRoundsEditor } from './ManualRoundsEditor'
+import { FixedPairsEditor } from './FixedPairsEditor'
 import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
 import { useT } from '../../i18n/useT'
@@ -33,6 +38,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   const [setsToWinMatch, setSetsToWinMatch] = useState(DEFAULT_MATCH_CONFIG.setsToWinMatch)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [manualRounds, setManualRounds] = useState<ScheduledMatch[] | null>(null)
+  const [fixedPairs, setFixedPairs] = useState<[PlayerId, PlayerId][] | null>(null)
   const [saving, setSaving] = useState(false)
 
   const balancedRounds = useMemo<ScheduledMatch[]>(() => {
@@ -46,7 +52,13 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   const teamName = (team: PlayerId[]) =>
     team.map(name).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' & ')
 
-  const finalRounds = mode === 'balanced' ? balancedRounds : manualRounds
+  const fixedRounds = useMemo<ScheduledMatch[] | null>(
+    () => (fixedPairs ? generateFixedPairsRotation(fixedPairs) : null),
+    [fixedPairs],
+  )
+
+  const finalRounds =
+    mode === 'balanced' ? balancedRounds : mode === 'fixed' ? fixedRounds : manualRounds
   const canConfirm = !!finalRounds && finalRounds.length > 0 && !saving
 
   const handleConfirm = async () => {
@@ -121,7 +133,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             {t('Formação das duplas')}
             <HelpHint
               text={t(
-                'Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada.',
+                'Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada. Duplas fixas trava os parceiros uma vez só — sem misturar quem joga com quem, sem gerar rodadas extras só pra variar dupla.',
               )}
             />
           </span>
@@ -139,6 +151,13 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
               className={toggleButton(mode === 'manual')}
             >
               {t('Manual')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('fixed')}
+              className={toggleButton(mode === 'fixed')}
+            >
+              {t('Duplas fixas')}
             </button>
           </div>
         </div>
@@ -236,6 +255,14 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
           availablePlayerIds={availablePlayerIds}
           byId={byId}
           onChange={setManualRounds}
+        />
+      )}
+
+      {mode === 'fixed' && format === 'duplas' && (
+        <FixedPairsEditor
+          availablePlayerIds={availablePlayerIds}
+          byId={byId}
+          onChange={setFixedPairs}
         />
       )}
 

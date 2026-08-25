@@ -50,10 +50,11 @@ export const EN: Record<string, string> = {
   Individual: 'Singles',
   'Duplas precisa de 4+ jogadores disponíveis.': 'Doubles needs 4+ available players.',
   'Formação das duplas': 'Pairing method',
-  'Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada.':
-    'Balanced draws and distributes pairs fairly (rest and partners varied). Manual lets you choose who plays with whom each round.',
+  'Balanceado sorteia e distribui as duplas de forma justa (descanso e parceiros variados). Manual deixa você escolher quem joga com quem em cada rodada. Duplas fixas trava os parceiros uma vez só — sem misturar quem joga com quem, sem gerar rodadas extras só pra variar dupla.':
+    'Balanced draws and distributes pairs fairly (rest and partners varied). Manual lets you choose who plays with whom each round. Fixed pairs locks partners in once — no mixing who plays with whom, no extra rounds just to vary the pairing.',
   'Balanceado (recomendado)': 'Balanced (recommended)',
   Manual: 'Manual',
+  'Duplas fixas': 'Fixed pairs',
   'Games para vencer o set': 'Games to win the set',
   'Quantos games o time precisa fazer (com 2 de vantagem) pra vencer o set. Padrão: 4. Se empatar nesse número, vai pro tiebreak.':
     'How many games a team needs (winning by 2) to take the set. Default: 4. A tie at that number goes to a tiebreak.',
@@ -80,6 +81,16 @@ export const EN: Record<string, string> = {
   'Time 1': 'Team 1',
   'Time 2': 'Team 2',
   'Escolha exatamente 2 para o Time 1.': 'Choose exactly 2 for Team 1.',
+
+  // FixedPairsEditor
+  'Toque em 2 jogadores pra formar uma dupla fixa — repete até todo mundo estar pareado. Essa dupla vale pro torneio inteiro, sem trocar de parceiro entre rodadas.':
+    'Tap 2 players to form a fixed pair — repeat until everyone is paired up. This pair holds for the whole tournament, no switching partners between rounds.',
+  'Duplas fixas precisa de um número par de jogadores disponíveis.':
+    'Fixed pairs needs an even number of available players.',
+  'Duplas formadas': 'Pairs formed',
+  'Desfazer última dupla': 'Undo last pair',
+  'Escolha o parceiro:': 'Choose the partner:',
+  'Toque no primeiro jogador da dupla:': 'Tap the first player of the pair:',
 
   // MatchSetupStep
   'Configurar partida': 'Set up match',
@@ -167,7 +178,7 @@ export const EN: Record<string, string> = {
     'In "Players", add your group (just a name). You can edit or remove them later — anyone with a recorded match gets archived instead, so history keeps working. Registered the same player twice by mistake (different names)? The "Merge duplicate players" section further down that same screen joins them into one without losing either one\'s history.',
   '2. Comece um torneio': '2. Start a tournament',
   'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Toque em "Confirmar e criar torneio".':
-    'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose), how many games decide the set, and how many sets decide the match (1 set, best of 3, or best of 5 — at the deciding set of a best-of-3/5, a tie becomes a super-tiebreak up to 10 points instead of another full set). Tap "Confirm and create tournament".',
+    'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose round by round, Fixed pairs locks partners in once and plays without mixing), how many games decide the set, and how many sets decide the match (1 set, best of 3, or best of 5 — at the deciding set of a best-of-3/5, a tie becomes a super-tiebreak up to 10 points instead of another full set). Tap "Confirm and create tournament".',
   '3. Ou pratique (sem torneio)': '3. Or practice (no tournament)',
   'Em "Praticar" você escolhe o formato, os jogadores dos dois times, quantos games decidem o set e quantos sets decidem a partida, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.':
     'In "Practice" you pick the format, the players on each side, how many games decide the set, and how many sets decide the match, skipping availability and rotation entirely — straight to setup and play. It counts toward ranking and history like any other match, but you can exclude these matches with the "Tournament matches only" checkbox on Ranking and History, if you want to keep practice separate from real matches.',

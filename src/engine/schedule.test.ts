@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateDoublesRotation, generateSinglesRotation } from './schedule'
+import { generateDoublesRotation, generateFixedPairsRotation, generateSinglesRotation } from './schedule'
 
 describe('generateDoublesRotation — canonical 5-player schedule (Section 2)', () => {
   const players = ['A', 'B', 'C', 'D', 'E']
@@ -111,6 +111,64 @@ describe('generateDoublesRotation — other player counts stay balanced', () => 
 
   it('throws for fewer than 4 players', () => {
     expect(() => generateDoublesRotation(['A', 'B', 'C'])).toThrow()
+  })
+})
+
+describe('generateFixedPairsRotation — duplas fixas', () => {
+  it('2 pairs (4 players): a single round, pair vs pair, nobody rests', () => {
+    const rounds = generateFixedPairsRotation([
+      ['A', 'B'],
+      ['C', 'D'],
+    ])
+    expect(rounds).toHaveLength(1)
+    expect(rounds[0]).toEqual({
+      roundIndex: 0,
+      team1: ['A', 'B'],
+      team2: ['C', 'D'],
+      restingPlayerIds: [],
+    })
+  })
+
+  it('3 pairs (6 players): round-robin between pairs, partners never separated', () => {
+    const pairs: Array<[string, string]> = [
+      ['A', 'B'],
+      ['C', 'D'],
+      ['E', 'F'],
+    ]
+    const rounds = generateFixedPairsRotation(pairs)
+    expect(rounds).toHaveLength(3)
+
+    for (const round of rounds) {
+      // Every team that appears is always exactly one of the 3 fixed pairs —
+      // partners are never split up or recombined with someone else.
+      for (const team of [round.team1, round.team2]) {
+        expect(pairs).toContainEqual(team)
+      }
+      expect(round.restingPlayerIds).toHaveLength(2)
+      // The resting players are always a fixed pair too.
+      expect(pairs).toContainEqual(round.restingPlayerIds)
+    }
+
+    const matchups = new Set(
+      rounds.map((r) => [r.team1.join('&'), r.team2.join('&')].sort().join(' vs ')),
+    )
+    // C(3,2) = 3 unique pair-vs-pair matchups.
+    expect(matchups.size).toBe(3)
+
+    const restCounts = new Map<string, number>()
+    for (const round of rounds) {
+      for (const id of round.restingPlayerIds) {
+        restCounts.set(id, (restCounts.get(id) ?? 0) + 1)
+      }
+    }
+    for (const [a, b] of pairs) {
+      expect(restCounts.get(a)).toBe(1)
+      expect(restCounts.get(b)).toBe(1)
+    }
+  })
+
+  it('throws for fewer than 2 pairs', () => {
+    expect(() => generateFixedPairsRotation([['A', 'B']])).toThrow()
   })
 })
 

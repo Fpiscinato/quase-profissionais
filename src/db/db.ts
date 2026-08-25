@@ -29,7 +29,7 @@ export interface PlayerRow {
 }
 
 export type TournamentFormat = 'duplas' | 'individual'
-export type TeamFormationMode = 'balanced' | 'manual'
+export type TeamFormationMode = 'balanced' | 'manual' | 'fixed'
 export type TournamentStatus = 'setup' | 'in_progress' | 'completed'
 export type TournamentOrigin = 'torneio' | 'avulsa'
 
