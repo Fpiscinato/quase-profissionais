@@ -38,23 +38,33 @@
       calc(env(safe-area-inset-right, 0px) + max(6vw, 10px))
       calc(env(safe-area-inset-bottom, 0px) + max(1.5vh, 6px))
       calc(env(safe-area-inset-left, 0px) + max(6vw, 10px));
-    gap: 0.7vh;
+    gap: 0.8vh;
+    transition: filter 0.4s ease;
   }
+  body.dimmed .app { filter: brightness(0.22); }
 
+  /* Altura fixa pro aviso do topo — antes o texto mudava de tamanho
+     (ex. mensagem do "Repetir") e empurrava o placar/botões pra baixo. */
   .wake-banner {
     flex-shrink: 0;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    height: clamp(20px, 6vh, 30px);
     border: none;
     border-radius: 8px;
-    padding: 0.6vh 6px;
-    font-size: clamp(9px, 3.1vw, 11px);
+    padding: 0 6px;
+    font-size: clamp(8.5px, 2.9vw, 10.5px);
     font-weight: 700;
     letter-spacing: 0.01em;
-    line-height: 1.25;
+    line-height: 1.2;
     text-align: center;
     color: var(--navy);
     background: var(--destructive);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: background 0.2s ease, color 0.2s ease;
   }
   .wake-banner.is-ok { background: var(--ok); }
@@ -105,7 +115,7 @@
     flex: 2.3;
     display: flex;
     flex-direction: row;
-    gap: 1.6vw;
+    gap: 4.5vw;
     min-height: 0;
     margin-top: 0.4vh;
   }
@@ -133,7 +143,7 @@
     flex: 1;
     display: flex;
     flex-direction: row;
-    gap: 1.6vw;
+    gap: 4.5vw;
     min-height: 0;
   }
 
@@ -165,6 +175,18 @@
     background: rgba(212, 175, 55, 0.14);
     color: var(--cream);
   }
+
+  /* Fica invisível e "vazado" (pointer-events: none) enquanto a tela está
+     no brilho normal; só aparece (e captura o primeiro toque, sem deixar
+     ele acertar um botão por baixo) quando escurecida. */
+  #dimOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: transparent;
+    display: none;
+  }
+  body.dimmed #dimOverlay { display: block; }
 </style>
 </head>
 <body>
@@ -199,6 +221,7 @@
     </button>
   </div>
 </div>
+<div id="dimOverlay" aria-hidden="true"></div>
 
 <script>
   // Teste isolado, sem ligação com o app real: só pra ver se o navegador
@@ -241,7 +264,7 @@
     var prevClass = wakeBtn.className;
     var prevText = wakeBtn.textContent;
     clearTimeout(wakeBannerFlashTimer);
-    wakeBtn.textContent = '🔁 (simulado) repetiria o último anúncio no tablet';
+    wakeBtn.textContent = '🔁 repetiria o anúncio no tablet (simulado)';
     wakeBannerFlashTimer = setTimeout(function () {
       wakeBtn.className = prevClass;
       wakeBtn.textContent = prevText;
@@ -260,8 +283,37 @@
     { once: true },
   );
 
-  // Wake Lock: mantém a tela acesa enquanto a página está aberta. Ao ser
-  // liberado (ex. o sistema tirou a página de primeiro plano), zera
+  // Escurece sozinho depois de um tempo parado (economiza um pouco de
+  // bateria num mostrador OLED) e volta ao normal no primeiro toque — na
+  // MESMA tela, sem sair da página. O primeiro toque enquanto está escuro
+  // só "acorda" a tela (o overlay captura esse toque); não conta como
+  // ponto. Não tem como detectar "olhar pro relógio" (levantar o pulso)
+  // de dentro de uma página web de forma confiável — então é sempre por
+  // toque mesmo.
+  var DIM_DELAY_MS = 8000;
+  var dimTimer = null;
+
+  function scheduleDim() {
+    clearTimeout(dimTimer);
+    dimTimer = setTimeout(function () {
+      document.body.classList.add('dimmed');
+    }, DIM_DELAY_MS);
+  }
+
+  function wakeFromDim() {
+    document.body.classList.remove('dimmed');
+    scheduleDim();
+  }
+
+  document.getElementById('dimOverlay').addEventListener('click', wakeFromDim);
+  ['btn1', 'btn2', 'undoBtn', 'repeatBtn', 'wakeBtn'].forEach(function (id) {
+    document.getElementById(id).addEventListener('click', scheduleDim);
+  });
+  scheduleDim();
+
+  // Wake Lock: mantém a tela acesa (não apaga/bloqueia) enquanto a página
+  // está aberta — o escurecimento acima é só visual, por cima disso. Ao
+  // ser liberado (ex. o sistema tirou a página de primeiro plano), zera
   // wakeLock pra que a volta em visibilitychange tente pedir de novo.
   var wakeLock = null;
 

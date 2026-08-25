@@ -248,6 +248,11 @@ export const EN: Record<string, string> = {
   'Já existe um jogador chamado "{name}".': 'A player named "{name}" already exists.',
   'O nome não pode ser vazio.': 'The name cannot be empty.',
   'O nome pode ter no máximo 16 caracteres.': 'The name can be at most 16 characters long.',
+  Apelido: 'Nickname',
+  'Apelido de até 3 letras': 'Nickname, up to 3 letters',
+  'Usado nas telas pequenas, como o relógio — se não preencher, o app usa as 3 primeiras letras do nome.':
+    'Used on small screens, like the watch — if left blank, the app uses the first 3 letters of the name.',
+  'O apelido pode ter no máximo 3 letras.': 'The nickname can be at most 3 letters long.',
   'Erro ao adicionar jogador.': 'Error adding player.',
   'Erro ao salvar.': 'Error saving.',
   'Mesclar jogadores duplicados': 'Merge duplicate players',

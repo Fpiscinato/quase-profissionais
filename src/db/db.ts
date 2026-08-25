@@ -24,6 +24,8 @@ export interface PlayerRow {
   id: string
   name: string
   active: boolean
+  /** Short (3-letter) tag shown on space-constrained displays (ex.: relógio). Optional, not unique. */
+  nickname?: string
 }
 
 export type TournamentFormat = 'duplas' | 'individual'
@@ -299,6 +301,9 @@ export function normalizeName(name: string): string {
  */
 export const MAX_PLAYER_NAME_LENGTH = 16
 
+/** Nickname shown on the relógio (Wear OS) remote — small screen, so kept to 3 letters. */
+export const MAX_NICKNAME_LENGTH = 3
+
 async function assertNameAvailable(name: string, excludingId?: string): Promise<void> {
   const target = normalizeName(name)
   const existing = await db.players.toArray()
@@ -306,7 +311,16 @@ async function assertNameAvailable(name: string, excludingId?: string): Promise<
   if (clash) throw new DuplicatePlayerNameError(name.trim())
 }
 
-export async function addPlayer(name: string): Promise<PlayerRow> {
+function normalizeNickname(nickname: string): string | undefined {
+  const trimmed = nickname.trim().toUpperCase()
+  if (!trimmed) return undefined
+  if (trimmed.length > MAX_NICKNAME_LENGTH) {
+    throw new Error(`O apelido pode ter no máximo ${MAX_NICKNAME_LENGTH} letras.`)
+  }
+  return trimmed
+}
+
+export async function addPlayer(name: string, nickname?: string): Promise<PlayerRow> {
   const trimmed = name.trim()
   if (!trimmed) throw new Error('O nome não pode ser vazio.')
   if (trimmed.length > MAX_PLAYER_NAME_LENGTH) {
@@ -314,6 +328,8 @@ export async function addPlayer(name: string): Promise<PlayerRow> {
   }
   await assertNameAvailable(trimmed)
   const player: PlayerRow = { id: newId(), name: trimmed, active: true }
+  const normalizedNickname = nickname !== undefined ? normalizeNickname(nickname) : undefined
+  if (normalizedNickname) player.nickname = normalizedNickname
   await db.players.add(player)
   return player
 }
@@ -326,6 +342,16 @@ export async function updatePlayerName(id: PlayerId, name: string): Promise<void
   }
   await assertNameAvailable(trimmed, id)
   await db.players.update(id, { name: trimmed })
+}
+
+export async function updatePlayerNickname(id: PlayerId, nickname: string): Promise<void> {
+  const normalized = normalizeNickname(nickname)
+  await db.players.update(id, { nickname: normalized })
+}
+
+/** Compact tag for space-constrained displays — the set nickname, or the name's first letters. */
+export function playerTag(player: PlayerRow): string {
+  return player.nickname ?? player.name.slice(0, MAX_NICKNAME_LENGTH).toUpperCase()
 }
 
 /** True if the player is referenced by any recorded match (Section 6: history is kept per match). */

@@ -3,13 +3,16 @@ import { useAllPlayers } from '../../db/hooks'
 import {
   addPlayer,
   DuplicatePlayerNameError,
+  MAX_NICKNAME_LENGTH,
   MAX_PLAYER_NAME_LENGTH,
   mergePlayers,
   removePlayer,
   updatePlayerName,
+  updatePlayerNickname,
 } from '../../db/db'
 import type { PlayerRow } from '../../db/db'
 import { card, destructiveButton, primaryButton, secondaryButton, textInput } from '../../ui/styles'
+import { HelpHint } from '../../ui/HelpHint'
 import { useT } from '../../i18n/useT'
 
 export function PlayersScreen() {
@@ -18,10 +21,12 @@ export function PlayersScreen() {
   const players = [...allPlayers].sort((a, b) => Number(b.active) - Number(a.active))
 
   const [newName, setNewName] = useState('')
+  const [newNickname, setNewNickname] = useState('')
   const [addError, setAddError] = useState<string | null>(null)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [editNickname, setEditNickname] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -43,8 +48,9 @@ export function PlayersScreen() {
     e.preventDefault()
     setAddError(null)
     try {
-      await addPlayer(newName)
+      await addPlayer(newName, newNickname)
       setNewName('')
+      setNewNickname('')
     } catch (err) {
       setAddError(translateError(err, 'Erro ao adicionar jogador.'))
     }
@@ -53,6 +59,7 @@ export function PlayersScreen() {
   const startEdit = (player: PlayerRow) => {
     setEditingId(player.id)
     setEditValue(player.name)
+    setEditNickname(player.nickname ?? '')
     setEditError(null)
   }
 
@@ -64,6 +71,7 @@ export function PlayersScreen() {
   const saveEdit = async (id: string) => {
     try {
       await updatePlayerName(id, editValue)
+      await updatePlayerNickname(id, editNickname)
       setEditingId(null)
     } catch (err) {
       setEditError(translateError(err, 'Erro ao salvar.'))
@@ -105,7 +113,7 @@ export function PlayersScreen() {
         <div className="flex gap-2">
           <input
             type="text"
-            className={textInput}
+            className={`${textInput} flex-1`}
             placeholder={t('Nome do novo jogador')}
             maxLength={MAX_PLAYER_NAME_LENGTH}
             value={newName}
@@ -114,10 +122,29 @@ export function PlayersScreen() {
               setAddError(null)
             }}
           />
+          <input
+            type="text"
+            className={`${textInput} w-16 text-center uppercase`}
+            placeholder={t('Apelido')}
+            maxLength={MAX_NICKNAME_LENGTH}
+            value={newNickname}
+            onChange={(e) => {
+              setNewNickname(e.target.value)
+              setAddError(null)
+            }}
+          />
           <button type="submit" className={primaryButton}>
             {t('Adicionar')}
           </button>
         </div>
+        <p className="text-xs text-cream/50">
+          {t('Apelido de até 3 letras')}
+          <HelpHint
+            text={t(
+              'Usado nas telas pequenas, como o relógio — se não preencher, o app usa as 3 primeiras letras do nome.',
+            )}
+          />
+        </p>
         {addError && <p className="text-sm text-destructive">{addError}</p>}
       </form>
 
@@ -130,17 +157,30 @@ export function PlayersScreen() {
             <div key={player.id} data-testid={`player-row-${player.id}`} className={card}>
               {isEditing ? (
                 <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    className={textInput}
-                    maxLength={MAX_PLAYER_NAME_LENGTH}
-                    value={editValue}
-                    onChange={(e) => {
-                      setEditValue(e.target.value)
-                      setEditError(null)
-                    }}
-                    autoFocus
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className={`${textInput} flex-1`}
+                      maxLength={MAX_PLAYER_NAME_LENGTH}
+                      value={editValue}
+                      onChange={(e) => {
+                        setEditValue(e.target.value)
+                        setEditError(null)
+                      }}
+                      autoFocus
+                    />
+                    <input
+                      type="text"
+                      className={`${textInput} w-16 text-center uppercase`}
+                      placeholder={t('Apelido')}
+                      maxLength={MAX_NICKNAME_LENGTH}
+                      value={editNickname}
+                      onChange={(e) => {
+                        setEditNickname(e.target.value)
+                        setEditError(null)
+                      }}
+                    />
+                  </div>
                   {editError && <p className="text-sm text-destructive">{editError}</p>}
                   <div className="flex gap-2">
                     <button
@@ -190,6 +230,11 @@ export function PlayersScreen() {
                     <span className={player.active ? '' : 'text-cream/40 line-through'}>
                       {player.name}
                     </span>
+                    {player.nickname && (
+                      <span className="rounded bg-sky/15 px-1.5 py-0.5 text-xs font-bold tracking-wide text-sky">
+                        {player.nickname}
+                      </span>
+                    )}
                     {!player.active && (
                       <span className="rounded bg-cream/10 px-2 py-0.5 text-xs text-cream/60">
                         {t('Arquivado')}
