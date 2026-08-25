@@ -57,7 +57,16 @@ describe('Live match screen in Tablet layout mode', () => {
     expect(screen.getByText('0 – 0')).toBeInTheDocument()
     // aria-label is the stable "Modo de layout" control name; the visible
     // text shows the current mode (mirrors the Voz/Velocidade toggle pattern).
-    expect(screen.getByRole('button', { name: 'Modo de layout' })).toHaveTextContent('Tablet')
+    // Lives in the header's "Opções" panel now, not on the live match screen
+    // itself — that row was crowded enough on a narrow phone to clip the
+    // "Games: X de Y" label.
+    fireEvent.click(screen.getByRole('button', { name: 'Opções' }))
+    // LayoutToggle only mounts once the panel opens, so its own settings
+    // liveQuery needs a tick to resolve — same async gap seedTabletMatch's
+    // earlier update already settled for LiveMatchScreen's own instance.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Modo de layout' })).toHaveTextContent('Tablet'),
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Ponto — Time 1' }))
     await screen.findByText('15 – 0')
@@ -72,8 +81,9 @@ describe('Live match screen in Tablet layout mode', () => {
     )
     await screen.findByTestId('serve-banner')
 
+    fireEvent.click(screen.getByRole('button', { name: 'Opções' }))
     const toggle = () => screen.getByRole('button', { name: 'Modo de layout' })
-    expect(toggle()).toHaveTextContent('Tablet')
+    await waitFor(() => expect(toggle()).toHaveTextContent('Tablet'))
 
     fireEvent.click(toggle())
     await waitFor(() => expect(toggle()).toHaveTextContent('Smartphone'))

@@ -24,7 +24,11 @@ const CARDS = [
   },
   {
     title: 'Tiebreak',
-    body: 'Quando os games empatam no topo do set (ex.: 4-4), joga-se um desempate até 7 pontos, precisando de 2 de vantagem, pra decidir o set.',
+    body: 'Quando os games empatam no topo do set (ex.: 4-4), joga-se um desempate até 7 pontos, precisando de 2 de vantagem, pra decidir o set. Quem sacaria o próximo game saca sozinho o 1º ponto do tiebreak; dali em diante o saque troca de time a cada 2 pontos. A troca de lado acontece a cada 6 pontos somados (6, 12, 18...) e de novo ao final do tiebreak, antes do próximo set começar.',
+  },
+  {
+    title: 'Termos do tênis',
+    body: 'Ace: ponto de saque que o adversário nem consegue tocar. Dupla falta: dois saques errados seguidos — ponto pro time adversário. Let: o saque toca a rede e cai no lugar certo — repete o saque, sem contar como falta. 40 a 40 é Deuce; quem ganha o ponto seguinte fica com a Vantagem (AD) e precisa vencer mais um ponto pra fechar o game (senão volta pro Deuce). Quebra de saque (break): vencer um game em que era o adversário quem estava sacando. Match point / set point: o ponto que, se vencido, decide a partida ou o set ali mesmo.',
   },
 ]
 

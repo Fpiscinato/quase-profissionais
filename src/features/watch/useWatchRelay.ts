@@ -12,11 +12,14 @@ export interface WatchStatePayload {
   type: 'state'
   score1: string
   score2: string
+  games1: string
+  games2: string
   serverTag: string
   serverSide: 'D' | 'E' | null
   canUndo: boolean
   autoDim: boolean
   matchOver: boolean
+  alertText: string
 }
 
 interface WatchRelayParams {
@@ -25,10 +28,14 @@ interface WatchRelayParams {
   autoDim: boolean
   score1: string
   score2: string
+  games1: string
+  games2: string
   serverTag: string
   serverSide: 'D' | 'E' | null
   canUndo: boolean
   matchOver: boolean
+  /** e.g. "Troquem de lado" / "Tiebreak!" — empty when there's nothing to flag. */
+  alertText: string
   onPoint: (team: 1 | 2) => void
   onUndo: () => void
   onRepeat: () => void
@@ -39,11 +46,14 @@ function statePayload(p: WatchRelayParams): WatchStatePayload {
     type: 'state',
     score1: p.score1,
     score2: p.score2,
+    games1: p.games1,
+    games2: p.games2,
     serverTag: p.serverTag,
     serverSide: p.serverSide,
     canUndo: p.canUndo,
     autoDim: p.autoDim,
     matchOver: p.matchOver,
+    alertText: p.alertText,
   }
 }
 
@@ -125,11 +135,14 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
   }, [
     params.score1,
     params.score2,
+    params.games1,
+    params.games2,
     params.serverTag,
     params.serverSide,
     params.canUndo,
     params.autoDim,
     params.matchOver,
+    params.alertText,
   ])
 
   return { linkOpen, watchConnected }

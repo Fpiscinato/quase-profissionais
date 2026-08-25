@@ -40,18 +40,14 @@ const SECTIONS = [
   },
   {
     title: '10. Controle remoto',
-    body: 'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado. Se quem aperta o controle (ou usa o relógio, seção 13) se confunde com a troca de times a cada rodada, use "Jogador com o controle remoto ou relógio" em "Configurar partida" pra fixar o time dele sempre no mesmo botão.',
+    body: 'Em "Controle remoto" você mapeia os botões de um controle físico (ex. um "clicker" de apresentação USB) pra Ponto Time 1, Ponto Time 2, Repetir anúncio, Desfazer e Salvar partida. Toque em "Definir", aperte o botão do controle, pronto — funciona com qualquer controle que emule teclado, não só um modelo específico. A tela ao vivo escuta esses botões o tempo todo, mesmo com o Modo viva-voz desligado. Se quem aperta o controle (ou usa o relógio, seção 12) se confunde com a troca de times a cada rodada, use "Jogador com o controle remoto ou relógio" em "Configurar partida" pra fixar o time dele sempre no mesmo botão.',
   },
   {
     title: '11. Layout tablet',
     body: 'A tela ao vivo tem um botão "📐" (perto do cronômetro) que alterna entre Automático, Tablet e Smartphone. Automático detecta o tamanho da tela sozinho; Tablet espalha os times e o placar lado a lado, útil numa tela maior; Smartphone mantém o layout empilhado de sempre.',
   },
   {
-    title: '12. Termos do tênis',
-    body: 'Ace: ponto de saque que o adversário nem consegue tocar. Dupla falta: dois saques errados seguidos — ponto pro time adversário. Let: o saque toca a rede e cai no lugar certo — repete o saque, sem contar como falta. 40 a 40 é Deuce; quem ganha o ponto seguinte fica com a Vantagem (AD) e precisa vencer mais um ponto pra fechar o game (senão volta pro Deuce). Quebra de saque (break): vencer um game em que era o adversário quem estava sacando. Match point / set point: o ponto que, se vencido, decide a partida ou o set ali mesmo.',
-  },
-  {
-    title: '13. Relógio (Wear OS)',
+    title: '12. Relógio (Wear OS)',
     body: 'Quem estiver com o Galaxy Watch pode marcar os pontos direto do pulso, sem carregar o controle remoto pendurado no pescoço. Em "Configurar relógio" gere um código de 6 dígitos e escolha se a tela do relógio fica sempre ativa (padrão) ou escurece sozinha depois de um tempo parada, pra economizar bateria. No navegador do relógio, abra o endereço indicado ali e digite o código num teclado numérico grande — o placar (0/15/30/40), quem saca e o lado aparecem sozinhos, atualizados pelo aparelho principal. Sem conexão confirmada, os botões do relógio ficam travados (não marcam ponto à toa) até reconectar. Sem Wi-Fi na quadra? Ative o ponto de acesso do tablet/celular e conecte o Wi-Fi do relógio nele (não é o Bluetooth de sempre) — funciona igual. Se quem usa o relógio se confunde com a troca de times a cada rodada, use "Jogador com o controle remoto ou relógio" em "Configurar partida" (seção 4). Só relógios Samsung/Wear OS por enquanto; Apple Watch não tem navegador de internet e ainda não é suportado.',
   },
 ]

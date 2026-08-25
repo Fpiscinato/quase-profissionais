@@ -14,7 +14,12 @@ import { KeyBindingsScreen } from './features/keys/KeyBindingsScreen'
 import { WatchSetupScreen } from './features/watch/WatchSetupScreen'
 import { voiceCommandsSupported } from './features/voice/useVoiceCommands'
 import { primeSpeechEngine, speak } from './features/voice/speech'
-import { resolveEffectiveLayout, TABLET_MIN_WIDTH_QUERY } from './features/match/layoutMode'
+import {
+  LAYOUT_MODE_LABELS,
+  nextLayoutMode,
+  resolveEffectiveLayout,
+  TABLET_MIN_WIDTH_QUERY,
+} from './features/match/layoutMode'
 import { useMatchMedia } from './lib/useMatchMedia'
 import { useT } from './i18n/useT'
 import type { Lang } from './i18n/i18n'
@@ -128,6 +133,28 @@ function LangToggle() {
 }
 
 /**
+ * Moved here (out of LiveMatchScreen's own header) because on a narrow
+ * phone that row was crowded enough to clip the "Games: X de Y" label —
+ * this is a device setting like Voz/Idioma anyway, not something tied to
+ * one match, so it belongs in the same panel.
+ */
+function LayoutToggle() {
+  const { t } = useT()
+  const settings = useSettings()
+  const layoutMode = settings?.layoutMode ?? 'auto'
+  return (
+    <button
+      type="button"
+      aria-label={t('Modo de layout')}
+      onClick={() => updateSettings({ layoutMode: nextLayoutMode(layoutMode) })}
+      className="flex min-h-7 items-center gap-1 rounded-md border border-cream/20 px-2 text-xs font-bold text-cream/70"
+    >
+      <span aria-hidden="true">📐</span> {t(LAYOUT_MODE_LABELS[layoutMode])}
+    </button>
+  )
+}
+
+/**
  * The header used to lay Voz/Comandos/PT-EN out inline, which made the
  * header's own height change (and everything below it jump) whenever a
  * toggle appeared/disappeared — most noticeably turning Voz on while on a
@@ -155,6 +182,7 @@ function HeaderOptions() {
         {open && (
           <div className="absolute right-0 top-full z-30 mt-2 flex w-max flex-col gap-2 rounded-xl border border-cream/10 bg-navy-light p-3 shadow-lg">
             <VoiceToggle />
+            <LayoutToggle />
             <LangToggle />
           </div>
         )}

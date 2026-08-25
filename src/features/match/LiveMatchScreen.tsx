@@ -9,7 +9,6 @@ import {
   saveMatch,
   startMatch,
   undoLastPoint,
-  updateSettings,
 } from '../../db/db'
 import { useWatchRelay } from '../watch/useWatchRelay'
 import { usePlayers, useSettings, useTournament } from '../../db/hooks'
@@ -32,8 +31,6 @@ import { useWakeLock } from '../../lib/useWakeLock'
 import { useKeyCommands } from '../keys/useKeyCommands'
 import { useMatchMedia } from '../../lib/useMatchMedia'
 import {
-  LAYOUT_MODE_LABELS,
-  nextLayoutMode,
   resolveEffectiveLayout,
   TABLET_MIN_HEIGHT_QUERY,
   TABLET_MIN_WIDTH_QUERY,
@@ -197,11 +194,24 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       ? String(state.tiebreak.points2)
       : pointLabel(state.currentGame.points2, state.currentGame.points1, config?.deuceMode ?? 'advantage')
     : '0'
+  // Same source the on-screen "Games: X de Y" row uses — final games once
+  // the match is over, current-set games otherwise.
+  const watchGames1 = state ? String(state.isMatchOver ? (state.finalGames1 ?? state.games1) : state.games1) : '0'
+  const watchGames2 = state ? String(state.isMatchOver ? (state.finalGames2 ?? state.games2) : state.games2) : '0'
+  // Same alerts the on-screen banner shows (troca de lado, tiebreak, set
+  // encerrado...) — 'game' is too transient/minor to bother the watch with.
+  const watchAlertText = alerts
+    .filter((a) => a !== 'game')
+    .map((a) => t(ALERT_LABELS[a]))
+    .join(' · ')
   const { watchConnected } = useWatchRelay({
     pin: settings?.watchRoomPin,
     autoDim: settings?.watchAutoDim ?? false,
     score1: watchScore1,
     score2: watchScore2,
+    games1: watchGames1,
+    games2: watchGames2,
+    alertText: watchAlertText,
     serverTag: watchServeInfo ? playerTag(byId.get(watchServeInfo.serverId) ?? { id: '', name: '?', active: true }) : '',
     serverSide: watchServeInfo ? (watchServeInfo.side === 'Direita' ? 'D' : 'E') : null,
     canUndo: (match?.pointLog.length ?? 0) > 0,
@@ -516,17 +526,6 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     </div>
   )
 
-  const layoutToggle = (
-    <button
-      type="button"
-      aria-label={t('Modo de layout')}
-      onClick={() => updateSettings({ layoutMode: nextLayoutMode(layoutMode) })}
-      className="ml-auto flex min-h-7 items-center gap-1 rounded-md border border-cream/20 px-2 text-xs font-bold text-cream/50"
-    >
-      <span aria-hidden="true">📐</span> {t(LAYOUT_MODE_LABELS[layoutMode])}
-    </button>
-  )
-
   // Only shown once a watch has been paired (features/watch/WatchSetupScreen) —
   // lets whoever is running the tablet notice at a glance if the watch fell
   // off the link, instead of only finding out when nobody's points are
@@ -562,10 +561,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
           {!state.isDecidingSuperTiebreak &&
             t('Games: {x} de {y}', { x: gamesLeadCount, y: gamesTarget })}
         </div>
-        <div className="flex items-center gap-2">
-          {watchBadge}
-          {layoutToggle}
-        </div>
+        <div className="flex items-center justify-end gap-2">{watchBadge}</div>
       </div>
       {!state.isDecidingSuperTiebreak && gamesProgressBlock}
       {setsProgressBlock}
