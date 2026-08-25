@@ -46,6 +46,14 @@ const SECTIONS = [
     title: '11. Layout tablet',
     body: 'A tela ao vivo tem um botão "📐" (perto do cronômetro) que alterna entre Automático, Tablet e Smartphone. Automático detecta o tamanho da tela sozinho; Tablet espalha os times e o placar lado a lado, útil numa tela maior; Smartphone mantém o layout empilhado de sempre.',
   },
+  {
+    title: '12. Termos do tênis',
+    body: 'Ace: ponto de saque que o adversário nem consegue tocar. Dupla falta: dois saques errados seguidos — ponto pro time adversário. Let: o saque toca a rede e cai no lugar certo — repete o saque, sem contar como falta. 40 a 40 é Deuce; quem ganha o ponto seguinte fica com a Vantagem (AD) e precisa vencer mais um ponto pra fechar o game (senão volta pro Deuce). Quebra de saque (break): vencer um game em que era o adversário quem estava sacando. Match point / set point: o ponto que, se vencido, decide a partida ou o set ali mesmo.',
+  },
+  {
+    title: '13. Relógio (Wear OS)',
+    body: 'Quem estiver com o Galaxy Watch pode marcar os pontos direto do pulso, sem carregar o controle remoto pendurado no pescoço. Em "Configurar relógio" gere um código de 6 dígitos e escolha se a tela do relógio escurece sozinha (economiza bateria) ou fica sempre ativa. No navegador do relógio, abra o endereço indicado ali e digite o código — o placar (0/15/30/40), quem saca e o lado aparecem sozinhos, atualizados pelo aparelho principal. Sem conexão confirmada, os botões do relógio ficam travados (não marcam ponto à toa) até reconectar. Sem Wi-Fi na quadra? Ative o ponto de acesso do tablet/celular e conecte o Wi-Fi do relógio nele (não é o Bluetooth de sempre) — funciona igual. Só relógios Samsung/Wear OS por enquanto; Apple Watch não tem navegador de internet e ainda não é suportado.',
+  },
 ]
 
 export function ManualScreen() {
