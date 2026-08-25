@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>Placar de Pulso — teste</title>
 <style>
   :root {
@@ -10,6 +10,7 @@
     --navy-light: #1f2e5c;
     --lime: #a4ce3a;
     --cream: #f2f0e6;
+    --gold: #d4af37;
     --destructive: #d9483a;
     --ok: #6fd07a;
     --warn: #d4af37;
@@ -33,8 +34,11 @@
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: max(2vh, 6px) max(5vw, 8px);
-    gap: 0.8vh;
+    padding: calc(env(safe-area-inset-top, 0px) + max(3.5vh, 14px))
+      calc(env(safe-area-inset-right, 0px) + max(6vw, 10px))
+      calc(env(safe-area-inset-bottom, 0px) + max(1.5vh, 6px))
+      calc(env(safe-area-inset-left, 0px) + max(6vw, 10px));
+    gap: 0.7vh;
   }
 
   .wake-banner {
@@ -42,9 +46,9 @@
     display: block;
     width: 100%;
     border: none;
-    border-radius: 10px;
-    padding: 0.9vh 6px;
-    font-size: clamp(10px, 3.6vw, 13px);
+    border-radius: 8px;
+    padding: 0.6vh 6px;
+    font-size: clamp(9px, 3.1vw, 11px);
     font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1.25;
@@ -62,18 +66,18 @@
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: clamp(6px, 3vw, 14px);
+    gap: clamp(6px, 3vw, 12px);
     font-variant-numeric: tabular-nums;
     font-weight: 800;
   }
 
   .score-team {
-    font-size: clamp(24px, 11vw, 44px);
+    font-size: clamp(20px, 9vw, 36px);
     line-height: 1;
   }
   .score-team--1 { color: var(--lime); }
   .score-team--2 { color: var(--cream); }
-  .score-sep { font-size: clamp(14px, 5vw, 22px); color: rgba(242, 240, 230, 0.4); }
+  .score-sep { font-size: clamp(12px, 4vw, 18px); color: rgba(242, 240, 230, 0.4); }
 
   .serve-row {
     flex-shrink: 0;
@@ -81,11 +85,11 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: clamp(10px, 3.6vw, 13px);
+    font-size: clamp(9px, 3.2vw, 12px);
     font-weight: 700;
     color: rgba(242, 240, 230, 0.75);
   }
-  .serve-ball { font-size: clamp(11px, 4vw, 15px); }
+  .serve-ball { font-size: clamp(10px, 3.6vw, 14px); }
   .serve-side {
     display: inline-flex;
     align-items: center;
@@ -97,48 +101,70 @@
     color: var(--lime);
   }
 
-  .pads {
-    flex: 1;
+  .team-row {
+    flex: 2.3;
     display: flex;
-    flex-direction: column;
-    gap: 1vh;
+    flex-direction: row;
+    gap: 1.6vw;
     min-height: 0;
+    margin-top: 0.4vh;
   }
 
   .pad {
+    flex: 1;
+    min-width: 0;
     border: none;
-    border-radius: 16px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-size: clamp(12px, 5.6vw, 19px);
+    letter-spacing: 0.04em;
+    font-size: clamp(11px, 5vw, 16px);
     transition: transform 0.08s ease, filter 0.08s ease;
   }
-  .pad:active { transform: scale(0.96); filter: brightness(0.9); }
+  .pad:active { transform: scale(0.95); filter: brightness(0.9); }
 
-  .pad--1 { background: var(--lime); color: var(--navy); flex: 2.1; }
-  .pad--2 { background: var(--cream); color: var(--navy); flex: 2.1; }
+  .pad--1 { background: var(--lime); color: var(--navy); }
+  .pad--2 { background: var(--cream); color: var(--navy); }
 
-  .pad-undo {
-    flex: 1.3;
+  .action-row {
+    flex: 1;
     display: flex;
+    flex-direction: row;
+    gap: 1.6vw;
+    min-height: 0;
+  }
+
+  .action-btn {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 2px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: clamp(8.5px, 3.2vw, 11px);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .action-btn .icon { font-size: clamp(13px, 5.5vw, 19px); line-height: 1; }
+  .action-btn:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
+  .action-btn:disabled { opacity: 0.35; }
+
+  .action-btn--undo {
     border: 1px solid rgba(217, 72, 58, 0.55);
     background: rgba(217, 72, 58, 0.14);
     color: var(--cream);
-    font-weight: 700;
-    font-size: clamp(11px, 4.4vw, 15px);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
   }
-  .pad-undo .undo-icon { font-size: clamp(16px, 7vw, 24px); line-height: 1; }
-  .pad-undo:active:not(:disabled) { transform: scale(0.96); filter: brightness(0.9); }
-  .pad-undo:disabled { opacity: 0.35; }
+  .action-btn--repeat {
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    background: rgba(212, 175, 55, 0.14);
+    color: var(--cream);
+  }
 </style>
 </head>
 <body>
@@ -159,24 +185,33 @@
     <span class="serve-side">D</span>
   </div>
 
-  <main class="pads">
+  <main class="team-row">
     <button id="btn1" class="pad pad--1" type="button">Time 1</button>
     <button id="btn2" class="pad pad--2" type="button">Time 2</button>
-    <button id="undoBtn" class="pad pad-undo" type="button" disabled>
-      <span class="undo-icon" aria-hidden="true">↺</span> Desfazer
-    </button>
   </main>
+
+  <div class="action-row">
+    <button id="undoBtn" class="action-btn action-btn--undo" type="button" disabled>
+      <span class="icon" aria-hidden="true">↺</span> Desfazer
+    </button>
+    <button id="repeatBtn" class="action-btn action-btn--repeat" type="button">
+      <span class="icon" aria-hidden="true">🔁</span> Repetir
+    </button>
+  </div>
 </div>
 
 <script>
   // Teste isolado, sem ligação com o app real: só pra ver se o navegador
   // do relógio abre a página, responde ao toque e segura a tela acesa.
   // O "🎾 JAR · D" é só um placeholder visual de quem saca — ainda não
-  // vem de dado real.
+  // vem de dado real, e "Repetir" ainda não repete nada de verdade (na
+  // versão real ele pediria pro tablet falar de novo no speaker dele).
   var log = [];
   var score1El = document.getElementById('score1');
   var score2El = document.getElementById('score2');
   var undoBtn = document.getElementById('undoBtn');
+  var repeatBtn = document.getElementById('repeatBtn');
+  var wakeBtn = document.getElementById('wakeBtn');
 
   function render() {
     var s1 = 0, s2 = 0;
@@ -201,6 +236,18 @@
     render();
   });
 
+  var wakeBannerFlashTimer = null;
+  repeatBtn.addEventListener('click', function () {
+    var prevClass = wakeBtn.className;
+    var prevText = wakeBtn.textContent;
+    clearTimeout(wakeBannerFlashTimer);
+    wakeBtn.textContent = '🔁 (simulado) repetiria o último anúncio no tablet';
+    wakeBannerFlashTimer = setTimeout(function () {
+      wakeBtn.className = prevClass;
+      wakeBtn.textContent = prevText;
+    }, 1400);
+  });
+
   // Melhor esforço: tela cheia reduz a chance do sistema do relógio
   // sobrepor a própria interface dele por cima da página.
   document.addEventListener(
@@ -213,14 +260,10 @@
     { once: true },
   );
 
-  // Wake Lock: mantém a tela acesa enquanto a página está aberta. Se o
-  // navegador do relógio não suportar (bem possível), o aviso mostra isso
-  // em vez de falhar quieto. Ao ser liberado (ex. o sistema tirou a página
-  // de primeiro plano), zera wakeLock pra que a volta em visibilitychange
-  // tente pedir de novo — antes isso ficava preso em "falhou" mesmo
-  // voltando pra tela.
+  // Wake Lock: mantém a tela acesa enquanto a página está aberta. Ao ser
+  // liberado (ex. o sistema tirou a página de primeiro plano), zera
+  // wakeLock pra que a volta em visibilitychange tente pedir de novo.
   var wakeLock = null;
-  var wakeBtn = document.getElementById('wakeBtn');
 
   function setWakeUI(state, detail) {
     wakeBtn.className =
