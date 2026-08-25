@@ -5,7 +5,7 @@
  * bloqueado com uma mensagem clara em vez de tentar conectar e falhar
  * silenciosamente.
  */
-export const RELAY_URL = 'wss://SEU-RELAY-AQUI.workers.dev'
+export const RELAY_URL = 'wss://quase-profissionais-relay.f-piscinato.workers.dev'
 
 export function isRelayConfigured(): boolean {
   return !RELAY_URL.includes('SEU-RELAY-AQUI')
