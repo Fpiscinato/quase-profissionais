@@ -1,6 +1,6 @@
 import { updateSettings } from '../../db/db'
 import { useSettings } from '../../db/hooks'
-import { generatePin, isRelayConfigured } from './relayConfig'
+import { generatePin, isRelayConfigured, WATCH_BUILD_TAG } from './relayConfig'
 import { useWatchRelay } from './useWatchRelay'
 import { card, primaryButton, secondaryButton, toggleButton } from '../../ui/styles'
 import { HelpHint } from '../../ui/HelpHint'
@@ -105,6 +105,14 @@ export function WatchSetupScreen() {
           <HelpHint
             text={t(
               'Sem Wi-Fi na quadra? Ative o ponto de acesso do tablet/celular e conecte o Wi-Fi do relógio nele (não é o Bluetooth de sempre) — funciona igual.',
+            )}
+          />
+        </p>
+        <p className="text-xs text-cream/50">
+          {t('Versão esperada do relógio:')} <span className="font-mono text-cream/70">{WATCH_BUILD_TAG}</span>
+          <HelpHint
+            text={t(
+              'Aparece no topo das duas telas do relógio. Se não bater com esse número, o navegador dele ainda está com uma versão em cache — feche e abra de novo.',
             )}
           />
         </p>

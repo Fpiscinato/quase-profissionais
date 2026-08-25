@@ -7,6 +7,14 @@
  */
 export const RELAY_URL = 'wss://quase-profissionais-relay.f-piscinato.workers.dev'
 
+/**
+ * Precisa bater com BUILD_TAG em public/relogio.html — mesma limitação do
+ * RELAY_URL acima (dois arquivos, sem como compartilhar a constante).
+ * Mostrada em "Configurar relógio" pra dar pra conferir, direto no tablet,
+ * qual versão o relógio deveria estar mostrando.
+ */
+export const WATCH_BUILD_TAG = 'v1.5'
+
 export function isRelayConfigured(): boolean {
   return !RELAY_URL.includes('SEU-RELAY-AQUI')
 }

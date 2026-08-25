@@ -223,6 +223,9 @@ export const EN: Record<string, string> = {
   'Gerar novo código': 'Generate new code',
   'No navegador do relógio, abra:': 'In the watch\'s browser, open:',
   'e digite o código acima.': 'and type the code above.',
+  'Versão esperada do relógio:': 'Expected watch version:',
+  'Aparece no topo das duas telas do relógio. Se não bater com esse número, o navegador dele ainda está com uma versão em cache — feche e abra de novo.':
+    'Shown at the top of both watch screens. If it doesn\'t match this number, its browser is still on a cached version — close and reopen it.',
   'Sem Wi-Fi na quadra? Ative o ponto de acesso do tablet/celular e conecte o Wi-Fi do relógio nele (não é o Bluetooth de sempre) — funciona igual.':
     'No Wi-Fi at the court? Turn on the tablet/phone\'s hotspot and connect the watch\'s own Wi-Fi to it (not the usual Bluetooth) — works the same way.',
   'Tela do relógio': 'Watch screen',
