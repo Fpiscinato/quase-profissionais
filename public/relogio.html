@@ -123,40 +123,48 @@
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 0.7vh;
-    font-size: clamp(14px, 5.4vw, 19px);
+    gap: 7px;
+    margin-top: 1.8vh;
+    font-size: clamp(17px, 6.4vw, 23px);
     font-weight: 800;
     color: rgba(242, 240, 230, 0.9);
   }
-  .serve-ball { font-size: clamp(15px, 5.8vw, 21px); }
+  .serve-ball { font-size: clamp(18px, 6.8vw, 25px); }
   .serve-side {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 1.5em;
-    padding: 2px 6px;
+    min-width: 1.4em;
+    padding: 2px 7px;
     border-radius: 5px;
     background: rgba(164, 206, 58, 0.18);
     color: var(--lime);
   }
-  .games-sep { color: rgba(242, 240, 230, 0.35); font-weight: 400; }
-  .games-chip {
-    display: inline-flex;
+
+  /* Segunda linha: progresso da partida, mesmo texto/formato da tela
+     principal ("Games: X de Y" / "Sets: X de Y"), não o placar de cada
+     time (esse já mora embaixo de cada botão, ver .pad-progress). */
+  .progress-row {
+    flex-shrink: 0;
+    display: flex;
     align-items: center;
-    gap: 3px;
-    font-variant-numeric: tabular-nums;
-    color: rgba(242, 240, 230, 0.8);
+    justify-content: center;
+    gap: 8px;
+    margin-top: 0.3vh;
+    font-size: clamp(10.5px, 3.8vw, 14px);
+    font-weight: 700;
+    color: rgba(242, 240, 230, 0.68);
   }
-  .games-chip-label { font-size: 0.6em; font-weight: 700; color: rgba(242, 240, 230, 0.5); text-transform: uppercase; }
+  .progress-row b { color: rgba(242, 240, 230, 0.92); font-weight: 800; }
+  .progress-sep { color: rgba(242, 240, 230, 0.3); }
 
   .team-row {
-    flex: 1.85;
+    flex: 2;
     display: flex;
     flex-direction: row;
     gap: 4vw;
     min-height: 0;
-    margin-top: 0.6vh;
+    margin-top: 3vh;
   }
 
   .pad {
@@ -168,10 +176,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-bottom: 20px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    font-size: clamp(13px, 5.8vw, 18px);
+    font-size: clamp(16px, 6.8vw, 22px);
     transition: transform 0.08s ease, filter 0.08s ease;
   }
   .pad:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
@@ -183,13 +192,37 @@
   .pad-score {
     position: absolute;
     top: 6px;
-    font-size: clamp(18px, 7.4vw, 25px);
+    font-size: clamp(21px, 8.6vw, 29px);
     font-variant-numeric: tabular-nums;
     font-weight: 800;
     opacity: 0.9;
   }
   .pad-score--1 { right: 8px; }
   .pad-score--2 { left: 8px; }
+
+  /* Bolinha por game vencido no set atual, raquetinha (🎾 — não existe
+     emoji de raquete isolada com suporte amplo) por set vencido. Escuro
+     translúcido quando "vazio" pra ler contra o fundo claro do botão. */
+  .pad-progress {
+    position: absolute;
+    bottom: 5px;
+    left: 4px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .pad-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(21, 33, 66, 0.22);
+  }
+  .pad-dot.is-won { background: var(--navy); }
+  .pad-racket { font-size: 10px; line-height: 1; opacity: 0.25; filter: grayscale(1); }
+  .pad-racket.is-won { opacity: 1; filter: none; }
 
   /* Faixa de alerta (troca de lado / tiebreak / set encerrado etc.) —
      era a faixa de conexão antes; a conexão foi pro rodapé do logo,
@@ -209,21 +242,21 @@
   }
 
   .action-row {
-    flex: 1.5;
+    flex: 1.6;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 0 6%;
+    padding: 0 5%;
     min-height: 0;
   }
 
   .action-mid { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .action-logo { width: clamp(36px, 13vw, 48px); height: clamp(36px, 13vw, 48px); object-fit: contain; border-radius: 8px; }
+  .action-logo { width: clamp(44px, 16vw, 58px); height: clamp(44px, 16vw, 58px); object-fit: contain; border-radius: 9px; }
 
   .action-btn {
     flex: 0 0 36%;
-    height: 97%;
+    height: 100%;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -232,11 +265,11 @@
     gap: 2px;
     border-radius: 12px;
     font-weight: 700;
-    font-size: clamp(8px, 2.9vw, 10px);
+    font-size: clamp(10px, 3.6vw, 13px);
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
-  .action-btn .icon { font-size: clamp(12px, 5vw, 17px); line-height: 1; }
+  .action-btn .icon { font-size: clamp(15px, 6vw, 20px); line-height: 1; }
   .action-btn:active:not(:disabled) { transform: scale(0.95); filter: brightness(0.9); }
   .action-btn:disabled { opacity: 0.3; }
 
@@ -249,13 +282,13 @@
   .link-pill {
     display: flex;
     align-items: center;
-    gap: 4px;
-    color: rgba(242, 240, 230, 0.75);
-    font-size: clamp(7.5px, 2.6vw, 9.5px);
+    gap: 5px;
+    color: rgba(242, 240, 230, 0.85);
+    font-size: clamp(11px, 4vw, 15px);
     font-weight: 700;
-    max-width: 22vw;
+    max-width: 30vw;
     text-align: center;
-    line-height: 1.15;
+    line-height: 1.2;
   }
   .link-dot {
     width: 6px;
@@ -301,21 +334,24 @@
       <span class="serve-ball" aria-hidden="true">🎾</span>
       <span id="serverTag">—</span>
       <span class="serve-side" id="serverSide">–</span>
-      <span class="games-sep" aria-hidden="true">·</span>
-      <span class="games-chip">
-        <span class="games-chip-label">G</span>
-        <span id="games1">0</span>-<span id="games2">0</span>
-      </span>
+    </div>
+
+    <div class="progress-row">
+      Games <b id="gamesLead">0</b> de <b id="gamesTarget">4</b>
+      <span class="progress-sep" id="setsProgressSep" hidden>·</span>
+      <span id="setsProgress" hidden>Sets <b id="setsLead">0</b> de <b id="setsTarget">1</b></span>
     </div>
 
     <main class="team-row">
       <button id="btn1" class="pad pad--1" type="button" disabled>
         <span id="score1" class="pad-score pad-score--1">0</span>
         Time 1
+        <span class="pad-progress" id="padProgress1"></span>
       </button>
       <button id="btn2" class="pad pad--2" type="button" disabled>
         <span id="score2" class="pad-score pad-score--2">0</span>
         Time 2
+        <span class="pad-progress" id="padProgress2"></span>
       </button>
     </main>
 
@@ -369,8 +405,14 @@
   var linkLabel = document.getElementById('linkLabel');
   var score1El = document.getElementById('score1');
   var score2El = document.getElementById('score2');
-  var games1El = document.getElementById('games1');
-  var games2El = document.getElementById('games2');
+  var gamesLeadEl = document.getElementById('gamesLead');
+  var gamesTargetEl = document.getElementById('gamesTarget');
+  var setsProgressEl = document.getElementById('setsProgress');
+  var setsProgressSepEl = document.getElementById('setsProgressSep');
+  var setsLeadEl = document.getElementById('setsLead');
+  var setsTargetEl = document.getElementById('setsTarget');
+  var padProgress1El = document.getElementById('padProgress1');
+  var padProgress2El = document.getElementById('padProgress2');
   var alertRowEl = document.getElementById('alertRow');
   var serverTagEl = document.getElementById('serverTag');
   var serverSideEl = document.getElementById('serverSide');
@@ -422,6 +464,22 @@
     updatePinUI();
     document.body.classList.remove('linked');
   });
+
+  // Bolinhas (games do set atual) + raquetinhas (sets vencidos) no rodapé
+  // de cada botão. Sempre monta o número inteiro de posições (won + vazias)
+  // pro tamanho do botão nunca mudar dependendo do placar.
+  function renderPadProgress(container, won, gamesTarget, setsWon, setsTarget) {
+    var html = '';
+    for (var i = 0; i < gamesTarget; i++) {
+      html += '<span class="pad-dot' + (i < won ? ' is-won' : '') + '"></span>';
+    }
+    if (setsTarget > 1) {
+      for (var j = 0; j < setsTarget; j++) {
+        html += '<span class="pad-racket' + (j < setsWon ? ' is-won' : '') + '" aria-hidden="true">🎾</span>';
+      }
+    }
+    container.innerHTML = html;
+  }
 
   function setLinkUI(state, detail) {
     // state: 'connecting' | 'waiting' | 'live' | 'lost'
@@ -512,8 +570,26 @@
         peerConnected = true;
         score1El.textContent = msg.score1;
         score2El.textContent = msg.score2;
-        games1El.textContent = msg.games1 || '0';
-        games2El.textContent = msg.games2 || '0';
+
+        var g1 = parseInt(msg.games1, 10) || 0;
+        var g2 = parseInt(msg.games2, 10) || 0;
+        var gTarget = parseInt(msg.gamesTarget, 10) || 4;
+        var s1 = parseInt(msg.sets1, 10) || 0;
+        var s2 = parseInt(msg.sets2, 10) || 0;
+        var sTarget = parseInt(msg.setsTarget, 10) || 1;
+
+        gamesLeadEl.textContent = String(Math.max(g1, g2));
+        gamesTargetEl.textContent = String(gTarget);
+        var showSets = sTarget > 1;
+        setsProgressEl.hidden = !showSets;
+        setsProgressSepEl.hidden = !showSets;
+        if (showSets) {
+          setsLeadEl.textContent = String(Math.max(s1, s2));
+          setsTargetEl.textContent = String(sTarget);
+        }
+        renderPadProgress(padProgress1El, g1, gTarget, s1, sTarget);
+        renderPadProgress(padProgress2El, g2, gTarget, s2, sTarget);
+
         alertRowEl.textContent = msg.alertText || '';
         serverTagEl.textContent = msg.serverTag || '—';
         serverSideEl.textContent = msg.serverSide || '–';

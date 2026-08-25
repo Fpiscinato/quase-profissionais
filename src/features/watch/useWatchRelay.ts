@@ -14,6 +14,10 @@ export interface WatchStatePayload {
   score2: string
   games1: string
   games2: string
+  gamesTarget: string
+  sets1: string
+  sets2: string
+  setsTarget: string
   serverTag: string
   serverSide: 'D' | 'E' | null
   canUndo: boolean
@@ -28,8 +32,16 @@ interface WatchRelayParams {
   autoDim: boolean
   score1: string
   score2: string
+  /** Current-set games per team, for the little dots under each button. */
   games1: string
   games2: string
+  /** Games needed to win the set (dots to render per team). */
+  gamesTarget: string
+  /** Sets won per team, for the little rackets under each button. */
+  sets1: string
+  sets2: string
+  /** Sets needed to win the match ('1' means single-set — no rackets shown). */
+  setsTarget: string
   serverTag: string
   serverSide: 'D' | 'E' | null
   canUndo: boolean
@@ -48,6 +60,10 @@ function statePayload(p: WatchRelayParams): WatchStatePayload {
     score2: p.score2,
     games1: p.games1,
     games2: p.games2,
+    gamesTarget: p.gamesTarget,
+    sets1: p.sets1,
+    sets2: p.sets2,
+    setsTarget: p.setsTarget,
     serverTag: p.serverTag,
     serverSide: p.serverSide,
     canUndo: p.canUndo,
@@ -137,6 +153,10 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
     params.score2,
     params.games1,
     params.games2,
+    params.gamesTarget,
+    params.sets1,
+    params.sets2,
+    params.setsTarget,
     params.serverTag,
     params.serverSide,
     params.canUndo,

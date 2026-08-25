@@ -194,10 +194,14 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       ? String(state.tiebreak.points2)
       : pointLabel(state.currentGame.points2, state.currentGame.points1, config?.deuceMode ?? 'advantage')
     : '0'
-  // Same source the on-screen "Games: X de Y" row uses — final games once
-  // the match is over, current-set games otherwise.
+  // Same source the on-screen "Games: X de Y" / progress dots use — final
+  // games once the match is over, current-set games otherwise.
   const watchGames1 = state ? String(state.isMatchOver ? (state.finalGames1 ?? state.games1) : state.games1) : '0'
   const watchGames2 = state ? String(state.isMatchOver ? (state.finalGames2 ?? state.games2) : state.games2) : '0'
+  const watchGamesTarget = config ? String(config.gamesToWinSet) : '4'
+  const watchSets1 = state ? String(state.sets1) : '0'
+  const watchSets2 = state ? String(state.sets2) : '0'
+  const watchSetsTarget = config ? String(config.setsToWinMatch) : '1'
   // Same alerts the on-screen banner shows (troca de lado, tiebreak, set
   // encerrado...) — 'game' is too transient/minor to bother the watch with.
   const watchAlertText = alerts
@@ -211,6 +215,10 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     score2: watchScore2,
     games1: watchGames1,
     games2: watchGames2,
+    gamesTarget: watchGamesTarget,
+    sets1: watchSets1,
+    sets2: watchSets2,
+    setsTarget: watchSetsTarget,
     alertText: watchAlertText,
     serverTag: watchServeInfo ? playerTag(byId.get(watchServeInfo.serverId) ?? { id: '', name: '?', active: true }) : '',
     serverSide: watchServeInfo ? (watchServeInfo.side === 'Direita' ? 'D' : 'E') : null,
