@@ -93,6 +93,15 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
     }
     let cancelled = false
     let retryTimer: ReturnType<typeof setTimeout> | undefined
+    let watchdogTimer: ReturnType<typeof setInterval> | undefined
+    // Updated on every inbound message (the watch already pings every 5s on
+    // its own) — if nothing arrives for a while, the watch link is
+    // considered gone even without an explicit 'peer-left'. Needed because
+    // an abrupt close on the watch side (app killed/backgrounded rather
+    // than a clean tab close) doesn't always reach the relay as a proper
+    // close, so 'peer-left' can never come — this device-local timeout is
+    // what actually recovers the badge in that case.
+    let lastPeerMessageAt = 0
 
     function connect() {
       if (cancelled) return
@@ -101,7 +110,12 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
 
       ws.onopen = () => {
         setLinkOpen(true)
+        lastPeerMessageAt = Date.now()
         ws.send(JSON.stringify(statePayload(paramsRef.current)))
+        clearInterval(watchdogTimer)
+        watchdogTimer = setInterval(() => {
+          if (Date.now() - lastPeerMessageAt > 15000) setWatchConnected(false)
+        }, 3000)
       }
       ws.onmessage = (evt) => {
         let msg: { type?: string; team?: number } = {}
@@ -110,6 +124,7 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
         } catch {
           return
         }
+        lastPeerMessageAt = Date.now()
         if (msg.type === 'point' && (msg.team === 1 || msg.team === 2)) {
           paramsRef.current.onPoint(msg.team)
         } else if (msg.type === 'undo') {
@@ -127,6 +142,7 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
       ws.onclose = () => {
         setLinkOpen(false)
         setWatchConnected(false)
+        clearInterval(watchdogTimer)
         wsRef.current = null
         if (!cancelled) retryTimer = setTimeout(connect, 3000)
       }
@@ -137,6 +153,7 @@ export function useWatchRelay(params: WatchRelayParams): { linkOpen: boolean; wa
     return () => {
       cancelled = true
       clearTimeout(retryTimer)
+      clearInterval(watchdogTimer)
       wsRef.current?.close()
       wsRef.current = null
     }
