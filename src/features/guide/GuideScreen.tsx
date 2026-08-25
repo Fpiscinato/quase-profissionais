@@ -30,6 +30,10 @@ const CARDS = [
     title: 'Termos do tênis',
     body: 'Ace: ponto de saque que o adversário nem consegue tocar. Dupla falta: dois saques errados seguidos — ponto pro time adversário. Let: o saque toca a rede e cai no lugar certo — repete o saque, sem contar como falta. 40 a 40 é Deuce; quem ganha o ponto seguinte fica com a Vantagem (AD) e precisa vencer mais um ponto pra fechar o game (senão volta pro Deuce). Quebra de saque (break): vencer um game em que era o adversário quem estava sacando. Match point / set point: o ponto que, se vencido, decide a partida ou o set ali mesmo.',
   },
+  {
+    title: 'Jogando pelo relógio',
+    body: 'Dá pra marcar os pontos direto do pulso (Galaxy Watch), pareando em "Configurar relógio". Na tela do relógio, o ícone do app fica entre Desfazer e Repetir — tocar nele pede confirmação e troca o código, útil pra desparear ou trocar de aparelho. Sem conexão confirmada os botões ficam travados, pra não marcar ponto à toa. Detalhes completos em "Como usar".',
+  },
 ]
 
 export function GuideScreen() {
