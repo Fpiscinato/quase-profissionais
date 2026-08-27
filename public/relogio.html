@@ -342,6 +342,16 @@
     color: var(--gold);
   }
 
+  /* Relógio ficando só na tela de placar (sem status bar do sistema à
+     vista), o usuário não tem como ver a hora — mostra abaixo da versão. */
+  .clock-tag {
+    flex-shrink: 0;
+    text-align: center;
+    font-size: clamp(10px, 3.6vw, 13px);
+    font-variant-numeric: tabular-nums;
+    color: rgba(242, 240, 230, 0.55);
+  }
+
   #dimOverlay { position: fixed; inset: 0; z-index: 50; background: transparent; display: none; }
   body.dimmed #dimOverlay { display: block; }
 </style>
@@ -374,6 +384,7 @@
     <div class="link-banner" id="linkBanner">Sem conexão</div>
 
     <div class="build-tag" id="buildTagScore"></div>
+    <div class="clock-tag" id="clockTag"></div>
 
     <div class="serve-row">
       <span class="serve-ball" aria-hidden="true">🎾</span>
@@ -438,9 +449,22 @@
   // Bumpar esse número a cada mudança neste arquivo — é a forma de
   // conferir na hora se o navegador do relógio pegou o deploy mais novo.
   // Mesmo esquema do APP_VERSION (src/version.ts): 1.1 até 1.9, depois 2.0.
-  var BUILD_TAG = 'v1.5';
+  var BUILD_TAG = 'v1.6';
   document.getElementById('buildTagPin').textContent = BUILD_TAG;
   document.getElementById('buildTagScore').textContent = BUILD_TAG;
+
+  // Hora do próprio relógio (relógio fica preso no placar, sem barra de
+  // status do sistema visível) — só o horário local do aparelho, sem
+  // depender de rede/relay nenhum.
+  var clockTagEl = document.getElementById('clockTag');
+  function updateClock() {
+    var d = new Date();
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mm = String(d.getMinutes()).padStart(2, '0');
+    clockTagEl.textContent = hh + ':' + mm;
+  }
+  updateClock();
+  setInterval(updateClock, 15000);
 
   var STORAGE_KEY = 'quase-profissionais-watch-pin';
   var LANG_KEY = 'quase-profissionais-watch-lang';

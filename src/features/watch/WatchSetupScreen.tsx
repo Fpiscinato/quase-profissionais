@@ -108,6 +108,9 @@ export function WatchSetupScreen() {
             )}
           />
         </p>
+        <p className="mb-2 text-sm text-gold">
+          {t('O relógio só mostra o placar de verdade com a tela "Partida ao vivo" aberta aqui no app — nesta tela ele só pareia.')}
+        </p>
         <p className="text-xs text-cream/50">
           {t('Versão esperada do relógio:')} <span className="font-mono text-cream/70">{WATCH_BUILD_TAG}</span>
           <HelpHint

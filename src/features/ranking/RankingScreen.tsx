@@ -12,7 +12,7 @@ import { shareOrDownloadFile } from '../../lib/shareFile'
 import { useT } from '../../i18n/useT'
 import { HelpHint } from '../../ui/HelpHint'
 import { groupByMatchesPlayed } from './rankingFilter'
-import { RankingReport, type RankingReportProps } from './RankingReport'
+import { RankingReport, type MatchTimeEntry, type RankingReportProps } from './RankingReport'
 
 function toMatchResult(m: MatchRow): MatchResult {
   // Matches recorded before multi-set support don't have sets1/sets2 — a
@@ -87,6 +87,7 @@ export function RankingScreen() {
   const [mode, setMode] = useState<Mode>('individual')
   const [sameGamesOnly, setSameGamesOnly] = useState(false)
   const [tournamentOnly, setTournamentOnly] = useState(false)
+  const [includeMatchTimes, setIncludeMatchTimes] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const { byId } = usePlayers()
 
@@ -158,6 +159,27 @@ export function RankingScreen() {
       ...m,
       durationSeconds: m.durationSeconds ?? 0,
     }))
+    // Same order matches were actually played in, across whatever tournaments
+    // fall inside the current scope (dia/geral) — completedAt is absent only
+    // on matches from before the timer existed, which sort first.
+    const matchTimes: MatchTimeEntry[] | undefined = includeMatchTimes
+      ? [...matchesForTab]
+          .sort((a, b) => (a.completedAt ?? 0) - (b.completedAt ?? 0))
+          .map((m) => {
+            const isMultiSetMatch = (m.sets?.length ?? 0) > 1
+            return {
+              id: m.id,
+              team1: teamName(m.team1),
+              team2: teamName(m.team2),
+              scoreLabel: isMultiSetMatch ? `${m.sets1 ?? 0} × ${m.sets2 ?? 0}` : `${m.games1} × ${m.games2}`,
+              setsLine: isMultiSetMatch
+                ? (m.sets ?? []).map((s) => `${s.games1}-${s.games2}${s.superTiebreak ? '*' : ''}`).join(', ')
+                : undefined,
+              winnerTeam: m.winnerTeam,
+              durationSeconds: m.durationSeconds ?? 0,
+            }
+          })
+      : undefined
     setReportProps({
       scopeLabel:
         tab === 'dia'
@@ -173,6 +195,7 @@ export function RankingScreen() {
       teamTimes: computeTeamPlayTime(completedWithDuration).filter((t) => t.playerIds.length === 2),
       totalSeconds: totalPlaySeconds(completedWithDuration),
       matchCount: completedWithDuration.length,
+      matchTimes,
       playerName: name,
       teamName,
     })
@@ -279,6 +302,16 @@ export function RankingScreen() {
           onChange={() => setTournamentOnly((v) => !v)}
         />
         <span>{t('Somente partidas de torneio')}</span>
+      </label>
+
+      <label className="flex items-center gap-2 text-sm text-cream/80">
+        <input
+          type="checkbox"
+          className="h-5 w-5 accent-lime"
+          checked={includeMatchTimes}
+          onChange={() => setIncludeMatchTimes((v) => !v)}
+        />
+        <span>{t('Incluir tempo de cada partida ao compartilhar')}</span>
       </label>
 
       {reportProps && (

@@ -235,7 +235,10 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
     return <div className="p-4 text-cream/70">{t('Carregando partida...')}</div>
   }
 
-  const elapsedSeconds = match.startedAt ? Math.floor((now - match.startedAt) / 1000) : 0
+  // Freezes at match.matchEndedAt once the match is decided, instead of
+  // ticking with `now` until "Salvar partida" is tapped — see db.ts.
+  const elapsedEndReference = match.matchEndedAt ?? now
+  const elapsedSeconds = match.startedAt ? Math.floor((elapsedEndReference - match.startedAt) / 1000) : 0
   const courtSides = courtSidesForVoice ?? computeCourtSides(state, match.team1InitialSide ?? 'Esquerda')
   const layoutMode = settings?.layoutMode ?? 'auto'
   const isTablet = resolveEffectiveLayout(layoutMode, isWideViewport) === 'tablet'

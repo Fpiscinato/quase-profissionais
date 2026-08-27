@@ -6,6 +6,17 @@ import { useT } from '../../i18n/useT'
 import { APP_VERSION } from '../../version'
 import { groupByMatchesPlayed } from './rankingFilter'
 
+export interface MatchTimeEntry {
+  id: string
+  team1: string
+  team2: string
+  scoreLabel: string
+  /** Only set for a best-of-3/5 match — per-set score, same format as History's card. */
+  setsLine?: string
+  winnerTeam?: 'team1' | 'team2'
+  durationSeconds: number
+}
+
 export interface RankingReportProps {
   scopeLabel: string
   generatedAtLabel: string
@@ -18,6 +29,8 @@ export interface RankingReportProps {
   totalSeconds: number
   /** Number of matches behind totalSeconds — same scope (dia/geral) as everything else in the report — used for the "média por partida" line. */
   matchCount: number
+  /** Present only when "Incluir tempo de cada partida" was checked — one row per match, same scope as everything else. */
+  matchTimes?: MatchTimeEntry[]
   playerName: (id: PlayerId) => string
   teamName: (ids: PlayerId[]) => string
 }
@@ -130,6 +143,25 @@ export function RankingReport(props: RankingReportProps) {
           </>
         )}
       </div>
+
+      {props.matchTimes && props.matchTimes.length > 0 && (
+        <div className={card}>
+          <h2 className="mb-2 text-lg font-semibold">{t('Tempo de cada partida')}</h2>
+          <ul className="flex flex-col gap-2 text-sm">
+            {props.matchTimes.map((m) => (
+              <li key={m.id} className="flex items-center justify-between gap-3 border-b border-cream/10 pb-2">
+                <span>
+                  <span className={m.winnerTeam === 'team1' ? 'font-bold text-lime' : ''}>{m.team1}</span>{' '}
+                  {m.scoreLabel}{' '}
+                  <span className={m.winnerTeam === 'team2' ? 'font-bold text-lime' : ''}>{m.team2}</span>
+                  {m.setsLine && <span className="ml-2 text-xs text-sky">{t('Sets:')} {m.setsLine}</span>}
+                </span>
+                <span className="shrink-0 text-cream/70">{formatDuration(m.durationSeconds)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="text-xs text-cream/50">
         {t(

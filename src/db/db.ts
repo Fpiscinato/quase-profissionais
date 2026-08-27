@@ -88,6 +88,8 @@ export interface MatchRow {
   winnerTeam?: TeamSide
   status: MatchStatus
   startedAt?: number
+  /** Timestamp of the point that decided the match (state.isMatchOver went true) — freezes the on-screen timer and durationSeconds at that instant instead of counting up while the final score sits on screen waiting for "Salvar partida". Undefined while the match is still in progress. */
+  matchEndedAt?: number
   completedAt?: number
   durationSeconds?: number
 }
@@ -449,7 +451,7 @@ function tallyPoints(pointLog: PointLog): { points1: number; points2: number } {
 }
 
 /** Derives the sets/games/points/winner snapshot stored on the row from a point log. */
-function deriveMatchTally(pointLog: PointLog, config: MatchConfig) {
+function deriveMatchTally(pointLog: PointLog, config: MatchConfig, previousMatchEndedAt: number | undefined) {
   const state = computeMatchState(pointLog, config)
   const { points1, points2 } = tallyPoints(pointLog)
   // games1/games2 are the total across every completed set (a single-set
@@ -459,6 +461,10 @@ function deriveMatchTally(pointLog: PointLog, config: MatchConfig) {
   // decided" behavior.
   const games1 = state.completedSets.reduce((sum, s) => sum + s.games1, 0)
   const games2 = state.completedSets.reduce((sum, s) => sum + s.games2, 0)
+  // Stamped once, the instant the match becomes over — an undo that brings
+  // the match back into play clears it again so a later re-finish restamps
+  // fresh rather than reusing a stale timestamp from before the undo.
+  const matchEndedAt = state.isMatchOver ? (previousMatchEndedAt ?? Date.now()) : undefined
   return {
     pointLog,
     sets: state.completedSets,
@@ -469,6 +475,7 @@ function deriveMatchTally(pointLog: PointLog, config: MatchConfig) {
     points1,
     points2,
     winnerTeam: state.winner,
+    matchEndedAt,
   }
 }
 
@@ -499,7 +506,7 @@ export async function recordPoint(
     if (!match) throw new Error('Match not found')
     const newLog = applyPoint(match.pointLog, winner, config)
     if (newLog === match.pointLog) return
-    await db.matches.update(matchId, deriveMatchTally(newLog, config))
+    await db.matches.update(matchId, deriveMatchTally(newLog, config, match.matchEndedAt))
   })
 }
 
@@ -509,7 +516,7 @@ export async function undoLastPoint(matchId: string, config: MatchConfig): Promi
     const match = await db.matches.get(matchId)
     if (!match || match.pointLog.length === 0) return
     const newLog = match.pointLog.slice(0, -1)
-    await db.matches.update(matchId, deriveMatchTally(newLog, config))
+    await db.matches.update(matchId, deriveMatchTally(newLog, config, match.matchEndedAt))
   })
 }
 
@@ -519,9 +526,12 @@ export async function saveMatch(matchId: string): Promise<void> {
     const match = await db.matches.get(matchId)
     if (!match) throw new Error('Match not found')
     const completedAt = Date.now()
-    const durationSeconds = match.startedAt
-      ? Math.max(0, Math.round((completedAt - match.startedAt) / 1000))
-      : 0
+    // durationSeconds is measured up to the point that actually decided the
+    // match (matchEndedAt), not up to whenever "Salvar partida" happens to
+    // get tapped — otherwise reviewing the final score for a minute before
+    // saving would inflate the recorded duration by that minute.
+    const endedAt = match.matchEndedAt ?? completedAt
+    const durationSeconds = match.startedAt ? Math.max(0, Math.round((endedAt - match.startedAt) / 1000)) : 0
     await db.matches.update(matchId, { status: 'completed', completedAt, durationSeconds })
   })
   await updateSettings({ currentMatchId: undefined })
