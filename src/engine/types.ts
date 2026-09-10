@@ -5,7 +5,7 @@ export type TeamSide = 'team1' | 'team2'
 export type DeuceMode = 'advantage' | 'goldenPoint'
 
 export interface MatchConfig {
-  /** Games needed to win a set outright (before tiebreak kicks in at N-N). Default 4. */
+  /** Games needed to win a set outright (before the tiebreak kicks in). Default 4. */
   gamesToWinSet: number
   /** Points needed to win the tiebreak, win by 2. Default 7. */
   tiebreakPoints: number
@@ -15,6 +15,13 @@ export interface MatchConfig {
   setsToWinMatch: 1 | 2 | 3
   /** Points needed to win the deciding-set super-tiebreak (only used when setsToWinMatch > 1 and the match reaches a decider). Win by 2. Default 10. */
   superTiebreakPoints: number
+  /**
+   * Short set ("Torneio rápido" / Davis-Cup style): when true, the deciding
+   * game is skipped — a tie at gamesToWinSet-1 (e.g. 1-1 on a 2-game set)
+   * goes straight to a tiebreak, and the tiebreak winner takes the set with
+   * gamesToWinSet games (recorded N to N-1, e.g. 2-1). Default false.
+   */
+  tiebreakDecidingGame: boolean
 }
 
 export const DEFAULT_MATCH_CONFIG: MatchConfig = {
@@ -23,6 +30,7 @@ export const DEFAULT_MATCH_CONFIG: MatchConfig = {
   deuceMode: 'advantage',
   setsToWinMatch: 1,
   superTiebreakPoints: 10,
+  tiebreakDecidingGame: false,
 }
 
 /** One entry per point played, in chronological order, for the whole match (across every set). */

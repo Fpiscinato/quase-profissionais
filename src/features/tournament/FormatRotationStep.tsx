@@ -23,11 +23,12 @@ const SETS_TO_WIN_OPTIONS: { value: 1 | 2 | 3; label: string }[] = [
 ]
 
 interface FormatPreset {
-  id: 'rapido' | 'padrao'
+  id: 'torneio-rapido' | 'rapido' | 'padrao'
   label: string
   desc: string
   gamesToWinSet: number
   deuceMode: DeuceMode
+  tiebreakDecidingGame: boolean
 }
 
 interface Props {
@@ -45,6 +46,9 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   const [gamesToWinSet, setGamesToWinSet] = useState(DEFAULT_MATCH_CONFIG.gamesToWinSet)
   const [setsToWinMatch, setSetsToWinMatch] = useState(DEFAULT_MATCH_CONFIG.setsToWinMatch)
   const [deuceMode, setDeuceMode] = useState<DeuceMode>(DEFAULT_MATCH_CONFIG.deuceMode)
+  const [tiebreakDecidingGame, setTiebreakDecidingGame] = useState(
+    DEFAULT_MATCH_CONFIG.tiebreakDecidingGame,
+  )
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [manualRounds, setManualRounds] = useState<ScheduledMatch[] | null>(null)
   const [fixedPairs, setFixedPairs] = useState<[PlayerId, PlayerId][] | null>(null)
@@ -72,11 +76,20 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
 
   const FORMAT_PRESETS: FormatPreset[] = [
     {
+      id: 'torneio-rapido',
+      label: t('Torneio rápido'),
+      desc: t('2 games; se empatar 1-1, o 3º game vira tiebreak'),
+      gamesToWinSet: 2,
+      deuceMode: 'advantage',
+      tiebreakDecidingGame: true,
+    },
+    {
       id: 'rapido',
       label: t('Rápido'),
       desc: t('Set a 4 games, com vantagem (padrão)'),
       gamesToWinSet: 4,
       deuceMode: 'advantage',
+      tiebreakDecidingGame: false,
     },
     {
       id: 'padrao',
@@ -84,15 +97,21 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
       desc: t('Set a 6 games, tiebreak em 6-6, ponto de ouro'),
       gamesToWinSet: 6,
       deuceMode: 'goldenPoint',
+      tiebreakDecidingGame: false,
     },
   ]
   const applyPreset = (preset: FormatPreset) => {
     setGamesToWinSet(preset.gamesToWinSet)
     setSetsToWinMatch(1)
     setDeuceMode(preset.deuceMode)
+    setTiebreakDecidingGame(preset.tiebreakDecidingGame)
   }
   const activePresetId = FORMAT_PRESETS.find(
-    (p) => p.gamesToWinSet === gamesToWinSet && p.deuceMode === deuceMode && setsToWinMatch === 1,
+    (p) =>
+      p.gamesToWinSet === gamesToWinSet &&
+      p.deuceMode === deuceMode &&
+      setsToWinMatch === 1 &&
+      p.tiebreakDecidingGame === tiebreakDecidingGame,
   )?.id
 
   const handleConfirm = async () => {
@@ -107,7 +126,13 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         team2: r.team2,
         restingPlayerIds: r.restingPlayerIds,
       })),
-      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet, setsToWinMatch, deuceMode },
+      options: {
+        ...DEFAULT_MATCH_CONFIG,
+        gamesToWinSet,
+        setsToWinMatch,
+        deuceMode,
+        tiebreakDecidingGame,
+      },
       origin: 'torneio',
     })
     onCreated(tournament.id)
@@ -202,17 +227,17 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
           {t('Presets de formato')}
           <HelpHint
             text={t(
-              'Duas opções prontas que configuram games, tiebreak e deuce de uma vez. Os controles abaixo precisam de ajuste fino.',
+              'Opções prontas que configuram games, tiebreak e deuce de uma vez. Os controles abaixo precisam de ajuste fino.',
             )}
           />
         </span>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2">
           {FORMAT_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
               onClick={() => applyPreset(preset)}
-              className={`min-h-11 flex-1 rounded-lg border-2 px-3 py-2 text-left transition-colors ${
+              className={`min-h-11 w-full rounded-lg border-2 px-3 py-2 text-left transition-colors ${
                 activePresetId === preset.id
                   ? 'border-lime bg-lime/10'
                   : 'border-cream/20 text-cream/70'
@@ -299,6 +324,33 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             className={toggleButton(deuceMode === 'goldenPoint')}
           >
             {t('Ponto de ouro (no-ad)')}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          {t('Game decisivo vira tiebreak')}
+          <HelpHint
+            text={t(
+              'Se os games empatarem no topo menos um (ex.: 1-1 num set a 2, ou 3-3 a 4), o game que decidiria o set é pulado — vai direto pro tiebreak. Deixa as partidas bem mais rápidas.',
+            )}
+          />
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setTiebreakDecidingGame(true)}
+            className={toggleButton(tiebreakDecidingGame)}
+          >
+            {t('Ligado')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTiebreakDecidingGame(false)}
+            className={toggleButton(!tiebreakDecidingGame)}
+          >
+            {t('Desligado')}
           </button>
         </div>
       </div>

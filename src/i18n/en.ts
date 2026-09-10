@@ -77,8 +77,15 @@ export const EN: Record<string, string> = {
   'Descansa:': 'Resting:',
   vs: 'vs',
   'Presets de formato': 'Format presets',
-  'Duas opções prontas que configuram games, tiebreak e deuce de uma vez. Os controles abaixo precisam de ajuste fino.':
-    'Two pre-set options that configure games, tiebreak and deuce all at once. The controls below fine-tune them.',
+  'Opções prontas que configuram games, tiebreak e deuce de uma vez. Os controles abaixo precisam de ajuste fino.':
+    'Pre-set options that configure games, tiebreak and deuce all at once. The controls below fine-tune them.',
+  'Torneio rápido': 'Quick tournament',
+  '2 games; se empatar 1-1, o 3º game vira tiebreak': '2 games; if tied 1-1, the 3rd game becomes a tiebreak',
+  'Game decisivo vira tiebreak': 'Deciding game becomes a tiebreak',
+  'Se os games empatarem no topo menos um (ex.: 1-1 num set a 2, ou 3-3 a 4), o game que decidiria o set é pulado — vai direto pro tiebreak. Deixa as partidas bem mais rápidas.':
+    'If games tie at one less than the target (e.g. 1-1 in a 2-game set, or 3-3 in a 4-game one), the game that would decide the set is skipped — it goes straight to a tiebreak. Makes matches much faster.',
+  Ligado: 'On',
+  Desligado: 'Off',
   'Rápido': 'Quick',
   'Padrão reduzido': 'Reduced standard',
   'Set a 4 games, com vantagem (padrão)': 'Set to 4 games, with advantage (default)',
@@ -196,8 +203,8 @@ export const EN: Record<string, string> = {
   'Em "Jogadores", adicione o grupo (nome e pronto). Dá pra editar ou excluir depois — quem já tem partida registrada é arquivado, não some do histórico. Cadastrou o mesmo jogador duas vezes por engano (nomes diferentes)? A seção "Mesclar jogadores duplicados", mais abaixo na mesma tela, junta os dois num só sem perder o histórico de nenhum dos dois.':
     'In "Players", add your group (just a name). You can edit or remove them later — anyone with a recorded match gets archived instead, so history keeps working. Registered the same player twice by mistake (different names)? The "Merge duplicate players" section further down that same screen joins them into one without losing either one\'s history.',
   '2. Comece um torneio': '2. Start a tournament',
-  'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Toque em "Confirmar e criar torneio".':
-    'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose round by round, Fixed pairs locks partners in once and plays without mixing), how many games decide the set, and how many sets decide the match (1 set, best of 3, or best of 5 — at the deciding set of a best-of-3/5, a tie becomes a super-tiebreak up to 10 points instead of another full set). Tap "Confirm and create tournament".',
+  'No botão "Torneio": primeiro marque quem está jogando hoje, depois escolha o formato (Duplas ou Individual), a formação das duplas (Balanceado sorteia justo, Manual você escolhe rodada a rodada, Duplas fixas trava os parceiros uma vez só e joga sem misturar), quantos games decidem o set e quantos sets decidem a partida (1 set, melhor de 3 ou melhor de 5 — no set decisivo de uma melhor-de-3/5, empate vira super-tiebreak até 10 pontos em vez de mais um set cheio). Quer jogar rápido? Toque no preset "Torneio rápido": set a 2 games, e se empatar 1-1 o game decisivo vira um tiebreak. Toque em "Confirmar e criar torneio".':
+    'In the "Tournament" button: first check who is playing today, then choose the format (Doubles or Singles), how pairs are formed (Balanced draws fairly, Manual lets you choose round by round, Fixed pairs locks partners in once and plays without mixing), how many games decide the set, and how many sets decide the match (1 set, best of 3, or best of 5 — at the deciding set of a best-of-3/5, a tie becomes a super-tiebreak up to 10 points instead of another full set). In a hurry? Tap the "Quick tournament" preset: a 2-game set, and if it ties 1-1 the deciding game becomes a tiebreak. Tap "Confirm and create tournament".',
   '3. Ou pratique (sem torneio)': '3. Or practice (no tournament)',
   'Em "Praticar" você escolhe o formato, os jogadores dos dois times, quantos games decidem o set e quantos sets decidem a partida, sem passar pela disponibilidade ou rotação — direto pra configurar e jogar. Conta pro ranking e histórico normalmente, mas dá pra excluir essas partidas com o checkbox "Somente partidas de torneio" no Ranking e no Histórico, se quiser separar treino de valendo.':
     'In "Practice" you pick the format, the players on each side, how many games decide the set, and how many sets decide the match, skipping availability and rotation entirely — straight to setup and play. It counts toward ranking and history like any other match, but you can exclude these matches with the "Tournament matches only" checkbox on Ranking and History, if you want to keep practice separate from real matches.',

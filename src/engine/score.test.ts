@@ -186,13 +186,7 @@ describe('isSetOver', () => {
 })
 
 describe('6-game set ("Padrão reduzido", Section 12: gamesToWinSet=6)', () => {
-  const config6: MatchConfig = {
-    gamesToWinSet: 6,
-    tiebreakPoints: 7,
-    deuceMode: 'advantage',
-    setsToWinMatch: 1,
-    superTiebreakPoints: 10,
-  }
+  const config6: MatchConfig = { ...config, gamesToWinSet: 6 }
   const winGame = (side: TeamSide): TeamSide[] => [side, side, side, side]
 
   // 12 games alternating team1/team2 (4-0 each), so after game k, totalGamesCompleted === k.
@@ -250,13 +244,7 @@ describe('Deuce mode parameterization (Section 12) — wired end-to-end via comp
   })
 
   it('golden point mode: the same log ends the game immediately at 40-40 (no-ad)', () => {
-    const goldenPointConfig: MatchConfig = {
-      gamesToWinSet: 4,
-      tiebreakPoints: 7,
-      deuceMode: 'goldenPoint',
-      setsToWinMatch: 1,
-      superTiebreakPoints: 10,
-    }
+    const goldenPointConfig: MatchConfig = { ...config, deuceMode: 'goldenPoint' }
     const log = play([...toDeuce, 'team1'], goldenPointConfig)
     const state = computeMatchState(log, goldenPointConfig)
     expect(state.games1).toBe(1)
@@ -266,13 +254,7 @@ describe('Deuce mode parameterization (Section 12) — wired end-to-end via comp
 })
 
 describe('Multi-set matches (setsToWinMatch > 1)', () => {
-  const bestOf3: MatchConfig = {
-    gamesToWinSet: 4,
-    tiebreakPoints: 7,
-    deuceMode: 'advantage',
-    setsToWinMatch: 2,
-    superTiebreakPoints: 10,
-  }
+  const bestOf3: MatchConfig = { ...config, setsToWinMatch: 2 }
   const bestOf5: MatchConfig = { ...bestOf3, setsToWinMatch: 3 }
 
   // A team winning a set 4-0 straight, with default gamesToWinSet=4: 4 games
@@ -359,5 +341,93 @@ describe('Multi-set matches (setsToWinMatch > 1)', () => {
     expect(finalState.isMatchOver).toBe(true)
     expect(finalState.sets1).toBe(3)
     expect(finalState.completedSets).toHaveLength(4)
+  })
+})
+
+describe('Torneio rápido (tiebreakDecidingGame) — Section 12, "game decisivo vira tiebreak"', () => {
+  const winGame = (side: TeamSide): TeamSide[] => [side, side, side, side]
+  // First to 2 games; the deciding game is replaced by a tiebreak.
+  const torneioRapido: MatchConfig = {
+    ...config,
+    gamesToWinSet: 2,
+    tiebreakDecidingGame: true,
+  }
+
+  it('isTiebreak triggers at gamesToWinSet-1 (1-1), not at 2-2', () => {
+    expect(isTiebreak(1, 1, torneioRapido)).toBe(true)
+    expect(isTiebreak(0, 2, torneioRapido)).toBe(false)
+    // Flag off: a 2-game set still ties at 2-2 and never at 1-1.
+    const standard2: MatchConfig = { ...config, gamesToWinSet: 2 }
+    expect(isTiebreak(2, 2, standard2)).toBe(true)
+    expect(isTiebreak(1, 1, standard2)).toBe(false)
+  })
+
+  it('2-0 still wins the set outright, no tiebreak', () => {
+    const log = play([...winGame('team1'), ...winGame('team1')], torneioRapido)
+    const state = computeMatchState(log, torneioRapido)
+    expect(state.isMatchOver).toBe(true)
+    expect(state.winner).toBe('team1')
+    expect(state.finalGames1).toBe(2)
+    expect(state.finalGames2).toBe(0)
+    expect(state.isTiebreak).toBe(false)
+  })
+
+  it('at 1-1 it goes straight to a tiebreak instead of a full deciding game', () => {
+    const log = play([...winGame('team1'), ...winGame('team2')], torneioRapido)
+    const state = computeMatchState(log, torneioRapido)
+    expect(state.isMatchOver).toBe(false)
+    expect(state.isTiebreak).toBe(true)
+    expect(state.isDecidingSuperTiebreak).toBe(false)
+    expect(state.games1).toBe(1)
+    expect(state.games2).toBe(1)
+    expect(state.tiebreak).toEqual({ points1: 0, points2: 0 })
+  })
+
+  it('the tiebreak winner takes the set 2-1 (no extra "+1" game beyond the target)', () => {
+    const tiebreakPoints: TeamSide[] = ['team2', 'team1', 'team2', 'team2', 'team2', 'team2', 'team2', 'team2']
+    const log = play([...winGame('team1'), ...winGame('team2'), ...tiebreakPoints], torneioRapido)
+    const state = computeMatchState(log, torneioRapido)
+    expect(state.isMatchOver).toBe(true)
+    expect(state.winner).toBe('team2')
+    expect(state.finalGames1).toBe(1)
+    expect(state.finalGames2).toBe(2)
+    expect(state.completedSets[0]).toEqual({
+      games1: 1,
+      games2: 2,
+      winner: 'team2',
+      superTiebreak: false,
+    })
+  })
+
+  it('tiebreak still needs win-by-2 (7-6 does not close it, 8-6 does)', () => {
+    // Interleaved so each side reaches 7-6 without the other ever sitting at
+    // a 0- or 1-point deficit when someone hits 7 (which would end it early).
+    const sevenSix: TeamSide[] = []
+    for (let i = 0; i < 13; i++) sevenSix.push(i % 2 === 0 ? 'team1' : 'team2')
+    const log = play([...winGame('team1'), ...winGame('team2'), ...sevenSix], torneioRapido)
+    expect(computeMatchState(log, torneioRapido).isMatchOver).toBe(false)
+    const logWon = play(
+      [...winGame('team1'), ...winGame('team2'), ...sevenSix, 'team1', 'team1'],
+      torneioRapido,
+    )
+    expect(computeMatchState(logWon, torneioRapido).isMatchOver).toBe(true)
+  })
+
+  it('generalizes to any game count: with a 4-game set, the tiebreak hits at 3-3', () => {
+    const cfg4: MatchConfig = { ...config, gamesToWinSet: 4, tiebreakDecidingGame: true }
+    const toThreeAll = [
+      ...winGame('team1'),
+      ...winGame('team2'),
+      ...winGame('team1'),
+      ...winGame('team2'),
+      ...winGame('team1'),
+      ...winGame('team2'),
+    ]
+    const log = play(toThreeAll, cfg4)
+    const state = computeMatchState(log, cfg4)
+    expect(state.isMatchOver).toBe(false)
+    expect(state.isTiebreak).toBe(true)
+    expect(state.games1).toBe(3)
+    expect(state.games2).toBe(3)
   })
 })

@@ -55,9 +55,15 @@ export function isTiebreakOver(
   return raceOver(tiebreak.points1, tiebreak.points2, tiebreakPoints)
 }
 
-/** True once both sides have reached config.gamesToWinSet games (set-all). */
+/**
+ * True once a set tiebreak should start. Normal sets tie at gamesToWinSet
+ * (e.g. 4-4 on a 4-game set). With tiebreakDecidingGame ("Torneio rápido"),
+ * the deciding game is skipped instead: a tie at gamesToWinSet-1 (1-1 on a
+ * 2-game set) goes straight to the tiebreak, whose winner takes the set.
+ */
 export function isTiebreak(games1: number, games2: number, config: MatchConfig): boolean {
-  return games1 === config.gamesToWinSet && games2 === config.gamesToWinSet
+  const tieAt = config.tiebreakDecidingGame ? config.gamesToWinSet - 1 : config.gamesToWinSet
+  return games1 === tieAt && games2 === tieAt
 }
 
 export interface SetOverResult {
