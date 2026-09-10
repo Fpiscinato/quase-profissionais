@@ -239,7 +239,7 @@ export function RankingScreen() {
           {t('Ranking')}
           <HelpHint
             text={t(
-              'Classificação por Games Vencidos (GV) — quem fez mais games no total. Empate é decidido por Pontos Vencidos (PtV) e, se ainda empatar, por Partidas Vencidas (PV). SV/SP (sets vencidos/perdidos) aparecem na tabela, de partidas melhor-de-3/5, mas não entram no critério de desempate. O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
+              'SV/SP (sets vencidos/perdidos) aparecem na tabela, de partidas melhor-de-3/5, mas não entram no critério de desempate (veja a legenda abaixo da tabela). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.',
             )}
           />
         </h1>
