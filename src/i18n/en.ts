@@ -36,6 +36,7 @@ export const EN: Record<string, string> = {
   'Quem joga hoje?': "Who's playing today?",
   'Marque os jogadores disponíveis. Mínimo 2.': 'Check the available players. Minimum 2.',
   'Marque pelo menos mais um jogador.': 'Check at least one more player.',
+  Todos: 'All',
   Continuar: 'Continue',
   jogador: 'player',
   jogadores: 'players',
@@ -74,6 +75,18 @@ export const EN: Record<string, string> = {
   Voltar: 'Back',
   Rodada: 'Round',
   'Descansa:': 'Resting:',
+  vs: 'vs',
+  'Presets de formato': 'Format presets',
+  'Duas opções prontas que configuram games, tiebreak e deuce de uma vez. Os controles abaixo precisam de ajuste fino.':
+    'Two pre-set options that configure games, tiebreak and deuce all at once. The controls below fine-tune them.',
+  'Rápido': 'Quick',
+  'Padrão reduzido': 'Reduced standard',
+  'Set a 4 games, com vantagem (padrão)': 'Set to 4 games, with advantage (default)',
+  'Set a 6 games, tiebreak em 6-6, ponto de ouro': 'Set to 6 games, tiebreak at 6-6, golden point',
+  'Deuce / empate em 40-40': 'Deuce / tie at 40-40',
+  'Vantagem: depois do 40-40 precisa de 2 pontos seguidos pra fechar o game. Ponto de ouro (no-ad): no 40-40 o próximo ponto decide o game.':
+    'Advantage: after 40-40 you need 2 straight points to close the game. Golden point (no-ad): at 40-40 the next point decides the game.',
+  Vantagem: 'Advantage',
 
   // ManualRoundsEditor
   'Toque em 2 jogadores de cada rodada para formar o Time 1 — os outros 2 formam o Time 2. Quem descansa já está balanceado.':
@@ -277,6 +290,8 @@ export const EN: Record<string, string> = {
   'Cancelando...': 'Cancelling...',
   'Sim, cancelar partida': 'Yes, cancel match',
   'Não é possível cancelar uma partida já concluída.': 'A match that has already been completed cannot be cancelled.',
+  'Não foi possível salvar a partida. Tente de novo.': 'Could not save the match. Try again.',
+  'Não foi possível cancelar a partida. Tente de novo.': 'Could not cancel the match. Try again.',
 
   // alerts.ts (ALERT_LABELS)
   'Set encerrado': 'Set over',

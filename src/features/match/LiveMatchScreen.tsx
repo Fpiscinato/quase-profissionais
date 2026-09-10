@@ -87,8 +87,10 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   const settings = useSettings()
   const [now, setNow] = useState(() => Date.now())
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState(false)
 
   useEffect(() => {
     startMatch(matchId)
@@ -163,8 +165,14 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   // call from useKeyCommands below) before the loading guard.
   const handleSave = async () => {
     setSaving(true)
-    await saveMatch(matchId)
-    onSaved()
+    setSaveError(false)
+    try {
+      await saveMatch(matchId)
+      onSaved()
+    } catch {
+      setSaving(false)
+      setSaveError(true)
+    }
   }
 
   useKeyCommands({
@@ -258,8 +266,14 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
 
   const handleCancel = async () => {
     setCancelling(true)
-    await cancelMatch(matchId)
-    onCancelled()
+    setCancelError(false)
+    try {
+      await cancelMatch(matchId)
+      onCancelled()
+    } catch {
+      setCancelling(false)
+      setCancelError(true)
+    }
   }
 
   // Team cards and point buttons are laid out left-to-right by physical
@@ -369,6 +383,8 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
   // alert appears/disappears or a second one joins it mid-match.
   const alertsBlock = (
     <div
+      role="status"
+      aria-live="polite"
       className={`flex flex-col justify-center gap-1 ${isRoomyTablet ? 'min-h-[160px]' : 'min-h-[88px]'}`}
     >
       {alerts.map((alert) =>
@@ -484,6 +500,11 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
       >
         {saving ? t('Salvando...') : t('Salvar partida')}
       </button>
+      {saveError && (
+        <p className={`text-center text-sm text-destructive ${isRoomyTablet ? 'mt-2' : 'mt-1'}`}>
+          {t('Não foi possível salvar a partida. Tente de novo.')}
+        </p>
+      )}
     </div>
   )
 
@@ -639,6 +660,7 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
               {cancelling ? t('Cancelando...') : t('Sim, cancelar partida')}
             </button>
           </div>
+          {cancelError && <p className="text-sm text-destructive">{t('Não foi possível cancelar a partida. Tente de novo.')}</p>}
         </div>
       ) : (
         <div className="flex gap-2">
@@ -650,7 +672,14 @@ export function LiveMatchScreen({ matchId, onSaved, onCancelled }: Props) {
           >
             {t('Desfazer')}
           </button>
-          <button type="button" className={secondaryButton} onClick={() => setConfirmingCancel(true)}>
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => {
+              setCancelError(false)
+              setConfirmingCancel(true)
+            }}
+          >
             {t('Cancelar partida')}
           </button>
         </div>

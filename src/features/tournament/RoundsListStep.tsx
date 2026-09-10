@@ -195,6 +195,11 @@ export function RoundsListStep({ tournamentId, onOpenMatch, onExit }: Props) {
                 <div className="mt-2 text-sm">
                   {teamName(match!.team1)} {match!.games1} × {match!.games2}{' '}
                   {teamName(match!.team2)}
+                  {(tournament.options?.setsToWinMatch ?? 1) > 1 && (
+                    <div className="text-xs text-sky">
+                      {t('Sets:')} {match!.sets1 ?? 0} × {match!.sets2 ?? 0}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

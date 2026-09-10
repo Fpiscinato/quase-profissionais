@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import App from '../../App'
 import { createTournament, db, ensurePlayersSeeded } from '../../db/db'
 
@@ -94,8 +94,12 @@ describe('Remote control team-fixing (MatchSetupStep), wired to Dexie', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Configurar partida' }))
     await screen.findByText(/Configurar partida — Rodada 1/)
 
-    const select = await screen.findByRole('combobox')
-    expect((select as HTMLSelectElement).value).toBe(c)
+    // Wait for the remembered holder to actually reflect in the combobox —
+    // it loads via useLiveQuery, after the <select> renders with its default
+    // "none", so findByRole alone could catch the element before the
+    // settings query resolves and flake here.
+    const select = screen.getByRole('combobox')
+    await waitFor(() => expect((select as HTMLSelectElement).value).toBe(c))
     expect(screen.getByRole('button', { name: 'Time dele: Time 1' })).toHaveClass('border-lime')
     // Already on team1 — the header must NOT show a swap.
     expect(screen.getByText(/Time 1:/).closest('p')!.textContent).toMatch(

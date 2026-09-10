@@ -32,6 +32,22 @@ export function AvailabilityStep({ onContinue }: Props) {
       </div>
 
       <div className="flex flex-col gap-2">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            className="min-h-9 rounded-lg border border-cream/20 px-3 text-xs font-semibold text-cream/70 active:bg-white/10"
+            onClick={() => setSelected(new Set(players.map((p) => p.id)))}
+          >
+            {t('Todos')}
+          </button>
+          <button
+            type="button"
+            className="min-h-9 rounded-lg border border-cream/20 px-3 text-xs font-semibold text-cream/70 active:bg-white/10"
+            onClick={() => setSelected(new Set())}
+          >
+            {t('Nenhum')}
+          </button>
+        </div>
         {players.map((player) => (
           <label key={player.id} className={labelClass}>
             <input

@@ -5,7 +5,7 @@ import {
   generateSinglesRotation,
 } from '../../engine/schedule'
 import { DEFAULT_MATCH_CONFIG } from '../../engine/types'
-import type { PlayerId, ScheduledMatch } from '../../engine/types'
+import type { DeuceMode, PlayerId, ScheduledMatch } from '../../engine/types'
 import { usePlayers } from '../../db/hooks'
 import { createTournament, type TeamFormationMode, type TournamentFormat } from '../../db/db'
 import { shuffle } from '../../lib/shuffle'
@@ -22,6 +22,14 @@ const SETS_TO_WIN_OPTIONS: { value: 1 | 2 | 3; label: string }[] = [
   { value: 3, label: 'Melhor de 5 (Grand Slam)' },
 ]
 
+interface FormatPreset {
+  id: 'rapido' | 'padrao'
+  label: string
+  desc: string
+  gamesToWinSet: number
+  deuceMode: DeuceMode
+}
+
 interface Props {
   availablePlayerIds: PlayerId[]
   onCreated: (tournamentId: string) => void
@@ -36,6 +44,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
   const [mode, setMode] = useState<TeamFormationMode>('balanced')
   const [gamesToWinSet, setGamesToWinSet] = useState(DEFAULT_MATCH_CONFIG.gamesToWinSet)
   const [setsToWinMatch, setSetsToWinMatch] = useState(DEFAULT_MATCH_CONFIG.setsToWinMatch)
+  const [deuceMode, setDeuceMode] = useState<DeuceMode>(DEFAULT_MATCH_CONFIG.deuceMode)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [manualRounds, setManualRounds] = useState<ScheduledMatch[] | null>(null)
   const [fixedPairs, setFixedPairs] = useState<[PlayerId, PlayerId][] | null>(null)
@@ -61,6 +70,31 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
     mode === 'balanced' ? balancedRounds : mode === 'fixed' ? fixedRounds : manualRounds
   const canConfirm = !!finalRounds && finalRounds.length > 0 && !saving
 
+  const FORMAT_PRESETS: FormatPreset[] = [
+    {
+      id: 'rapido',
+      label: t('Rápido'),
+      desc: t('Set a 4 games, com vantagem (padrão)'),
+      gamesToWinSet: 4,
+      deuceMode: 'advantage',
+    },
+    {
+      id: 'padrao',
+      label: t('Padrão reduzido'),
+      desc: t('Set a 6 games, tiebreak em 6-6, ponto de ouro'),
+      gamesToWinSet: 6,
+      deuceMode: 'goldenPoint',
+    },
+  ]
+  const applyPreset = (preset: FormatPreset) => {
+    setGamesToWinSet(preset.gamesToWinSet)
+    setSetsToWinMatch(1)
+    setDeuceMode(preset.deuceMode)
+  }
+  const activePresetId = FORMAT_PRESETS.find(
+    (p) => p.gamesToWinSet === gamesToWinSet && p.deuceMode === deuceMode && setsToWinMatch === 1,
+  )?.id
+
   const handleConfirm = async () => {
     if (!finalRounds) return
     setSaving(true)
@@ -73,7 +107,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         team2: r.team2,
         restingPlayerIds: r.restingPlayerIds,
       })),
-      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet, setsToWinMatch },
+      options: { ...DEFAULT_MATCH_CONFIG, gamesToWinSet, setsToWinMatch, deuceMode },
       origin: 'torneio',
     })
     onCreated(tournament.id)
@@ -165,6 +199,34 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-cream/80">
+          {t('Presets de formato')}
+          <HelpHint
+            text={t(
+              'Duas opções prontas que configuram games, tiebreak e deuce de uma vez. Os controles abaixo precisam de ajuste fino.',
+            )}
+          />
+        </span>
+        <div className="flex gap-2">
+          {FORMAT_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => applyPreset(preset)}
+              className={`min-h-11 flex-1 rounded-lg border-2 px-3 py-2 text-left transition-colors ${
+                activePresetId === preset.id
+                  ? 'border-lime bg-lime/10'
+                  : 'border-cream/20 text-cream/70'
+              }`}
+            >
+              <span className="block font-semibold">{preset.label}</span>
+              <span className="mt-0.5 block text-[11px] leading-tight opacity-80">{preset.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
           {t('Games para vencer o set')}
           <HelpHint
             text={t(
@@ -214,6 +276,33 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         </div>
       </div>
 
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-cream/80">
+          {t('Deuce / empate em 40-40')}
+          <HelpHint
+            text={t(
+              'Vantagem: depois do 40-40 precisa de 2 pontos seguidos pra fechar o game. Ponto de ouro (no-ad): no 40-40 o próximo ponto decide o game.',
+            )}
+          />
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setDeuceMode('advantage')}
+            className={toggleButton(deuceMode === 'advantage')}
+          >
+            {t('Vantagem')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeuceMode('goldenPoint')}
+            className={toggleButton(deuceMode === 'goldenPoint')}
+          >
+            {t('Ponto de ouro (no-ad)')}
+          </button>
+        </div>
+      </div>
+
       {format === 'individual' && (
         <p className="text-sm text-cream/70">
           {t('No Individual todo mundo joga contra todo mundo uma vez — não há escolha de duplas.')}
@@ -224,14 +313,14 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
         <div className="flex flex-col gap-2">
           {balancedRounds.map((round) => (
             <div key={round.roundIndex} className={card}>
-              <div className="mb-1 text-xs text-cream/60">Rodada {round.roundIndex + 1}</div>
+              <div className="mb-1 text-xs text-cream/60">{t('Rodada')} {round.roundIndex + 1}</div>
               <div className="font-semibold">
-                {teamName(round.team1)} <span className="text-cream/50">vs</span>{' '}
+                {teamName(round.team1)} <span className="text-cream/50">{t('vs')}</span>{' '}
                 {teamName(round.team2)}
               </div>
               {round.restingPlayerIds.length > 0 && (
                 <div className="text-xs text-cream/60">
-                  Descansa:{' '}
+                  {t('Descansa:')}{' '}
                   {round.restingPlayerIds
                     .map(name)
                     .sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -245,7 +334,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
             className={secondaryButton}
             onClick={() => setShuffleSeed((s) => s + 1)}
           >
-            Sortear novamente
+{t('Sortear novamente')}
           </button>
         </div>
       )}
@@ -268,7 +357,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
 
       <div className="mt-2 flex gap-2">
         <button type="button" className={secondaryButton} onClick={onBack}>
-          Voltar
+          {t('Voltar')}
         </button>
         <button
           type="button"
@@ -276,7 +365,7 @@ export function FormatRotationStep({ availablePlayerIds, onCreated, onBack }: Pr
           disabled={!canConfirm}
           onClick={handleConfirm}
         >
-          {saving ? 'Criando...' : 'Confirmar e criar torneio'}
+          {saving ? t('Criando...') : t('Confirmar e criar torneio')}
         </button>
       </div>
     </div>
