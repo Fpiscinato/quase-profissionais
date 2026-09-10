@@ -11,8 +11,8 @@ const baseProps: RankingReportProps = {
   scopeLabel: 'Ranking geral',
   generatedAtLabel: '13/08/2026',
   individualStandings: [
-    { playerId: 'p1', matchesPlayed: 2, matchesWon: 2, setsWon: 0, setsLost: 0, gamesWon: 8, gamesLost: 3, pointsWon: 33, pointsLost: 20 },
-    { playerId: 'p2', matchesPlayed: 2, matchesWon: 0, setsWon: 0, setsLost: 0, gamesWon: 3, gamesLost: 8, pointsWon: 20, pointsLost: 33 },
+    { playerId: 'p1', matchesPlayed: 2, matchesWon: 2, setsWon: 0, setsLost: 0, gamesWon: 8, gamesLost: 3, pointsWon: 33, pointsLost: 20, winRate: 100 },
+    { playerId: 'p2', matchesPlayed: 2, matchesWon: 0, setsWon: 0, setsLost: 0, gamesWon: 3, gamesLost: 8, pointsWon: 20, pointsLost: 33, winRate: 0 },
   ],
   teamStandings: [
     {
@@ -23,6 +23,7 @@ const baseProps: RankingReportProps = {
       gamesLost: 1,
       pointsWon: 16,
       pointsLost: 8,
+      winRate: 100,
     },
   ],
   groupByMatches: false,
@@ -56,8 +57,8 @@ describe('RankingReport (pure presentational component)', () => {
       ...baseProps,
       groupByMatches: true,
       individualStandings: [
-        { playerId: 'p1', matchesPlayed: 2, matchesWon: 2, setsWon: 0, setsLost: 0, gamesWon: 8, gamesLost: 3, pointsWon: 33, pointsLost: 20 },
-        { playerId: 'p2', matchesPlayed: 1, matchesWon: 0, setsWon: 0, setsLost: 0, gamesWon: 3, gamesLost: 8, pointsWon: 20, pointsLost: 33 },
+        { playerId: 'p1', matchesPlayed: 2, matchesWon: 2, setsWon: 0, setsLost: 0, gamesWon: 8, gamesLost: 3, pointsWon: 33, pointsLost: 20, winRate: 100 },
+        { playerId: 'p2', matchesPlayed: 1, matchesWon: 0, setsWon: 0, setsLost: 0, gamesWon: 3, gamesLost: 8, pointsWon: 20, pointsLost: 33, winRate: 0 },
       ],
     }
     render(<RankingReport {...props} />)

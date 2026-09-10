@@ -6,6 +6,7 @@ export type View =
   | 'partida-avulsa'
   | 'jogadores'
   | 'ranking'
+  | 'confronto'
   | 'historico'
   | 'guia'
   | 'manual'
@@ -22,6 +23,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { view: 'jogadores', label: 'Jogadores', hint: 'Adicionar, editar, remover' },
   { view: 'ranking', label: 'Ranking', hint: 'Do dia e geral' },
+  { view: 'confronto', label: 'Confrontos', hint: 'Quem ganha de quem' },
   { view: 'historico', label: 'Histórico', hint: 'Torneios e partidas anteriores' },
   { view: 'guia', label: 'Como jogar', hint: 'Regras básicas em 6 cards' },
   { view: 'manual', label: 'Como usar', hint: 'Passo a passo do app' },

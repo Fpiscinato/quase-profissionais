@@ -125,6 +125,14 @@ export interface PlayerStanding {
   pointsLost: number
   setsWon: number
   setsLost: number
+  /** Win rate percentage (0-100), derived from matchesWon / matchesPlayed. */
+  winRate: number
+}
+
+export interface WinStreak {
+  /** 'W' for wins, 'L' for losses. */
+  type: 'W' | 'L'
+  count: number
 }
 
 /**
@@ -144,4 +152,6 @@ export interface TeamStanding {
   pointsLost: number
   setsWon: number
   setsLost: number
+  /** Win rate percentage (0-100), derived from matchesWon / matchesPlayed. */
+  winRate: number
 }

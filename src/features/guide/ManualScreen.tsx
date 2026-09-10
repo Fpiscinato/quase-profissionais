@@ -24,7 +24,7 @@ const SECTIONS = [
   },
   {
     title: '6. Ranking',
-    body: '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla — as colunas SV/SP mostram sets vencidos/perdidos ao lado de games e pontos. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.',
+    body: '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla — além de games e pontos, cada linha mostra o aproveitamento de vitórias (A%) e a sequência atual (Seq): "3V" de três vitórias seguidas, "2D" de duas derrotas. As colunas SV/SP mostram sets vencidos/perdidos. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela. "Confrontos" (na tela inicial) mostra quem leva a melhor quando dois jogadores se enfrentam — escolha dois nomes e veja o retrospecto entre eles.',
   },
   {
     title: '7. Histórico',

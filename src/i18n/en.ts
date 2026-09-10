@@ -23,6 +23,8 @@ export const EN: Record<string, string> = {
   'Adicionar, editar, remover': 'Add, edit, remove',
   Ranking: 'Ranking',
   'Do dia e geral': "Today's and overall",
+  Confrontos: 'Head to head',
+  'Quem ganha de quem': 'Who beats whom',
   Histórico: 'History',
   'Torneios e partidas anteriores': 'Previous tournaments and matches',
   'Como jogar': 'How to play',
@@ -215,8 +217,8 @@ export const EN: Record<string, string> = {
   'Os botões grandes somam ponto pra cada time. A tela mostra quem saca, de que lado, e avisa na hora de trocar de lado ou de fechar o set. No topo, ao lado do cronômetro, o placar "Games: X de Y" e duas fileiras de caixinhas (uma por time, na cor de cada um) mostram quantos games cada time já ganhou e quantos faltam pra fechar o set. O histórico de lado da quadra (as letras D/E embaixo do nome do time) mostra só as últimas 5 trocas, pra não estourar a tela em sets que vão pro tiebreak longo. Numa partida melhor-de-3/5, uma segunda fileira azul mostra os sets ganhos por cada time, e um aviso "Set encerrado" aparece entre um set e outro; o set decisivo (empate 1-1 ou 2-2) vira um super-tiebreak até 10 pontos. Errou o toque? "Desfazer" volta um ponto. No final, "Salvar partida" grava o resultado.':
     'The big buttons add a point for each team. The screen shows who is serving, from which side, and alerts you when to change ends or when the set closes. At the top, next to the timer, the "Games: X of Y" label and two rows of boxes (one per team, in each team\'s color) show how many games each team has won and how many are left to close the set. The court-side history (the D/E letters under the team name) only shows the last 5 changes, so it doesn\'t overflow the screen on sets that go to a long tiebreak. In a best-of-3/5 match, a second blue row shows sets won by each team, and a "Set over" banner appears between sets; the deciding set (a 1-1 or 2-2 tie) becomes a super-tiebreak up to 10 points. Mistapped? "Undo" steps back one point. At the end, "Save match" records the result.',
   '6. Ranking': '6. Ranking',
-  '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla — as colunas SV/SP mostram sets vencidos/perdidos ao lado de games e pontos. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela.':
-    '"Ranking" shows the day\'s standings (with a picker to choose another date) and the overall ranking (every tournament ever played), both individual and by pair — the SV/SP columns show sets won/lost alongside games and points. Check "Tournament matches only" to leave out matches made in "Practice". The "Compartilhar" button generates an image with both rankings, a legend explaining each column, and the time played — always matching whichever scope (day or overall) is selected on screen.',
+  '"Ranking" mostra a classificação do dia (com seletor pra escolher outra data) e o ranking geral (todos os torneios já jogados), tanto individual quanto por dupla — além de games e pontos, cada linha mostra o aproveitamento de vitórias (A%) e a sequência atual (Seq): "3V" de três vitórias seguidas, "2D" de duas derrotas. As colunas SV/SP mostram sets vencidos/perdidos. Marque "Somente partidas de torneio" pra deixar de fora as partidas feitas em "Praticar". O botão "Compartilhar" gera uma imagem com os dois rankings, a legenda explicando cada coluna e o tempo jogado — sempre do mesmo recorte (dia ou geral) que está selecionado na tela. "Confrontos" (na tela inicial) mostra quem leva a melhor quando dois jogadores se enfrentam — escolha dois nomes e veja o retrospecto entre eles.':
+    '"Ranking" shows the day\'s standings (with a picker to choose another date) and the overall ranking (every tournament ever played), both individual and by pair — besides games and points, each row shows the win rate (W%) and the current streak: "3V" for three wins in a row, "2D" for two losses. The SW/SL columns show sets won/lost. Check "Tournament matches only" to leave out matches made in "Practice". The "Share" button generates an image with both rankings, a legend explaining each column, and time played — always matching whichever scope (day or overall) is selected on screen. "Head to head" (on the home screen) shows who comes out on top when two players face each other — pick two names and see their matchup record.',
   '7. Histórico': '7. History',
   '"Histórico" guarda todos os torneios e partidas anteriores, agrupados por dia — cada dia mostra quantas partidas teve e o tempo total jogado naquele dia, além do placar, duração e tempo total jogado por jogador e por dupla no card do topo. Numa partida melhor-de-3/5, o placar de cada partida mostra os sets (com o resultado de cada um) além do total de games. O mesmo checkbox "Somente partidas de torneio" também funciona aqui.':
     '"History" keeps every past tournament and match, grouped by day — each day shows how many matches it had and the total time played that day, plus score, duration and total time played per player and per pair in the card at the top. In a best-of-3/5 match, each match\'s placar shows the sets (with each one\'s result) alongside the total games. The same "Tournament matches only" checkbox also works here.',
@@ -349,6 +351,22 @@ export const EN: Record<string, string> = {
   'Ranking geral': 'Overall ranking',
   'Do dia': 'Today',
   Geral: 'Overall',
+  'A%': 'W%',
+  Seq: 'Streak',
+  'Confronto direto': 'Head to head',
+  'Escolha dois jogadores pra ver quem leva a melhor quando se enfrentam. Só contam partidas em que estiveram em lados opostos.':
+    'Pick two players to see who comes out on top when they face each other. Only matches where they were on opposite sides count.',
+  'Jogador 1': 'Player 1',
+  'Jogador 2': 'Player 2',
+  'Selecionar jogador 1...': 'Select player 1...',
+  'Selecionar jogador 2...': 'Select player 2...',
+  'Escolha dois jogadores pra começar.': 'Pick two players to start.',
+  'Esses dois nunca se enfrentaram.': 'These two have never faced each other.',
+  'Nenhuma partida registrada entre esses dois ainda.': 'No matches recorded between these two yet.',
+  Empate: 'Draw',
+  'Conf.': 'H2H',
+  'Histórico dos confrontos': 'Matchup history',
+  'Venceu:': 'Winner:',
   'Nenhuma partida concluída ainda.': 'No completed matches yet.',
   'Nem todos jogaram o mesmo número de partidas.': 'Not everyone has played the same number of matches.',
   'Agrupar por número de partidas jogadas': 'Group by number of matches played',
@@ -367,8 +385,8 @@ export const EN: Record<string, string> = {
   GP: 'GL',
   PtV: 'PW',
   PtP: 'PL',
-  'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos':
-    'Sorted by GW, tiebroken by PW and then MW. MP matches played · MW matches won · SW sets won · SL sets lost · GW games won · GL games lost · PW points won · PL points lost',
+  'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · A% aproveitamento de vitórias · Seq sequência atual de vitórias (V) ou derrotas (D) · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos':
+    'Sorted by GW, tiebroken by PW and then MW. MP matches played · MW matches won · W% win rate · Streak current run of wins (V/W) or losses (D/L) · SW sets won · SL sets lost · GW games won · GL games lost · PW points won · PL points lost',
   'Duplas: só conta quem jogou junto na mesma dupla.': 'Pairs: only counts those who played together as the same pair.',
   'SV/SP (sets vencidos/perdidos) aparecem na tabela, de partidas melhor-de-3/5, mas não entram no critério de desempate (veja a legenda abaixo da tabela). O critério é o mesmo pro ranking Individual e por Dupla; a diferença é só quem entra na conta: Individual credita cada jogador separadamente, Dupla só soma quando os dois jogaram juntos como a mesma dupla.':
     'SV/SP (sets won/lost) show in the table, from best-of-3/5 matches, but do not factor into the tiebreak criteria (see the legend below the table). The criteria are the same for the Individual and Pair rankings; the only difference is who gets credited: Individual credits each player separately, Pair only counts it when the two played together as that exact pair.',

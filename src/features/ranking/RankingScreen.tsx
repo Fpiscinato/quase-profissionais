@@ -4,7 +4,7 @@ import { toBlob } from 'html-to-image'
 import { db } from '../../db/db'
 import type { MatchRow } from '../../db/db'
 import { usePlayers } from '../../db/hooks'
-import { computeStandings, computeTeamStandings } from '../../engine/ranking'
+import { computeStandings, computeTeamStandings, computeCurrentStreaks, computeTeamStreaks } from '../../engine/ranking'
 import { computePlayerPlayTime, computeTeamPlayTime, totalPlaySeconds } from '../../engine/stats'
 import type { MatchResult, PlayerId } from '../../engine/types'
 import { formatDate } from '../../lib/format'
@@ -81,6 +81,19 @@ function ShareIcon() {
 // during a horizontal scroll, which read as "numbers on top of the names".
 const rowBg = (i: number) => (i % 2 === 1 ? 'bg-[#1a2650]' : 'bg-navy')
 
+// Compact streak cell: "3V" (lime) for consecutive wins, "2D" (red) for
+// losses, "—" when the player has no matches in scope. Reads at a glance
+// inside the dense ranking table without a full sentence.
+function streakCell(label: string | undefined, cell: string) {
+  if (!label) return <td className={`${cell} py-1 pr-2 text-right text-cream/40`}>—</td>
+  const isWin = label.endsWith('V')
+  return (
+    <td className={`${cell} py-1 pr-2 text-right font-bold ${isWin ? 'text-lime' : 'text-destructive'}`}>
+      {label}
+    </td>
+  )
+}
+
 export function RankingScreen() {
   const { t } = useT()
   const [tab, setTab] = useState<Tab>('dia')
@@ -128,6 +141,15 @@ export function RankingScreen() {
       ? allCompletedMatches.filter((m) => tournamentDateById.get(m.tournamentId) === effectiveDate)
       : allCompletedMatches
   const matchResults = matchesForTab.map(toMatchResult)
+
+  // Streaks follow chronological order (oldest first) so the streak counts
+  // from the most recent match backwards. Matches without a completion
+  // timestamp (legacy rows) sort first.
+  const chronologicalMatchResults = [...matchesForTab]
+    .sort((a, b) => (a.completedAt ?? 0) - (b.completedAt ?? 0))
+    .map(toMatchResult)
+  const streaks = computeCurrentStreaks(chronologicalMatchResults)
+  const teamStreaks = computeTeamStreaks(chronologicalMatchResults)
 
   const name = (id: PlayerId) => byId.get(id)?.name ?? '?'
   const teamName = (ids: PlayerId[]) =>
@@ -198,6 +220,8 @@ export function RankingScreen() {
       matchTimes,
       playerName: name,
       teamName,
+      playerStreaks: streaks,
+      teamStreaks,
     })
   }
 
@@ -373,6 +397,8 @@ export function RankingScreen() {
                     </th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PJ')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('PV')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-lime">{t('A%')}</th>
+                    <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('Seq')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-sky">{t('SV')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-sky">{t('SP')}</th>
                     <th className="py-1 pr-2 text-right font-normal text-cream/60">{t('GV')}</th>
@@ -386,6 +412,7 @@ export function RankingScreen() {
                     ? sectionsFor(individualStandings, sameGamesOnly).flatMap((section) => {
                         const rows = section.rows.map((s, i) => {
                           const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
+                          const streak = streaks.get(s.playerId)
                           return (
                             <tr key={s.playerId}>
                               <td className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>{i + 1}</td>
@@ -394,6 +421,8 @@ export function RankingScreen() {
                               </td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.winRate}%</td>
+                              {streakCell(streak ? `${streak.count}${streak.type === 'W' ? 'V' : 'D'}` : undefined, cell)}
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.setsWon}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.setsLost}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</td>
@@ -410,7 +439,7 @@ export function RankingScreen() {
                             <td className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
                               {groupLabel(section.matchesPlayed)}
                             </td>
-                            <td className="bg-navy pt-3 pb-1" colSpan={8} />
+                            <td className="bg-navy pt-3 pb-1" colSpan={10} />
                           </tr>,
                           ...rows,
                         ]
@@ -418,6 +447,8 @@ export function RankingScreen() {
                     : sectionsFor(teamStandings, sameGamesOnly).flatMap((section) => {
                         const rows = section.rows.map((s, i) => {
                           const cell = `${rowBg(i)} ${i === 0 ? 'font-bold text-gold' : ''}`
+                          const teamKey = [...s.playerIds].sort().join('|')
+                          const streak = teamStreaks.get(teamKey)
                           return (
                             <tr key={s.playerIds.join('|')}>
                               <td className={`sticky left-0 z-10 ${cell} py-1 pr-2`}>{i + 1}</td>
@@ -426,6 +457,8 @@ export function RankingScreen() {
                               </td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesPlayed}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.matchesWon}</td>
+                              <td className={`${cell} py-1 pr-2 text-right`}>{s.winRate}%</td>
+                              {streakCell(streak ? `${streak.count}${streak.type === 'W' ? 'V' : 'D'}` : undefined, cell)}
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.setsWon}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.setsLost}</td>
                               <td className={`${cell} py-1 pr-2 text-right`}>{s.gamesWon}</td>
@@ -442,7 +475,7 @@ export function RankingScreen() {
                             <td className="sticky left-8 z-10 whitespace-nowrap bg-navy pt-3 pb-1 text-xs font-semibold text-cream/50">
                               {groupLabel(section.matchesPlayed)}
                             </td>
-                            <td className="bg-navy pt-3 pb-1" colSpan={8} />
+                            <td className="bg-navy pt-3 pb-1" colSpan={10} />
                           </tr>,
                           ...rows,
                         ]
@@ -454,7 +487,7 @@ export function RankingScreen() {
           </div>
           <p className="text-xs text-cream/50">
             {t(
-              'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+              'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · A% aproveitamento de vitórias · Seq sequência atual de vitórias (V) ou derrotas (D) · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
             )}
             {mode === 'duplas' &&
               ` · ${t('Duplas: só conta quem jogou junto na mesma dupla.')}`}

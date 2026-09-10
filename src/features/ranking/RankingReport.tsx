@@ -33,6 +33,10 @@ export interface RankingReportProps {
   matchTimes?: MatchTimeEntry[]
   playerName: (id: PlayerId) => string
   teamName: (ids: PlayerId[]) => string
+  /** Per-player current streak, same scope as the report. Missing = no matches in scope. */
+  playerStreaks?: Map<PlayerId, { type: 'W' | 'L'; count: number }>
+  /** Per-team-key current streak, same scope. Missing = no matches in scope. */
+  teamStreaks?: Map<string, { type: 'W' | 'L'; count: number }>
 }
 
 const headCell = 'py-2 pr-3 text-left text-xs font-semibold text-cream/60'
@@ -62,40 +66,76 @@ export function RankingReport(props: RankingReportProps) {
 
       <RankingTable
         title={t('Individual')}
-        head={['#', t('Jogador'), t('PJ'), t('PV'), t('SV'), t('SP'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
+        head={[
+          '#',
+          t('Jogador'),
+          t('PJ'),
+          t('PV'),
+          t('A%'),
+          t('Seq'),
+          t('SV'),
+          t('SP'),
+          t('GV'),
+          t('GP'),
+          t('PtV'),
+          t('PtP'),
+        ]}
         standings={props.individualStandings}
         groupByMatches={props.groupByMatches}
         rowKey={(s) => s.playerId}
-        rowValues={(s) => [
-          props.playerName(s.playerId),
-          String(s.matchesPlayed),
-          String(s.matchesWon),
-          String(s.setsWon),
-          String(s.setsLost),
-          String(s.gamesWon),
-          String(s.gamesLost),
-          String(s.pointsWon),
-          String(s.pointsLost),
-        ]}
+        rowValues={(s) => {
+          const streak = props.playerStreaks?.get(s.playerId)
+          return [
+            props.playerName(s.playerId),
+            String(s.matchesPlayed),
+            String(s.matchesWon),
+            `${s.winRate}%`,
+            streak ? `${streak.count}${streak.type === 'W' ? 'V' : 'D'}` : '—',
+            String(s.setsWon),
+            String(s.setsLost),
+            String(s.gamesWon),
+            String(s.gamesLost),
+            String(s.pointsWon),
+            String(s.pointsLost),
+          ]
+        }}
       />
 
       <RankingTable
         title={t('Duplas')}
-        head={['#', t('Dupla'), t('PJ'), t('PV'), t('SV'), t('SP'), t('GV'), t('GP'), t('PtV'), t('PtP')]}
+        head={[
+          '#',
+          t('Dupla'),
+          t('PJ'),
+          t('PV'),
+          t('A%'),
+          t('Seq'),
+          t('SV'),
+          t('SP'),
+          t('GV'),
+          t('GP'),
+          t('PtV'),
+          t('PtP'),
+        ]}
         standings={props.teamStandings}
         groupByMatches={props.groupByMatches}
         rowKey={(s) => s.playerIds.join('|')}
-        rowValues={(s) => [
-          props.teamName(s.playerIds),
-          String(s.matchesPlayed),
-          String(s.matchesWon),
-          String(s.setsWon),
-          String(s.setsLost),
-          String(s.gamesWon),
-          String(s.gamesLost),
-          String(s.pointsWon),
-          String(s.pointsLost),
-        ]}
+        rowValues={(s) => {
+          const streak = props.teamStreaks?.get([...s.playerIds].sort().join('|'))
+          return [
+            props.teamName(s.playerIds),
+            String(s.matchesPlayed),
+            String(s.matchesWon),
+            `${s.winRate}%`,
+            streak ? `${streak.count}${streak.type === 'W' ? 'V' : 'D'}` : '—',
+            String(s.setsWon),
+            String(s.setsLost),
+            String(s.gamesWon),
+            String(s.gamesLost),
+            String(s.pointsWon),
+            String(s.pointsLost),
+          ]
+        }}
       />
 
       <div className={card}>
@@ -165,7 +205,7 @@ export function RankingReport(props: RankingReportProps) {
 
       <p className="text-xs text-cream/50">
         {t(
-          'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
+          'Ordenado por GV, desempate por PtV e depois PV. PJ partidas jogadas · PV partidas vencidas · A% aproveitamento de vitórias · Seq sequência atual de vitórias (V) ou derrotas (D) · SV sets vencidos · SP sets perdidos · GV games vencidos · GP games perdidos · PtV pontos vencidos · PtP pontos perdidos',
         )}
         {' · '}
         {t('Duplas: só conta quem jogou junto na mesma dupla.')}

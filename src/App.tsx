@@ -5,6 +5,7 @@ import { TournamentWizard } from './features/tournament/TournamentWizard'
 import { QuickMatchScreen } from './features/quickmatch/QuickMatchScreen'
 import { PlayersScreen } from './features/players/PlayersScreen'
 import { RankingScreen } from './features/ranking/RankingScreen'
+import { HeadToHeadScreen } from './features/ranking/HeadToHeadScreen'
 import { HistoryScreen } from './features/history/HistoryScreen'
 import { GuideScreen } from './features/guide/GuideScreen'
 import { ManualScreen } from './features/guide/ManualScreen'
@@ -264,19 +265,22 @@ function App() {
         )}
         <HeaderOptions />
       </header>
-      {view === 'home' && <HomeScreen onNavigate={setView} />}
-      {view === 'torneio' && <TournamentWizard onExit={() => setView('home')} />}
-      {view === 'partida-avulsa' && (
-        <QuickMatchScreen onCreated={() => setView('torneio')} onBack={() => setView('home')} />
-      )}
-      {view === 'jogadores' && <PlayersScreen />}
-      {view === 'ranking' && <RankingScreen />}
-      {view === 'historico' && <HistoryScreen />}
-      {view === 'guia' && <GuideScreen />}
-      {view === 'manual' && <ManualScreen />}
-      {view === 'backup' && <BackupScreen />}
-      {view === 'atalhos' && <KeyBindingsScreen />}
-      {view === 'relogio' && <WatchSetupScreen />}
+      <div key={view} className="animate-view-enter">
+        {view === 'home' && <HomeScreen onNavigate={setView} />}
+        {view === 'torneio' && <TournamentWizard onExit={() => setView('home')} />}
+        {view === 'partida-avulsa' && (
+          <QuickMatchScreen onCreated={() => setView('torneio')} onBack={() => setView('home')} />
+        )}
+        {view === 'jogadores' && <PlayersScreen />}
+        {view === 'ranking' && <RankingScreen />}
+        {view === 'confronto' && <HeadToHeadScreen />}
+        {view === 'historico' && <HistoryScreen />}
+        {view === 'guia' && <GuideScreen />}
+        {view === 'manual' && <ManualScreen />}
+        {view === 'backup' && <BackupScreen />}
+        {view === 'atalhos' && <KeyBindingsScreen />}
+        {view === 'relogio' && <WatchSetupScreen />}
+      </div>
     </div>
   )
 }
