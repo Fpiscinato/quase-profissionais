@@ -20,9 +20,9 @@ Cloudflare Pages — precisa ser um Worker próprio. Só precisa fazer isso
    ```
 4. O comando termina imprimindo uma URL parecida com:
    ```
-   https://quase-profissionais-relay.<sua-subdomínio>.workers.dev
+   https://quase-profissionais-relay.f-piscinato.workers.dev
    ```
-   **Copie essa URL.**
+   **Copie essa URL.** (já é a que está em `src/features/watch/relayConfig.ts`)
 5. Cole essa URL (trocando `https://` por `wss://`) em **dois lugares** —
    são dois arquivos separados que não compartilham essa constante entre
    si:

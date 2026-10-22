@@ -1,5 +1,20 @@
 # Tennis Americano Manager — Authoritative Spec (v1)
 
+> ⚠️ **Este documento é a spec da v1 e ficou atrás do código.** O app está na
+> versão `2.6` e mudou em pontos que aqui ainda são os da v1:
+> - **Hosting**: não é mais Cloudflare Pages — é Cloudflare Workers
+>   (`https://quase-profissionais.f-piscinato.workers.dev`), com deploy
+>   automático pela integração Git da Cloudflare.
+> - **Backend**: o app continua sendo estático e local, mas existe um Worker
+>   **separado** (`relay-worker/`) só para o modo relógio repassar mensagens ao
+>   vivo entre os aparelhos. Ele não guarda nada.
+> - **Idioma**: hoje são português **e** inglês (`src/i18n/`).
+> - **Estado**: a UI existe há várias versões (wizard de torneio, tela de match,
+>   ranking, head-to-head, atalhos, comandos de voz, backup, guia).
+>
+> Em caso de conflito entre este ficheiro e o código, **o código e o README
+> atuais valem** — este documento serve de histórico do plano original.
+
 Single source of truth. Read at the start of every session. If code conflicts
 with this file, THIS FILE WINS. Do not add features not described here.
 New repository, same delivery pipeline as the darts app (GitHub -> Cloudflare).
