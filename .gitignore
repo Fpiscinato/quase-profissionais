@@ -73,3 +73,29 @@ coverage/
 
 # Download acidental (nome inválido no Windows) — não versionar
 image:1000124934
+
+# ===== Segurança extra: credenciais de ferramentas/infra =====
+.envrc
+.direnv/
+.npmrc
+.pypirc
+.netrc
+_netrc
+.aws/
+.azure/
+.config/gcloud/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+cloudflared/
+*.ovpn
+*.crt
+*.der
+*.csr
+*.mobileprovision
+*.sqlite
+*.sqlite3
+*.db
+.claude/RESUME.md

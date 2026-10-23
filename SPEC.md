@@ -15,9 +15,12 @@
 > Em caso de conflito entre este ficheiro e o código, **o código e o README
 > atuais valem** — este documento serve de histórico do plano original.
 
-Single source of truth. Read at the start of every session. If code conflicts
-with this file, THIS FILE WINS. Do not add features not described here.
-New repository, same delivery pipeline as the darts app (GitHub -> Cloudflare).
+**Histórico do plano original (v1), não a fonte da verdade atual.** Leia o
+`README.md` primeiro. Em caso de conflito entre este ficheiro e o código/README
+atuais, **o código e o README valem**. As regras de arquitetura da secção 0
+(100% estático, IndexedDB, offline-first, sem backend próprio) continuam válidas.
+O `relay-worker/` é a única exceção documentada (ver `relay-worker/RELAY.md`).
+Não adicione funcionalidades que não estejam no README/SPEC sem confirmar.
 
 ## 0. Non-negotiable architecture
 - **Static PWA. NO backend, NO server, NO database server.** (Do NOT add
